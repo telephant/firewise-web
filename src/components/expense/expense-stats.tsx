@@ -9,52 +9,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUpIcon, CoinsIcon } from '@/components/icons';
 import { useExpenses } from '@/hooks/use-expenses';
 import { useExpenseData } from '@/contexts/expense-data-context';
 import { getCategoryColor } from '@/lib/category-colors';
+import { formatCurrency, formatMonth } from '@/lib/format';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-
-function TrendingUpIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-      <polyline points="16 7 22 7 22 13" />
-    </svg>
-  );
-}
-
-function CoinsIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="8" cy="8" r="6" />
-      <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
-      <path d="M7 6h1v4" />
-      <path d="m16.71 13.88.7.71-2.82 2.82" />
-    </svg>
-  );
-}
 
 interface ExpenseStatsProps {
   ledgerId: string;
@@ -137,14 +97,10 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
     return { byCategory, total };
   }, [expenses, selectedCurrency, currencies, categories]);
 
-  // Format amount with currency
+  // Format amount with selected currency
   const formatAmount = (amount: number) => {
     if (!selectedCurrency) return '';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: selectedCurrency.code,
-      minimumFractionDigits: 2,
-    }).format(amount);
+    return formatCurrency(amount, selectedCurrency.code);
   };
 
   if (loading) {
@@ -173,7 +129,7 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
     <div className="space-y-3 p-4">
       {/* Compact Header with Month and Currency */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">{format(now, 'MMMM yyyy')}</span>
+        <span className="text-sm font-medium text-muted-foreground">{formatMonth(now)}</span>
         <Select value={selectedCurrencyId} onValueChange={setSelectedCurrencyId}>
           <SelectTrigger className="w-fit h-7 text-xs px-3 gap-1.5 border-0 bg-muted/50 rounded-full font-medium">
             <SelectValue />

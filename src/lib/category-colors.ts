@@ -23,13 +23,3 @@ export function getCategoryColor(name: string): CategoryColorSet {
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return CATEGORY_COLORS[hash % CATEGORY_COLORS.length];
 }
-
-// Get just the bar color (for the thin indicator)
-export function getCategoryBarColor(name: string): string {
-  return getCategoryColor(name).bar;
-}
-
-// Get just the badge classes
-export function getCategoryBadgeColor(name: string): string {
-  return getCategoryColor(name).badge;
-}
