@@ -173,16 +173,19 @@ function ReceiptIcon({ className }: { className?: string }) {
 
 interface AddExpenseDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (data: {
-    name: string;
-    amount: number;
-    currency_id: string;
-    category_id?: string;
-    description?: string;
-    payment_method_id?: string;
-    date?: string;
-  }) => Promise<void>;
+  onOpenChange: (open: boolean, hasChanges: boolean) => void;
+  onSubmit: (
+    data: {
+      name: string;
+      amount: number;
+      currency_id: string;
+      category_id?: string;
+      description?: string;
+      payment_method_id?: string;
+      date?: string;
+    },
+    options?: { skipRefetch?: boolean }
+  ) => Promise<void>;
 }
 
 export function AddExpenseDialog({
@@ -200,6 +203,7 @@ export function AddExpenseDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addAnother, setAddAnother] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const [newCategory, setNewCategory] = useState('');
   const [newPaymentMethod, setNewPaymentMethod] = useState('');
@@ -247,21 +251,28 @@ export function AddExpenseDialog({
     setError(null);
 
     try {
-      await onSubmit({
-        name: name.trim(),
-        amount: parseFloat(amount),
-        currency_id: currencyId,
-        category_id: categoryId || undefined,
-        description: description.trim() || undefined,
-        payment_method_id: paymentMethodId || undefined,
-        date: format(date, 'yyyy-MM-dd'),
-      });
+      // When "add another" is checked, skip refetch until dialog closes
+      await onSubmit(
+        {
+          name: name.trim(),
+          amount: parseFloat(amount),
+          currency_id: currencyId,
+          category_id: categoryId || undefined,
+          description: description.trim() || undefined,
+          payment_method_id: paymentMethodId || undefined,
+          date: format(date, 'yyyy-MM-dd'),
+        },
+        { skipRefetch: addAnother }
+      );
+
+      setHasChanges(true);
 
       if (addAnother) {
         resetForm();
       } else {
-        onOpenChange(false);
+        onOpenChange(false, true);
         resetForm();
+        setHasChanges(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create expense');
@@ -301,21 +312,25 @@ export function AddExpenseDialog({
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
+      // Pass hasChanges to parent so it knows whether to refetch
+      onOpenChange(false, hasChanges);
       resetForm();
       setShowNewCategory(false);
       setShowCurrencyDialog(false);
       setShowNewPaymentMethod(false);
+      setHasChanges(false);
+    } else {
+      onOpenChange(true, false);
     }
-    onOpenChange(open);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit}>
-          <DialogHeader className="pb-4">
+          <DialogHeader className="pb-2">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10">
+              <div className="p-2 rounded-xl bg-primary/10">
                 <ReceiptIcon className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -325,9 +340,9 @@ export function AddExpenseDialog({
             </div>
           </DialogHeader>
 
-          <div className="grid gap-5 py-4">
+          <div className="grid gap-3 py-2">
             {/* Name */}
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label htmlFor="expense-name" className="flex items-center gap-2 text-sm font-medium">
                 <FileTextIcon className="h-4 w-4 text-muted-foreground" />
                 Name <span className="text-destructive">*</span>
@@ -341,54 +356,54 @@ export function AddExpenseDialog({
               />
             </div>
 
-            {/* Amount & Currency */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="expense-amount" className="flex items-center gap-2 text-sm font-medium">
-                  <DollarIcon className="h-4 w-4 text-muted-foreground" />
-                  Amount <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="expense-amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-sm font-medium">Currency <span className="text-destructive">*</span></Label>
-                <div className="flex gap-2">
-                  <Select value={currencyId} onValueChange={setCurrencyId}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((currency) => (
-                        <SelectItem key={currency.id} value={currency.id}>
-                          {currency.code}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowCurrencyDialog(true)}
-                    className="shrink-0"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                  </Button>
-                </div>
+            {/* Amount */}
+            <div className="grid gap-1">
+              <Label htmlFor="expense-amount" className="flex items-center gap-2 text-sm font-medium">
+                <DollarIcon className="h-4 w-4 text-muted-foreground" />
+                Amount <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="expense-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            {/* Currency */}
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Currency <span className="text-destructive">*</span></Label>
+              <div className="flex gap-2">
+                <Select value={currencyId} onValueChange={setCurrencyId}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencies.map((currency) => (
+                      <SelectItem key={currency.id} value={currency.id}>
+                        {currency.code} - {currency.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowCurrencyDialog(true)}
+                  className="shrink-0"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
             {/* Category */}
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label className="flex items-center gap-2 text-sm font-medium">
                 <TagIcon className="h-4 w-4 text-muted-foreground" />
                 Category
@@ -440,7 +455,7 @@ export function AddExpenseDialog({
             </div>
 
             {/* Payment Method */}
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label className="flex items-center gap-2 text-sm font-medium">
                 <CreditCardIcon className="h-4 w-4 text-muted-foreground" />
                 Payment Method
@@ -492,7 +507,7 @@ export function AddExpenseDialog({
             </div>
 
             {/* Date */}
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label className="flex items-center gap-2 text-sm font-medium">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                 Date
@@ -516,7 +531,7 @@ export function AddExpenseDialog({
             </div>
 
             {/* Description */}
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label htmlFor="expense-description" className="text-sm font-medium">
                 Description (optional)
               </Label>
@@ -541,7 +556,7 @@ export function AddExpenseDialog({
             )}
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-3 pt-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
             <label className="flex items-center gap-2 text-sm mr-auto cursor-pointer select-none">
               <input
                 type="checkbox"

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ExpenseCard } from './expense-card';
 import { ExpenseDetailDialog } from './expense-detail-dialog';
 import { AddExpenseDialog } from './add-expense-dialog';
@@ -8,7 +9,7 @@ import { ExpenseStats } from './expense-stats';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusIcon, ReceiptIcon, ChartIcon, SparklesIcon } from '@/components/icons';
+import { PlusIcon, ReceiptIcon, ChartIcon, SparklesIcon, RefreshIcon } from '@/components/icons';
 import { useExpenses } from '@/hooks/use-expenses';
 import type { Expense } from '@/types';
 
@@ -23,9 +24,21 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [startInEditMode, setStartInEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('expenses');
+  const [refreshing, setRefreshing] = useState(false);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
-  const { expenses, loading, error, createExpense, updateExpense, deleteExpense } =
+  useEffect(() => {
+    setPortalContainer(document.body);
+  }, []);
+
+  const { expenses, loading, error, refetch, createExpense, updateExpense, deleteExpense } =
     useExpenses(ledgerId);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
 
   const handleExpenseClick = (expense: Expense) => {
     setSelectedExpense(expense);
@@ -39,16 +52,26 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
     setDetailDialogOpen(true);
   };
 
-  const handleAddExpense = async (data: {
-    name: string;
-    amount: number;
-    currency_id: string;
-    category_id?: string;
-    description?: string;
-    payment_method_id?: string;
-    date?: string;
-  }) => {
-    await createExpense(data);
+  const handleAddExpense = async (
+    data: {
+      name: string;
+      amount: number;
+      currency_id: string;
+      category_id?: string;
+      description?: string;
+      payment_method_id?: string;
+      date?: string;
+    },
+    options?: { skipRefetch?: boolean }
+  ) => {
+    await createExpense(data, options);
+  };
+
+  const handleAddDialogClose = (open: boolean, hasChanges: boolean) => {
+    setAddDialogOpen(open);
+    if (!open && hasChanges) {
+      refetch();
+    }
   };
 
   const handleUpdateExpense = async (
@@ -94,8 +117,32 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
   }
 
   return (
-    <div className="relative flex flex-col h-full bg-background">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+    <>
+      {/* Floating Action Buttons - rendered via portal to document.body for true fixed positioning */}
+      {portalContainer && activeTab === 'expenses' && createPortal(
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="h-10 w-10 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 bg-background border"
+            size="icon"
+            variant="outline"
+          >
+            <RefreshIcon className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            onClick={() => setAddDialogOpen(true)}
+            className="h-14 w-14 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 hover:scale-105 bg-gradient-to-br from-primary to-primary/90"
+            size="icon"
+          >
+            <PlusIcon className="h-6 w-6" />
+          </Button>
+        </div>,
+        portalContainer
+      )}
+
+      <div className="relative flex flex-col h-full bg-background">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-4 py-2">
           <TabsList className="h-11 w-full grid grid-cols-2 bg-muted/50 p-1 rounded-xl">
             <TabsTrigger
@@ -146,39 +193,17 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
             </div>
           )}
 
-          {/* Desktop add button */}
-          {expenses.length > 0 && (
-            <div className="hidden md:block p-4 pt-2">
-              <Button
-                onClick={() => setAddDialogOpen(true)}
-                className="w-full h-11 rounded-xl shadow-sm hover:shadow-md transition-shadow"
-              >
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Add Expense
-              </Button>
-            </div>
-          )}
         </TabsContent>
 
         <TabsContent value="stats" className="flex-1 mt-0">
           <ExpenseStats ledgerId={ledgerId} defaultCurrencyId={defaultCurrencyId} />
         </TabsContent>
-      </Tabs>
-
-      {/* Floating Action Button for mobile - only show on expenses tab */}
-      {activeTab === 'expenses' && (
-        <Button
-          onClick={() => setAddDialogOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl hover:shadow-2xl md:hidden transition-all duration-200 hover:scale-105 bg-gradient-to-br from-primary to-primary/90"
-          size="icon"
-        >
-          <PlusIcon className="h-6 w-6" />
-        </Button>
-      )}
+        </Tabs>
+      </div>
 
       <AddExpenseDialog
         open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
+        onOpenChange={handleAddDialogClose}
         onSubmit={handleAddExpense}
       />
 
@@ -190,6 +215,6 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
         onDelete={handleDeleteExpense}
         startInEditMode={startInEditMode}
       />
-    </div>
+    </>
   );
 }

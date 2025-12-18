@@ -47,19 +47,24 @@ export function useExpenses(ledgerId: string | null, filters?: ExpenseFilters) {
     fetchExpenses();
   }, [fetchExpenses]);
 
-  const createExpense = async (data: {
-    name: string;
-    amount: number;
-    currency_id: string;
-    category_id?: string;
-    description?: string;
-    payment_method_id?: string;
-    date?: string;
-  }) => {
+  const createExpense = async (
+    data: {
+      name: string;
+      amount: number;
+      currency_id: string;
+      category_id?: string;
+      description?: string;
+      payment_method_id?: string;
+      date?: string;
+    },
+    options?: { skipRefetch?: boolean }
+  ) => {
     if (!ledgerId) throw new Error('No ledger selected');
     const response = await expenseApi.create(ledgerId, data);
     if (response.success && response.data) {
-      await fetchExpenses();
+      if (!options?.skipRefetch) {
+        await fetchExpenses();
+      }
       return response.data;
     }
     throw new Error(response.error || 'Failed to create expense');
