@@ -22,7 +22,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { useCategories, useCurrencies, usePaymentMethods } from '@/hooks/use-expenses';
+import { useExpenseData } from '@/contexts/expense-data-context';
 import { AddCurrencyDialog } from './add-currency-dialog';
 import { format, parseISO } from 'date-fns';
 import type { Expense } from '@/types';
@@ -115,9 +115,7 @@ export function ExpenseDetailDialog({
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [showNewPaymentMethod, setShowNewPaymentMethod] = useState(false);
 
-  const { categories, createCategory } = useCategories();
-  const { currencies, createCurrency } = useCurrencies();
-  const { paymentMethods, createPaymentMethod } = usePaymentMethods();
+  const { categories, currencies, paymentMethods, createCategory, createCurrency, createPaymentMethod } = useExpenseData();
 
   useEffect(() => {
     if (expense && open) {

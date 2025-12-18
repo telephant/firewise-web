@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useCategories, useCurrencies, usePaymentMethods } from '@/hooks/use-expenses';
+import { useExpenseData } from '@/contexts/expense-data-context';
 import { AddCurrencyDialog } from './add-currency-dialog';
 import { format } from 'date-fns';
 
@@ -103,9 +103,7 @@ export function AddExpenseDialog({
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [showNewPaymentMethod, setShowNewPaymentMethod] = useState(false);
 
-  const { categories, createCategory } = useCategories();
-  const { currencies, createCurrency } = useCurrencies();
-  const { paymentMethods, createPaymentMethod } = usePaymentMethods();
+  const { categories, currencies, paymentMethods, createCategory, createCurrency, createPaymentMethod } = useExpenseData();
 
   useEffect(() => {
     if (currencies.length > 0 && !currencyId) {
