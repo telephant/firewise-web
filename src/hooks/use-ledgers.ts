@@ -41,7 +41,7 @@ export function useLedgers() {
 
   const updateLedger = async (
     id: string,
-    data: { name?: string; description?: string }
+    data: { name?: string; description?: string; default_currency_id?: string | null }
   ) => {
     const response = await ledgerApi.update(id, data);
     if (response.success && response.data) {

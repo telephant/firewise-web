@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { categoryApi, currencyApi, paymentMethodApi } from '@/lib/api';
 import type { ExpenseCategory, Currency, PaymentMethod } from '@/types';
 
@@ -13,25 +13,36 @@ interface ExpenseDataContextType {
   createCurrency: (data: { code: string; name: string; rate: number }) => Promise<Currency>;
   createPaymentMethod: (data: { name: string; description?: string }) => Promise<PaymentMethod>;
   deleteCategory: (id: string) => Promise<boolean>;
+  deleteCurrency: (id: string) => Promise<boolean>;
   deletePaymentMethod: (id: string) => Promise<boolean>;
   refetch: () => Promise<void>;
 }
 
 const ExpenseDataContext = createContext<ExpenseDataContextType | null>(null);
 
-export function ExpenseDataProvider({ children }: { children: ReactNode }) {
+interface ExpenseDataProviderProps {
+  children: ReactNode;
+  ledgerId: string;
+}
+
+export function ExpenseDataProvider({ children, ledgerId }: ExpenseDataProviderProps) {
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Use ref to track current ledgerId for callbacks
+  const ledgerIdRef = useRef(ledgerId);
+  ledgerIdRef.current = ledgerId;
+
   const fetchAll = useCallback(async () => {
+    const currentLedgerId = ledgerIdRef.current;
     setLoading(true);
     try {
       const [categoriesRes, currenciesRes, paymentMethodsRes] = await Promise.all([
-        categoryApi.getAll(),
-        currencyApi.getAll(),
-        paymentMethodApi.getAll(),
+        categoryApi.getAll(currentLedgerId),
+        currencyApi.getAll(currentLedgerId),
+        paymentMethodApi.getAll(currentLedgerId),
       ]);
 
       if (categoriesRes.success && categoriesRes.data) {
@@ -48,9 +59,10 @@ export function ExpenseDataProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Refetch when ledgerId changes
   useEffect(() => {
     fetchAll();
-  }, [fetchAll]);
+  }, [ledgerId, fetchAll]);
 
   // Refresh data when window regains focus (sync with changes from other tabs/users)
   useEffect(() => {
@@ -63,28 +75,28 @@ export function ExpenseDataProvider({ children }: { children: ReactNode }) {
   }, [fetchAll]);
 
   const refetchCategories = useCallback(async () => {
-    const response = await categoryApi.getAll();
+    const response = await categoryApi.getAll(ledgerIdRef.current);
     if (response.success && response.data) {
       setCategories(response.data);
     }
   }, []);
 
   const refetchCurrencies = useCallback(async () => {
-    const response = await currencyApi.getAll();
+    const response = await currencyApi.getAll(ledgerIdRef.current);
     if (response.success && response.data) {
       setCurrencies(response.data);
     }
   }, []);
 
   const refetchPaymentMethods = useCallback(async () => {
-    const response = await paymentMethodApi.getAll();
+    const response = await paymentMethodApi.getAll(ledgerIdRef.current);
     if (response.success && response.data) {
       setPaymentMethods(response.data);
     }
   }, []);
 
   const createCategory = async (name: string) => {
-    const response = await categoryApi.create(name);
+    const response = await categoryApi.create(ledgerIdRef.current, name);
     if (response.success && response.data) {
       await refetchCategories();
       return response.data;
@@ -93,7 +105,7 @@ export function ExpenseDataProvider({ children }: { children: ReactNode }) {
   };
 
   const createCurrency = async (data: { code: string; name: string; rate: number }) => {
-    const response = await currencyApi.create(data);
+    const response = await currencyApi.create(ledgerIdRef.current, data);
     if (response.success && response.data) {
       await refetchCurrencies();
       return response.data;
@@ -102,7 +114,7 @@ export function ExpenseDataProvider({ children }: { children: ReactNode }) {
   };
 
   const createPaymentMethod = async (data: { name: string; description?: string }) => {
-    const response = await paymentMethodApi.create(data);
+    const response = await paymentMethodApi.create(ledgerIdRef.current, data);
     if (response.success && response.data) {
       await refetchPaymentMethods();
       return response.data;
@@ -111,7 +123,7 @@ export function ExpenseDataProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteCategory = async (id: string) => {
-    const response = await categoryApi.delete(id);
+    const response = await categoryApi.delete(ledgerIdRef.current, id);
     if (response.success) {
       await refetchCategories();
       return true;
@@ -119,8 +131,17 @@ export function ExpenseDataProvider({ children }: { children: ReactNode }) {
     throw new Error(response.error || 'Failed to delete category');
   };
 
+  const deleteCurrency = async (id: string) => {
+    const response = await currencyApi.delete(ledgerIdRef.current, id);
+    if (response.success) {
+      await refetchCurrencies();
+      return true;
+    }
+    throw new Error(response.error || 'Failed to delete currency');
+  };
+
   const deletePaymentMethod = async (id: string) => {
-    const response = await paymentMethodApi.delete(id);
+    const response = await paymentMethodApi.delete(ledgerIdRef.current, id);
     if (response.success) {
       await refetchPaymentMethods();
       return true;
@@ -139,6 +160,7 @@ export function ExpenseDataProvider({ children }: { children: ReactNode }) {
         createCurrency,
         createPaymentMethod,
         deleteCategory,
+        deleteCurrency,
         deletePaymentMethod,
         refetch: fetchAll,
       }}

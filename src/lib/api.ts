@@ -55,7 +55,7 @@ export const ledgerApi = {
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: { name?: string; description?: string }) =>
+  update: (id: string, data: { name?: string; description?: string; default_currency_id?: string | null }) =>
     fetchApi<Ledger>(`/ledgers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -154,43 +154,48 @@ export const expenseApi = {
 
 // Category API
 export const categoryApi = {
-  getAll: () => fetchApi<ExpenseCategory[]>('/categories'),
+  getAll: (ledgerId: string) => fetchApi<ExpenseCategory[]>(`/ledgers/${ledgerId}/categories`),
 
-  create: (name: string) =>
-    fetchApi<ExpenseCategory>('/categories', {
+  create: (ledgerId: string, name: string) =>
+    fetchApi<ExpenseCategory>(`/ledgers/${ledgerId}/categories`, {
       method: 'POST',
       body: JSON.stringify({ name }),
     }),
 
-  delete: (id: string) =>
-    fetchApi(`/categories/${id}`, {
+  delete: (ledgerId: string, id: string) =>
+    fetchApi(`/ledgers/${ledgerId}/categories/${id}`, {
       method: 'DELETE',
     }),
 };
 
 // Currency API
 export const currencyApi = {
-  getAll: () => fetchApi<Currency[]>('/currencies'),
+  getAll: (ledgerId: string) => fetchApi<Currency[]>(`/ledgers/${ledgerId}/currencies`),
 
-  create: (data: { code: string; name: string; rate: number }) =>
-    fetchApi<Currency>('/currencies', {
+  create: (ledgerId: string, data: { code: string; name: string; rate: number }) =>
+    fetchApi<Currency>(`/ledgers/${ledgerId}/currencies`, {
       method: 'POST',
       body: JSON.stringify(data),
+    }),
+
+  delete: (ledgerId: string, id: string) =>
+    fetchApi(`/ledgers/${ledgerId}/currencies/${id}`, {
+      method: 'DELETE',
     }),
 };
 
 // Payment Method API
 export const paymentMethodApi = {
-  getAll: () => fetchApi<PaymentMethod[]>('/payment-methods'),
+  getAll: (ledgerId: string) => fetchApi<PaymentMethod[]>(`/ledgers/${ledgerId}/payment-methods`),
 
-  create: (data: { name: string; description?: string }) =>
-    fetchApi<PaymentMethod>('/payment-methods', {
+  create: (ledgerId: string, data: { name: string; description?: string }) =>
+    fetchApi<PaymentMethod>(`/ledgers/${ledgerId}/payment-methods`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  delete: (id: string) =>
-    fetchApi(`/payment-methods/${id}`, {
+  delete: (ledgerId: string, id: string) =>
+    fetchApi(`/ledgers/${ledgerId}/payment-methods/${id}`, {
       method: 'DELETE',
     }),
 };

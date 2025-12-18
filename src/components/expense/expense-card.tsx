@@ -49,7 +49,7 @@ export function ExpenseCard({ expense, onClick, onEdit }: ExpenseCardProps) {
 
   return (
     <Card
-      className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
+      className="p-3 cursor-pointer hover:bg-accent/50 transition-colors"
       onClick={onClick}
     >
       <div className="flex items-start gap-3">

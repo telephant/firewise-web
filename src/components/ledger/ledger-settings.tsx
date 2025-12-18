@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useExpenseData } from '@/contexts/expense-data-context';
 import type { Ledger } from '@/types';
 
 function SettingsIcon({ className }: { className?: string }) {
@@ -107,7 +115,7 @@ function TrashIcon({ className }: { className?: string }) {
 interface LedgerSettingsProps {
   ledger: Ledger;
   onMembersClick: () => void;
-  onUpdate: (data: { name?: string; description?: string }) => Promise<void>;
+  onUpdate: (data: { name?: string; description?: string; default_currency_id?: string | null }) => Promise<void>;
   onDelete: () => Promise<void>;
 }
 
@@ -121,10 +129,18 @@ export function LedgerSettings({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [name, setName] = useState(ledger.name);
   const [description, setDescription] = useState(ledger.description || '');
+  const [defaultCurrencyId, setDefaultCurrencyId] = useState(ledger.default_currency_id || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { currencies } = useExpenseData();
   const isOwner = ledger.role === 'owner';
+
+  useEffect(() => {
+    setName(ledger.name);
+    setDescription(ledger.description || '');
+    setDefaultCurrencyId(ledger.default_currency_id || '');
+  }, [ledger]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +156,7 @@ export function LedgerSettings({
       await onUpdate({
         name: name.trim(),
         description: description.trim() || undefined,
+        default_currency_id: defaultCurrencyId || null,
       });
       setEditDialogOpen(false);
     } catch (err) {
@@ -222,6 +239,21 @@ export function LedgerSettings({
                   onChange={(e) => setDescription(e.target.value)}
                   disabled={loading}
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label>Default Currency</Label>
+                <Select value={defaultCurrencyId} onValueChange={setDefaultCurrencyId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select default currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencies.map((currency) => (
+                      <SelectItem key={currency.id} value={currency.id}>
+                        {currency.code} - {currency.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>

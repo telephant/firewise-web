@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/header';
 import { ExpenseList } from '@/components/expense/expense-list';
 import { LedgerSettings } from '@/components/ledger/ledger-settings';
 import { InviteUserDialog } from '@/components/ledger/invite-user-dialog';
+import { ExpenseDataProvider } from '@/contexts/expense-data-context';
 import { useLedgers } from '@/hooks/use-ledgers';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,7 +35,7 @@ export default function LedgerPage({
     }
   }, [ledgerId, ledgers, loading, router]);
 
-  const handleUpdate = async (data: { name?: string; description?: string }) => {
+  const handleUpdate = async (data: { name?: string; description?: string; default_currency_id?: string | null }) => {
     if (!ledger) return;
     const updated = await updateLedger(ledger.id, data);
     setLedger({ ...ledger, ...updated });
@@ -62,7 +63,7 @@ export default function LedgerPage({
   }
 
   return (
-    <>
+    <ExpenseDataProvider ledgerId={ledgerId}>
       <Header title={ledger.name}>
         <LedgerSettings
           ledger={ledger}
@@ -72,7 +73,7 @@ export default function LedgerPage({
         />
       </Header>
 
-      <ExpenseList ledgerId={ledgerId} />
+      <ExpenseList ledgerId={ledgerId} defaultCurrencyId={ledger.default_currency_id} />
 
       {user && (
         <InviteUserDialog
@@ -82,6 +83,6 @@ export default function LedgerPage({
           currentUserId={user.id}
         />
       )}
-    </>
+    </ExpenseDataProvider>
   );
 }
