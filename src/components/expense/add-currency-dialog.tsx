@@ -13,6 +13,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+function CoinsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="8" cy="8" r="6" />
+      <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
+      <path d="M7 6h1v4" />
+      <path d="m16.71 13.88.7.71-2.82 2.82" />
+    </svg>
+  );
+}
+
 interface AddCurrencyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -90,32 +112,61 @@ export function AddCurrencyDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Add Currency</DialogTitle>
-            <DialogDescription>
-              Add a new currency with its exchange rate relative to your base currency.
-            </DialogDescription>
+          <DialogHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/10">
+                <CoinsIcon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle>Add Currency</DialogTitle>
+                <DialogDescription>
+                  Add a new currency with its exchange rate.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="currency-code">Currency Code *</Label>
-              <Input
-                id="currency-code"
-                placeholder="USD"
-                maxLength={3}
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                disabled={loading}
-                className="uppercase"
-              />
-              <p className="text-xs text-muted-foreground">
-                3-letter ISO code (e.g., USD, EUR, GBP, JPY)
-              </p>
+          <div className="grid gap-5 py-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="currency-code" className="text-sm font-medium">
+                  Code <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="currency-code"
+                  placeholder="USD"
+                  maxLength={3}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  disabled={loading}
+                  className="uppercase"
+                />
+                <p className="text-xs text-muted-foreground">
+                  3-letter ISO code
+                </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="currency-rate" className="text-sm font-medium">Exchange Rate</Label>
+                <Input
+                  id="currency-rate"
+                  type="number"
+                  step="0.000001"
+                  min="0"
+                  placeholder="1.0"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                  disabled={loading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Default: 1.0
+                </p>
+              </div>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="currency-name">Currency Name *</Label>
+              <Label htmlFor="currency-name" className="text-sm font-medium">
+                Currency Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="currency-name"
                 placeholder="US Dollar"
@@ -125,27 +176,19 @@ export function AddCurrencyDialog({
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="currency-rate">Exchange Rate</Label>
-              <Input
-                id="currency-rate"
-                type="number"
-                step="0.000001"
-                min="0"
-                placeholder="1.0"
-                value={rate}
-                onChange={(e) => setRate(e.target.value)}
-                disabled={loading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Rate relative to your base currency (default: 1.0)
-              </p>
-            </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                <svg className="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" x2="12" y1="8" y2="12" />
+                  <line x1="12" x2="12.01" y1="16" y2="16" />
+                </svg>
+                {error}
+              </div>
+            )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -154,8 +197,18 @@ export function AddCurrencyDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Adding...' : 'Add Currency'}
+            <Button type="submit" disabled={loading} className="min-w-[100px]">
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Adding...
+                </span>
+              ) : (
+                'Add Currency'
+              )}
             </Button>
           </DialogFooter>
         </form>

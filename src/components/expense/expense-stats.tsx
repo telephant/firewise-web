@@ -11,7 +11,50 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useExpenses } from '@/hooks/use-expenses';
 import { useExpenseData } from '@/contexts/expense-data-context';
+import { getCategoryColor } from '@/lib/category-colors';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
+
+function TrendingUpIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+      <polyline points="16 7 22 7 22 13" />
+    </svg>
+  );
+}
+
+function CoinsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="8" cy="8" r="6" />
+      <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
+      <path d="M7 6h1v4" />
+      <path d="m16.71 13.88.7.71-2.82 2.82" />
+    </svg>
+  );
+}
 
 interface ExpenseStatsProps {
   ledgerId: string;
@@ -108,10 +151,10 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
     return (
       <div className="space-y-4 p-4">
         <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
           ))}
         </div>
       </div>
@@ -127,12 +170,12 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
   }
 
   return (
-    <div className="space-y-4 p-4">
-      {/* Currency Selector */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Currency:</span>
+    <div className="space-y-3 p-4">
+      {/* Compact Header with Month and Currency */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-muted-foreground">{format(now, 'MMMM yyyy')}</span>
         <Select value={selectedCurrencyId} onValueChange={setSelectedCurrencyId}>
-          <SelectTrigger className="w-32">
+          <SelectTrigger className="w-fit h-7 text-xs px-3 gap-1.5 border-0 bg-muted/50 rounded-full font-medium">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -145,31 +188,65 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
         </Select>
       </div>
 
-      {/* Month Header */}
-      <h2 className="text-lg font-semibold">{format(now, 'MMMM yyyy')}</h2>
-
       {/* Stats by Category */}
       {stats.byCategory.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground">No expenses this month</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+            <CoinsIcon className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground font-medium">No expenses this month</p>
+          <p className="text-sm text-muted-foreground/70 mt-1">Start tracking your spending!</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {/* Total */}
-          <div className="flex items-center justify-between px-3 py-2.5 bg-primary/5 rounded-lg border-2 border-primary/20 mb-1">
-            <span className="font-semibold">Total</span>
-            <span className="text-lg font-bold text-primary">{formatAmount(stats.total)}</span>
+          {/* Total Card - matching expense card style */}
+          <div className="p-3 rounded-2xl border-0 shadow-sm bg-card/80 backdrop-blur-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <TrendingUpIcon className="h-4 w-4" />
+                <span className="text-sm font-medium">Total Spending</span>
+              </div>
+              <p className="text-[15px] font-semibold tabular-nums">{formatAmount(stats.total)}</p>
+            </div>
           </div>
 
-          {stats.byCategory.map((cat) => (
-            <div
-              key={cat.id}
-              className="flex items-center justify-between px-3 py-2.5 bg-card rounded-lg border shadow-sm"
-            >
-              <span className="font-medium">{cat.name}</span>
-              <span className="font-semibold">{formatAmount(cat.amount)}</span>
-            </div>
-          ))}
+          {/* Category Breakdown - matching expense card style */}
+          {stats.byCategory.map((cat) => {
+            const colors = getCategoryColor(cat.name);
+            const percentage = (cat.amount / stats.total) * 100;
+
+            return (
+              <div
+                key={cat.id}
+                className="p-3 rounded-2xl border-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 bg-card/80 backdrop-blur-sm"
+              >
+                <div className="flex items-center gap-4">
+                  {/* Category Color Indicator - same as expense card */}
+                  <div className={`w-1 self-stretch rounded-full ${colors.bar}`} />
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-[15px]">{cat.name}</span>
+                      <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${colors.badge}`}>
+                        {percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${colors.bar} rounded-full transition-all duration-500`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <p className="font-semibold text-[15px] tabular-nums shrink-0">
+                    {formatAmount(cat.amount)}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

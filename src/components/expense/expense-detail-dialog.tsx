@@ -455,57 +455,64 @@ export function ExpenseDetailDialog({
           </form>
         ) : (
           <>
-            <DialogHeader>
-              <DialogTitle>{expense.name}</DialogTitle>
-              <DialogDescription>
-                Added by {expense.created_by_profile?.full_name || expense.created_by_profile?.email || 'Unknown'}
-              </DialogDescription>
+            <DialogHeader className="pb-2">
+              <DialogTitle className="text-xl">{expense.name}</DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">
-                  {formatAmount(expense.amount, expense.currency?.code)}
-                </span>
-                {expense.category && (
-                  <Badge variant="secondary">{expense.category.name}</Badge>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-5 py-2">
+              {/* Amount - Hero section */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
                 <div>
-                  <p className="text-muted-foreground">Date</p>
-                  <p>{format(parseISO(expense.date), 'PPP')}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                  <span className="text-2xl font-bold">
+                    {formatAmount(expense.amount, expense.currency?.code)}
+                  </span>
                 </div>
-                {expense.payment_method && (
-                  <div>
-                    <p className="text-muted-foreground">Payment Method</p>
-                    <p>{expense.payment_method.name}</p>
-                  </div>
+                {expense.category && (
+                  <Badge variant="secondary" className="text-sm px-3 py-1">
+                    {expense.category.name}
+                  </Badge>
                 )}
               </div>
 
+              {/* Key Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 rounded-lg bg-muted/30">
+                  <p className="text-xs text-muted-foreground mb-1">Date</p>
+                  <p className="font-medium">{format(parseISO(expense.date), 'MMM d, yyyy')}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/30">
+                  <p className="text-xs text-muted-foreground mb-1">Payment</p>
+                  <p className="font-medium">{expense.payment_method?.name || '—'}</p>
+                </div>
+              </div>
+
+              {/* Description */}
               {expense.description && (
-                <div className="text-sm">
-                  <p className="text-muted-foreground">Description</p>
-                  <p>{expense.description}</p>
+                <div className="p-3 rounded-lg bg-muted/30">
+                  <p className="text-xs text-muted-foreground mb-1">Description</p>
+                  <p className="text-sm">{expense.description}</p>
                 </div>
               )}
 
-              <div className="text-xs text-muted-foreground">
-                Created: {format(parseISO(expense.created_at), 'PPP p')}
+              {/* Meta info */}
+              <div className="pt-2 border-t border-border/50">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Added by {expense.created_by_profile?.full_name || expense.created_by_profile?.email || 'Unknown'}</span>
+                  <span>{format(parseISO(expense.created_at), 'MMM d, yyyy')}</span>
+                </div>
                 {expense.updated_at !== expense.created_at && (
-                  <>
-                    <br />
-                    Updated: {format(parseISO(expense.updated_at), 'PPP p')}
-                  </>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Updated {format(parseISO(expense.updated_at), 'MMM d, yyyy')}
+                  </p>
                 )}
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button
-                variant="destructive"
+                variant="outline"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => setDeleteConfirm(true)}
               >
                 Delete

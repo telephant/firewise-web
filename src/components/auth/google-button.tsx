@@ -21,7 +21,7 @@ export function GoogleButton() {
     <Button
       onClick={handleGoogleLogin}
       variant="outline"
-      className="w-full flex items-center justify-center gap-3"
+      className="w-full flex items-center justify-center gap-3 h-12 text-base font-medium bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 shadow-sm hover:shadow transition-all duration-200"
       size="lg"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24">

@@ -67,6 +67,110 @@ function PlusIcon({ className }: { className?: string }) {
   );
 }
 
+function DollarIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="12" x2="12" y1="2" y2="22" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+  );
+}
+
+function TagIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+      <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+  );
+}
+
+function CreditCardIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="20" height="14" x="2" y="5" rx="2" />
+      <line x1="2" x2="22" y1="10" y2="10" />
+    </svg>
+  );
+}
+
+function FileTextIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M10 9H8" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
+    </svg>
+  );
+}
+
+function ReceiptIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+      <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+      <path d="M12 17.5v-11" />
+    </svg>
+  );
+}
+
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -209,15 +313,25 @@ export function AddExpenseDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Add Expense</DialogTitle>
-            <DialogDescription>Add a new expense to this ledger.</DialogDescription>
+          <DialogHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/10">
+                <ReceiptIcon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle>Add Expense</DialogTitle>
+                <DialogDescription>Add a new expense to this ledger.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-5 py-4">
             {/* Name */}
             <div className="grid gap-2">
-              <Label htmlFor="expense-name">Name *</Label>
+              <Label htmlFor="expense-name" className="flex items-center gap-2 text-sm font-medium">
+                <FileTextIcon className="h-4 w-4 text-muted-foreground" />
+                Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="expense-name"
                 placeholder="e.g., Lunch, Groceries, Coffee"
@@ -227,51 +341,58 @@ export function AddExpenseDialog({
               />
             </div>
 
-            {/* Amount */}
-            <div className="grid gap-2">
-              <Label htmlFor="expense-amount">Amount *</Label>
-              <Input
-                id="expense-amount"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            {/* Currency */}
-            <div className="grid gap-2">
-              <Label>Currency *</Label>
-              <div className="flex gap-2">
-                <Select value={currencyId} onValueChange={setCurrencyId}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currencies.map((currency) => (
-                      <SelectItem key={currency.id} value={currency.id}>
-                        {currency.code} - {currency.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setShowCurrencyDialog(true)}
-                >
-                  <PlusIcon className="h-4 w-4" />
-                </Button>
+            {/* Amount & Currency */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="expense-amount" className="flex items-center gap-2 text-sm font-medium">
+                  <DollarIcon className="h-4 w-4 text-muted-foreground" />
+                  Amount <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="expense-amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-sm font-medium">Currency <span className="text-destructive">*</span></Label>
+                <div className="flex gap-2">
+                  <Select value={currencyId} onValueChange={setCurrencyId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map((currency) => (
+                        <SelectItem key={currency.id} value={currency.id}>
+                          {currency.code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowCurrencyDialog(true)}
+                    className="shrink-0"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
             {/* Category */}
             <div className="grid gap-2">
-              <Label>Category</Label>
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <TagIcon className="h-4 w-4 text-muted-foreground" />
+                Category
+              </Label>
               {showNewCategory ? (
                 <div className="flex gap-2">
                   <Input
@@ -310,6 +431,7 @@ export function AddExpenseDialog({
                     variant="outline"
                     size="icon"
                     onClick={() => setShowNewCategory(true)}
+                    className="shrink-0"
                   >
                     <PlusIcon className="h-4 w-4" />
                   </Button>
@@ -319,7 +441,10 @@ export function AddExpenseDialog({
 
             {/* Payment Method */}
             <div className="grid gap-2">
-              <Label>Payment Method</Label>
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <CreditCardIcon className="h-4 w-4 text-muted-foreground" />
+                Payment Method
+              </Label>
               {showNewPaymentMethod ? (
                 <div className="flex gap-2">
                   <Input
@@ -358,6 +483,7 @@ export function AddExpenseDialog({
                     variant="outline"
                     size="icon"
                     onClick={() => setShowNewPaymentMethod(true)}
+                    className="shrink-0"
                   >
                     <PlusIcon className="h-4 w-4" />
                   </Button>
@@ -367,11 +493,14 @@ export function AddExpenseDialog({
 
             {/* Date */}
             <div className="grid gap-2">
-              <Label>Date</Label>
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                Date
+              </Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                  <Button variant="outline" className="justify-start text-left font-normal w-full">
+                    <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                     {format(date, 'PPP')}
                   </Button>
                 </PopoverTrigger>
@@ -388,7 +517,9 @@ export function AddExpenseDialog({
 
             {/* Description */}
             <div className="grid gap-2">
-              <Label htmlFor="expense-description">Description (optional)</Label>
+              <Label htmlFor="expense-description" className="text-sm font-medium">
+                Description (optional)
+              </Label>
               <Input
                 id="expense-description"
                 placeholder="Additional notes"
@@ -398,30 +529,51 @@ export function AddExpenseDialog({
               />
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                <svg className="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" x2="12" y1="8" y2="12" />
+                  <line x1="12" x2="12.01" y1="16" y2="16" />
+                </svg>
+                {error}
+              </div>
+            )}
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <label className="flex items-center gap-2 text-sm mr-auto">
+          <DialogFooter className="flex-col sm:flex-row gap-3 pt-2">
+            <label className="flex items-center gap-2 text-sm mr-auto cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={addAnother}
                 onChange={(e) => setAddAnother(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-gray-300 text-primary focus:ring-primary"
               />
-              Add another
+              <span className="text-muted-foreground">Add another</span>
             </label>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Adding...' : 'Add Expense'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading} className="min-w-[100px]">
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Adding...
+                  </span>
+                ) : (
+                  'Add Expense'
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

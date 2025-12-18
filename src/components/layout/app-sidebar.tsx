@@ -20,6 +20,25 @@ import { useLedgers } from '@/hooks/use-ledgers';
 import type { Ledger } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
+function FlameIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+    </svg>
+  );
+}
+
 function BookIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -59,6 +78,25 @@ function PlusIcon({ className }: { className?: string }) {
   );
 }
 
+function SparklesIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    </svg>
+  );
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const { ledgers, loading, createLedger } = useLedgers();
@@ -72,63 +110,77 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar>
-        <SidebarHeader className="border-b">
-          <div className="flex items-center gap-2 px-2 py-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <BookIcon className="h-4 w-4" />
+        <SidebarHeader className="border-b border-sidebar-border/50">
+          <div className="flex items-center gap-3 px-3 py-4">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md">
+              <FlameIcon className="h-5 w-5" />
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse" />
             </div>
-            <span className="font-semibold">Firewise</span>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg tracking-tight">Firewise</span>
+              <span className="text-[10px] text-muted-foreground font-medium">Expense Tracker</span>
+            </div>
           </div>
         </SidebarHeader>
 
-        <SidebarContent>
+        <SidebarContent className="px-2">
           <SidebarGroup>
-            <SidebarGroupLabel className="flex items-center justify-between">
-              <span>Ledgers</span>
+            <SidebarGroupLabel className="flex items-center justify-between px-2 py-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ledgers</span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5"
+                className="h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
                 onClick={() => setCreateDialogOpen(true)}
               >
                 <PlusIcon className="h-4 w-4" />
               </Button>
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="space-y-1">
                 {loading ? (
                   <>
                     {[1, 2, 3].map((i) => (
                       <SidebarMenuItem key={i}>
-                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-10 w-full rounded-lg" />
                       </SidebarMenuItem>
                     ))}
                   </>
                 ) : ledgers.length === 0 ? (
-                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                    No ledgers yet.
-                    <br />
+                  <div className="px-3 py-6 text-center">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                      <SparklesIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">No ledgers yet</p>
                     <button
                       onClick={() => setCreateDialogOpen(true)}
-                      className="text-primary hover:underline"
+                      className="text-sm font-medium text-primary hover:underline"
                     >
                       Create your first ledger
                     </button>
                   </div>
                 ) : (
-                  ledgers.map((ledger: Ledger) => (
-                    <SidebarMenuItem key={ledger.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === `/dashboard/ledger/${ledger.id}`}
-                      >
-                        <Link href={`/dashboard/ledger/${ledger.id}`}>
-                          <BookIcon className="h-4 w-4" />
-                          <span className="truncate">{ledger.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))
+                  ledgers.map((ledger: Ledger) => {
+                    const isActive = pathname === `/dashboard/ledger/${ledger.id}`;
+                    return (
+                      <SidebarMenuItem key={ledger.id}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          className={`h-10 rounded-lg transition-all duration-200 ${
+                            isActive
+                              ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                              : 'hover:bg-accent'
+                          }`}
+                        >
+                          <Link href={`/dashboard/ledger/${ledger.id}`}>
+                            <BookIcon className={`h-4 w-4 ${isActive ? 'text-primary' : ''}`} />
+                            <span className="truncate">{ledger.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })
                 )}
               </SidebarMenu>
             </SidebarGroupContent>

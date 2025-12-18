@@ -112,6 +112,46 @@ function TrashIcon({ className }: { className?: string }) {
   );
 }
 
+function BookIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" />
+    </svg>
+  );
+}
+
+function AlertTriangleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
 interface LedgerSettingsProps {
   ledger: Ledger;
   onMembersClick: () => void;
@@ -216,32 +256,45 @@ export function LedgerSettings({
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <form onSubmit={handleUpdate}>
-            <DialogHeader>
-              <DialogTitle>Edit Ledger</DialogTitle>
-              <DialogDescription>Update your ledger details.</DialogDescription>
+            <DialogHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-primary/10">
+                  <BookIcon className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle>Edit Ledger</DialogTitle>
+                  <DialogDescription>Update your ledger details.</DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-5 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-name">Name</Label>
+                <Label htmlFor="edit-name" className="text-sm font-medium">
+                  Name <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="edit-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={loading}
+                  placeholder="My Ledger"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-description">Description (optional)</Label>
+                <Label htmlFor="edit-description" className="text-sm font-medium">
+                  Description (optional)
+                </Label>
                 <Input
                   id="edit-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   disabled={loading}
+                  placeholder="A brief description"
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Default Currency</Label>
+                <Label className="text-sm font-medium">Default Currency</Label>
                 <Select value={defaultCurrencyId} onValueChange={setDefaultCurrencyId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select default currency" />
@@ -255,10 +308,15 @@ export function LedgerSettings({
                   </SelectContent>
                 </Select>
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                  <AlertTriangleIcon className="h-4 w-4 shrink-0" />
+                  {error}
+                </div>
+              )}
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -267,8 +325,18 @@ export function LedgerSettings({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : 'Save'}
+              <Button type="submit" disabled={loading} className="min-w-[80px]">
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </span>
+                ) : (
+                  'Save'
+                )}
               </Button>
             </DialogFooter>
           </form>
@@ -278,17 +346,35 @@ export function LedgerSettings({
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Ledger</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{ledger.name}&quot;? This action cannot be undone.
-              All expenses in this ledger will be permanently deleted.
-            </DialogDescription>
+          <DialogHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-destructive/10">
+                <AlertTriangleIcon className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <DialogTitle>Delete Ledger</DialogTitle>
+                <DialogDescription>This action cannot be undone.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="py-4">
+            <div className="p-4 rounded-xl bg-muted/50 border border-muted">
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete <span className="font-semibold text-foreground">&quot;{ledger.name}&quot;</span>?
+                All expenses in this ledger will be permanently deleted.
+              </p>
+            </div>
+          </div>
 
-          <DialogFooter>
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+              <AlertTriangleIcon className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 pt-2">
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
@@ -296,8 +382,18 @@ export function LedgerSettings({
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-              {loading ? 'Deleting...' : 'Delete'}
+            <Button variant="destructive" onClick={handleDelete} disabled={loading} className="min-w-[80px]">
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Deleting...
+                </span>
+              ) : (
+                'Delete'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
