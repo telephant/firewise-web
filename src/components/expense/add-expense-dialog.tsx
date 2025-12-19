@@ -201,6 +201,7 @@ export function AddExpenseDialog({
   const [categoryId, setCategoryId] = useState('');
   const [paymentMethodId, setPaymentMethodId] = useState('');
   const [date, setDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -518,7 +519,7 @@ export function AddExpenseDialog({
                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                 Date
               </Label>
-              <Popover>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="justify-start text-left font-normal w-full">
                     <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -529,7 +530,12 @@ export function AddExpenseDialog({
                   <Calendar
                     mode="single"
                     selected={date}
-                    onSelect={(d) => d && setDate(d)}
+                    onSelect={(d) => {
+                      if (d) {
+                        setDate(d);
+                        setCalendarOpen(false);
+                      }
+                    }}
                     initialFocus
                   />
                 </PopoverContent>
