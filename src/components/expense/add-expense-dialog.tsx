@@ -257,15 +257,34 @@ export function AddExpenseDialog({
     setError(null);
 
     try {
+      let finalCategoryId = categoryId;
+      let finalPaymentMethodId = paymentMethodId;
+
+      // Auto-save unsaved category if user typed one
+      if (showNewCategory && newCategory.trim()) {
+        const category = await createCategory(newCategory.trim());
+        finalCategoryId = category.id;
+        setNewCategory('');
+        setShowNewCategory(false);
+      }
+
+      // Auto-save unsaved payment method if user typed one
+      if (showNewPaymentMethod && newPaymentMethod.trim()) {
+        const pm = await createPaymentMethod({ name: newPaymentMethod.trim() });
+        finalPaymentMethodId = pm.id;
+        setNewPaymentMethod('');
+        setShowNewPaymentMethod(false);
+      }
+
       // When "add another" is checked, skip refetch until dialog closes
       await onSubmit(
         {
           name: name.trim(),
           amount: parseFloat(amount),
           currency_id: currencyId,
-          category_id: categoryId || undefined,
+          category_id: finalCategoryId || undefined,
           description: description.trim() || undefined,
-          payment_method_id: paymentMethodId || undefined,
+          payment_method_id: finalPaymentMethodId || undefined,
           date: format(date, 'yyyy-MM-dd'),
         },
         { skipRefetch: addAnother }
