@@ -162,10 +162,19 @@ export const categoryApi = {
       body: JSON.stringify({ name }),
     }),
 
+  update: (ledgerId: string, id: string, name: string) =>
+    fetchApi<ExpenseCategory>(`/ledgers/${ledgerId}/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name }),
+    }),
+
   delete: (ledgerId: string, id: string) =>
     fetchApi(`/ledgers/${ledgerId}/categories/${id}`, {
       method: 'DELETE',
     }),
+
+  getUsageCount: (ledgerId: string, id: string) =>
+    fetchApi<{ count: number }>(`/ledgers/${ledgerId}/categories/${id}/usage`),
 };
 
 // Currency API
@@ -178,10 +187,19 @@ export const currencyApi = {
       body: JSON.stringify(data),
     }),
 
+  update: (ledgerId: string, id: string, data: { code?: string; name?: string; rate?: number }) =>
+    fetchApi<Currency>(`/ledgers/${ledgerId}/currencies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
   delete: (ledgerId: string, id: string) =>
     fetchApi(`/ledgers/${ledgerId}/currencies/${id}`, {
       method: 'DELETE',
     }),
+
+  getUsageCount: (ledgerId: string, id: string) =>
+    fetchApi<{ count: number }>(`/ledgers/${ledgerId}/currencies/${id}/usage`),
 };
 
 // Payment Method API
@@ -194,8 +212,17 @@ export const paymentMethodApi = {
       body: JSON.stringify(data),
     }),
 
+  update: (ledgerId: string, id: string, data: { name?: string; description?: string }) =>
+    fetchApi<PaymentMethod>(`/ledgers/${ledgerId}/payment-methods/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
   delete: (ledgerId: string, id: string) =>
     fetchApi(`/ledgers/${ledgerId}/payment-methods/${id}`, {
       method: 'DELETE',
     }),
+
+  getUsageCount: (ledgerId: string, id: string) =>
+    fetchApi<{ count: number }>(`/ledgers/${ledgerId}/payment-methods/${id}/usage`),
 };

@@ -35,7 +35,13 @@ import {
   TrashIcon,
   BookIcon,
   AlertTriangleIcon,
+  TagIcon,
+  CoinsIcon,
+  CreditCardIcon,
 } from '@/components/icons';
+import { CategoryManageDialog } from './category-manage-dialog';
+import { CurrencyManageDialog } from './currency-manage-dialog';
+import { PaymentMethodManageDialog } from './payment-method-manage-dialog';
 import { useExpenseData } from '@/contexts/expense-data-context';
 import type { Ledger } from '@/types';
 
@@ -54,6 +60,9 @@ export function LedgerSettings({
 }: LedgerSettingsProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [currencyDialogOpen, setCurrencyDialogOpen] = useState(false);
+  const [paymentMethodDialogOpen, setPaymentMethodDialogOpen] = useState(false);
   const [name, setName] = useState(ledger.name);
   const [description, setDescription] = useState(ledger.description || '');
   const [defaultCurrencyId, setDefaultCurrencyId] = useState(ledger.default_currency_id || '');
@@ -119,6 +128,18 @@ export function LedgerSettings({
           <DropdownMenuItem onClick={onMembersClick}>
             <UsersIcon className="mr-2 h-4 w-4" />
             Members
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setCategoryDialogOpen(true)}>
+            <TagIcon className="mr-2 h-4 w-4" />
+            Categories
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setCurrencyDialogOpen(true)}>
+            <CoinsIcon className="mr-2 h-4 w-4" />
+            Currencies
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setPaymentMethodDialogOpen(true)}>
+            <CreditCardIcon className="mr-2 h-4 w-4" />
+            Payment Methods
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
             <PencilIcon className="mr-2 h-4 w-4" />
@@ -266,6 +287,24 @@ export function LedgerSettings({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Category Management Dialog */}
+      <CategoryManageDialog
+        open={categoryDialogOpen}
+        onOpenChange={setCategoryDialogOpen}
+      />
+
+      {/* Currency Management Dialog */}
+      <CurrencyManageDialog
+        open={currencyDialogOpen}
+        onOpenChange={setCurrencyDialogOpen}
+      />
+
+      {/* Payment Method Management Dialog */}
+      <PaymentMethodManageDialog
+        open={paymentMethodDialogOpen}
+        onOpenChange={setPaymentMethodDialogOpen}
+      />
     </>
   );
 }

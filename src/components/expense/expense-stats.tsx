@@ -22,7 +22,7 @@ interface ExpenseStatsProps {
 }
 
 export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps) {
-  const { currencies, categories } = useExpenseData();
+  const { currencies, categories, onCategoryChange, onCurrencyChange, onPaymentMethodChange } = useExpenseData();
   const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>('');
 
   // Get current month date range - memoize to prevent infinite loops
@@ -37,7 +37,25 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
     };
   }, []);
 
-  const { expenses, loading, error } = useExpenses(ledgerId, filters);
+  const { expenses, loading, error, refetch } = useExpenses(ledgerId, filters);
+
+  // Subscribe to category, currency, and payment method changes to refresh stats
+  useEffect(() => {
+    const unsubscribeCategory = onCategoryChange(() => {
+      refetch();
+    });
+    const unsubscribeCurrency = onCurrencyChange(() => {
+      refetch();
+    });
+    const unsubscribePaymentMethod = onPaymentMethodChange(() => {
+      refetch();
+    });
+    return () => {
+      unsubscribeCategory();
+      unsubscribeCurrency();
+      unsubscribePaymentMethod();
+    };
+  }, [onCategoryChange, onCurrencyChange, onPaymentMethodChange, refetch]);
   const now = new Date();
 
   // Set default currency when currencies load or defaultCurrencyId changes

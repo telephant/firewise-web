@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusIcon, ReceiptIcon, ChartIcon, SparklesIcon, RefreshIcon } from '@/components/icons';
 import { useExpenses } from '@/hooks/use-expenses';
+import { useExpenseData } from '@/contexts/expense-data-context';
 import type { Expense } from '@/types';
 
 interface ExpenseListProps {
@@ -33,6 +34,25 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
 
   const { expenses, loading, error, refetch, createExpense, updateExpense, deleteExpense } =
     useExpenses(ledgerId);
+  const { onCategoryChange, onCurrencyChange, onPaymentMethodChange } = useExpenseData();
+
+  // Subscribe to category, currency, and payment method changes to refresh expense list
+  useEffect(() => {
+    const unsubscribeCategory = onCategoryChange(() => {
+      refetch();
+    });
+    const unsubscribeCurrency = onCurrencyChange(() => {
+      refetch();
+    });
+    const unsubscribePaymentMethod = onPaymentMethodChange(() => {
+      refetch();
+    });
+    return () => {
+      unsubscribeCategory();
+      unsubscribeCurrency();
+      unsubscribePaymentMethod();
+    };
+  }, [onCategoryChange, onCurrencyChange, onPaymentMethodChange, refetch]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
