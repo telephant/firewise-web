@@ -225,6 +225,7 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
         open={addDialogOpen}
         onOpenChange={handleAddDialogClose}
         onSubmit={handleAddExpense}
+        defaultCurrencyId={defaultCurrencyId}
       />
 
       <ExpenseDetailDialog

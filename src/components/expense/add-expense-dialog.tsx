@@ -186,12 +186,14 @@ interface AddExpenseDialogProps {
     },
     options?: { skipRefetch?: boolean }
   ) => Promise<void>;
+  defaultCurrencyId?: string | null;
 }
 
 export function AddExpenseDialog({
   open,
   onOpenChange,
   onSubmit,
+  defaultCurrencyId,
 }: AddExpenseDialogProps) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -215,11 +217,14 @@ export function AddExpenseDialog({
 
   useEffect(() => {
     if (currencies.length > 0 && !currencyId) {
-      const usd = currencies.find((c) => c.code === 'USD');
-      if (usd) setCurrencyId(usd.id);
-      else setCurrencyId(currencies[0].id);
+      // Use ledger's default currency if available, otherwise first currency
+      if (defaultCurrencyId && currencies.find((c) => c.id === defaultCurrencyId)) {
+        setCurrencyId(defaultCurrencyId);
+      } else {
+        setCurrencyId(currencies[0].id);
+      }
     }
-  }, [currencies, currencyId]);
+  }, [currencies, currencyId, defaultCurrencyId]);
 
   const resetForm = () => {
     setName('');
