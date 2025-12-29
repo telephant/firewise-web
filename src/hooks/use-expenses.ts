@@ -4,35 +4,65 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { expenseApi } from '@/lib/api';
 import type { Expense } from '@/types';
 
+const PAGE_SIZE = 20;
+
 interface ExpenseFilters {
-  page?: number;
-  limit?: number;
   category_id?: string;
   payment_method_id?: string;
   start_date?: string;
   end_date?: string;
+  limit?: number;
 }
 
 export function useExpenses(ledgerId: string | null, filters?: ExpenseFilters) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Serialize filters to compare by value instead of reference
   const filtersKey = JSON.stringify(filters || {});
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
 
-  const fetchExpenses = useCallback(async () => {
+  const fetchExpenses = useCallback(async (pageNum: number = 1, append: boolean = false) => {
     if (!ledgerId) return;
-    setLoading(true);
+
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
+
     try {
-      const response = await expenseApi.getAll(ledgerId, filtersRef.current);
+      const limit = filtersRef.current?.limit || PAGE_SIZE;
+      const response = await expenseApi.getAll(ledgerId, {
+        ...filtersRef.current,
+        page: pageNum,
+        limit,
+      });
+
       if (response.success && response.data) {
-        setExpenses(response.data.expenses);
+        const newExpenses = response.data.expenses;
+
+        if (append) {
+          setExpenses((prev) => [...prev, ...newExpenses]);
+        } else {
+          setExpenses(newExpenses);
+        }
+
         setTotal(response.data.total);
+        setPage(pageNum);
+
+        // Check if there are more items to load
+        const totalLoaded = append
+          ? expenses.length + newExpenses.length
+          : newExpenses.length;
+        setHasMore(totalLoaded < response.data.total);
       } else {
         setError(response.error || 'Failed to fetch expenses');
       }
@@ -40,11 +70,27 @@ export function useExpenses(ledgerId: string | null, filters?: ExpenseFilters) {
       setError('Failed to fetch expenses');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  }, [ledgerId, filtersKey, expenses.length]);
+
+  // Reset and fetch when filters change
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    fetchExpenses(1, false);
   }, [ledgerId, filtersKey]);
 
-  useEffect(() => {
-    fetchExpenses();
+  const loadMore = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      fetchExpenses(page + 1, true);
+    }
+  }, [fetchExpenses, page, loadingMore, hasMore]);
+
+  const refetch = useCallback(() => {
+    setPage(1);
+    setHasMore(true);
+    return fetchExpenses(1, false);
   }, [fetchExpenses]);
 
   const createExpense = async (
@@ -63,7 +109,7 @@ export function useExpenses(ledgerId: string | null, filters?: ExpenseFilters) {
     const response = await expenseApi.create(ledgerId, data);
     if (response.success && response.data) {
       if (!options?.skipRefetch) {
-        await fetchExpenses();
+        await refetch();
       }
       return response.data;
     }
@@ -85,7 +131,10 @@ export function useExpenses(ledgerId: string | null, filters?: ExpenseFilters) {
     if (!ledgerId) throw new Error('No ledger selected');
     const response = await expenseApi.update(ledgerId, id, data);
     if (response.success && response.data) {
-      await fetchExpenses();
+      // Update the expense in place without refetching
+      setExpenses((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, ...response.data } : e))
+      );
       return response.data;
     }
     throw new Error(response.error || 'Failed to update expense');
@@ -106,8 +155,11 @@ export function useExpenses(ledgerId: string | null, filters?: ExpenseFilters) {
     expenses,
     total,
     loading,
+    loadingMore,
     error,
-    refetch: fetchExpenses,
+    hasMore,
+    refetch,
+    loadMore,
     createExpense,
     updateExpense,
     deleteExpense,

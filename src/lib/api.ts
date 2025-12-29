@@ -38,6 +38,7 @@ async function fetchApi<T>(
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   return response.json();
