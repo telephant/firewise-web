@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, buttonVariants } from './button';
-import { LoaderIcon } from '@/components/icons';
+import { Spinner } from './spinner';
 import { cn } from '@/lib/utils';
 import type { VariantProps } from 'class-variance-authority';
 
@@ -28,7 +28,7 @@ export function LoadingButton({
     >
       {loading ? (
         <>
-          <LoaderIcon className="h-4 w-4 animate-spin" />
+          <Spinner variant="fire" />
           {loadingText || children}
         </>
       ) : (

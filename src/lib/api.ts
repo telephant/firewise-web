@@ -7,6 +7,8 @@ import type {
   ExpenseCategory,
   Currency,
   PaymentMethod,
+  ExpenseStats,
+  MonthlyStats,
 } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -226,4 +228,39 @@ export const paymentMethodApi = {
 
   getUsageCount: (ledgerId: string, id: string) =>
     fetchApi<{ count: number }>(`/ledgers/${ledgerId}/payment-methods/${id}/usage`),
+};
+
+// Stats API
+export const statsApi = {
+  getExpenseStats: (
+    ledgerId: string,
+    params?: {
+      start_date?: string;
+      end_date?: string;
+      currency_id?: string;
+    }
+  ) => {
+    const searchParams = new URLSearchParams();
+    if (params?.start_date) searchParams.set('start_date', params.start_date);
+    if (params?.end_date) searchParams.set('end_date', params.end_date);
+    if (params?.currency_id) searchParams.set('currency_id', params.currency_id);
+
+    const query = searchParams.toString();
+    return fetchApi<ExpenseStats>(`/ledgers/${ledgerId}/stats${query ? `?${query}` : ''}`);
+  },
+
+  getMonthlyStats: (
+    ledgerId: string,
+    params?: {
+      currency_id?: string;
+      months?: number;
+    }
+  ) => {
+    const searchParams = new URLSearchParams();
+    if (params?.currency_id) searchParams.set('currency_id', params.currency_id);
+    if (params?.months) searchParams.set('months', params.months.toString());
+
+    const query = searchParams.toString();
+    return fetchApi<MonthlyStats>(`/ledgers/${ledgerId}/stats/monthly${query ? `?${query}` : ''}`);
+  },
 };

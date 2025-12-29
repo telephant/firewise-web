@@ -83,3 +83,32 @@ export interface ApiResponse<T = unknown> {
   error?: string;
   message?: string;
 }
+
+// Stats types
+export interface CategoryStats {
+  category_id: string | null;
+  category_name: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface ExpenseStats {
+  total: number;
+  currency_code: string;
+  currency_id: string;
+  by_category: CategoryStats[];
+  start_date: string;
+  end_date: string;
+}
+
+// Monthly stats types
+export interface MonthTotal {
+  month: string; // 'YYYY-MM' format
+  total: number;
+}
+
+export interface MonthlyStats {
+  months: MonthTotal[];
+  currency_code: string;
+  currency_id: string;
+}
