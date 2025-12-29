@@ -7,6 +7,7 @@ import { ExpenseDetailDialog } from './expense-detail-dialog';
 import { AddExpenseDialog } from './add-expense-dialog';
 import { ExpenseStats } from './expense-stats';
 import { PeriodFilter } from './period-filter';
+import { CategoryFilter } from './category-filter';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,16 +33,21 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [period, setPeriod] = useState<PeriodOption>('all');
   const [customRange, setCustomRange] = useState<CustomDateRange | undefined>();
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   useEffect(() => {
     setPortalContainer(document.body);
   }, []);
 
-  // Compute filters based on selected period
+  // Compute filters based on selected period and category
   const filters = useMemo(() => {
-    return getPeriodDateRange(period, customRange);
-  }, [period, customRange]);
+    const dateFilters = getPeriodDateRange(period, customRange);
+    return {
+      ...dateFilters,
+      category_id: categoryId || undefined,
+    };
+  }, [period, customRange, categoryId]);
 
   const { expenses, loading, loadingMore, error, hasMore, refetch, loadMore, createExpense, updateExpense, deleteExpense } =
     useExpenses(ledgerId, filters);
@@ -213,11 +219,15 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
           </TabsList>
 
           {activeTab === 'expenses' && (
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <PeriodFilter
                 value={period}
                 customRange={customRange}
                 onChange={handlePeriodChange}
+              />
+              <CategoryFilter
+                value={categoryId}
+                onChange={setCategoryId}
               />
             </div>
           )}
@@ -242,7 +252,7 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
               <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                 <SparklesIcon className="h-10 w-10 text-primary" />
               </div>
-              {period === 'all' ? (
+              {period === 'all' && !categoryId ? (
                 <>
                   <h3 className="text-lg font-semibold mb-2">No expenses yet</h3>
                   <p className="text-muted-foreground mb-6 max-w-xs">
@@ -260,14 +270,17 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
                 <>
                   <h3 className="text-lg font-semibold mb-2">No expenses found</h3>
                   <p className="text-muted-foreground mb-6 max-w-xs">
-                    No expenses match the selected time period
+                    No expenses match the selected filters
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => handlePeriodChange('all')}
+                    onClick={() => {
+                      handlePeriodChange('all');
+                      setCategoryId(null);
+                    }}
                     className="rounded-xl px-6 h-11"
                   >
-                    View all expenses
+                    Clear filters
                   </Button>
                 </>
               )}
