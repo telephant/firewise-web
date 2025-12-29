@@ -74,11 +74,13 @@ export function useExpenses(ledgerId: string | null, filters?: ExpenseFilters) {
     }
   }, [ledgerId, filtersKey, expenses.length]);
 
-  // Reset and fetch when filters change
+  // Reset and fetch when ledgerId or filters change
   useEffect(() => {
     setPage(1);
     setHasMore(true);
+    setExpenses([]);
     fetchExpenses(1, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ledgerId, filtersKey]);
 
   const loadMore = useCallback(() => {

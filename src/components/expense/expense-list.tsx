@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { ExpenseCard } from './expense-card';
 import { ExpenseDetailDialog } from './expense-detail-dialog';
 import { AddExpenseDialog } from './add-expense-dialog';
 import { ExpenseStats } from './expense-stats';
+import { PeriodFilter } from './period-filter';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +14,7 @@ import { PlusIcon, ReceiptIcon, ChartIcon, SparklesIcon, RefreshIcon } from '@/c
 import { useExpenses } from '@/hooks/use-expenses';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import { useExpenseData } from '@/contexts/expense-data-context';
+import { type PeriodOption, type CustomDateRange, getPeriodDateRange } from '@/lib/date-utils';
 import type { Expense } from '@/types';
 
 interface ExpenseListProps {
@@ -28,13 +30,33 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
   const [activeTab, setActiveTab] = useState('expenses');
   const [refreshing, setRefreshing] = useState(false);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  const [period, setPeriod] = useState<PeriodOption>('all');
+  const [customRange, setCustomRange] = useState<CustomDateRange | undefined>();
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   useEffect(() => {
     setPortalContainer(document.body);
   }, []);
 
+  // Compute filters based on selected period
+  const filters = useMemo(() => {
+    return getPeriodDateRange(period, customRange);
+  }, [period, customRange]);
+
   const { expenses, loading, loadingMore, error, hasMore, refetch, loadMore, createExpense, updateExpense, deleteExpense } =
-    useExpenses(ledgerId);
+    useExpenses(ledgerId, filters);
+
+  // Track when initial load is complete
+  useEffect(() => {
+    if (!loading && !initialLoadDone) {
+      setInitialLoadDone(true);
+    }
+  }, [loading, initialLoadDone]);
+
+  const handlePeriodChange = (newPeriod: PeriodOption, newCustomRange?: CustomDateRange) => {
+    setPeriod(newPeriod);
+    setCustomRange(newCustomRange);
+  };
 
   const { triggerRef } = useInfiniteScroll({
     loading: loading || loadingMore,
@@ -123,7 +145,8 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
     setDetailDialogOpen(false);
   };
 
-  if (loading) {
+  // Only show full skeleton on initial load, not on filter changes
+  if (loading && !initialLoadDone) {
     return (
       <div className="space-y-3 p-4">
         {[1, 2, 3, 4, 5].map((i) => (
@@ -171,7 +194,7 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
 
       <div className="relative flex flex-col h-full bg-background">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-4 py-2">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-4 py-2 space-y-2">
           <TabsList className="h-11 w-full grid grid-cols-2 bg-muted/50 p-1 rounded-xl">
             <TabsTrigger
               value="expenses"
@@ -188,25 +211,66 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
               Stats
             </TabsTrigger>
           </TabsList>
+
+          {activeTab === 'expenses' && (
+            <div className="flex items-center">
+              <PeriodFilter
+                value={period}
+                customRange={customRange}
+                onChange={handlePeriodChange}
+              />
+            </div>
+          )}
         </div>
 
-        <TabsContent value="expenses" className="flex-1 mt-0">
-          {expenses.length === 0 ? (
+        <TabsContent value="expenses" className="flex-1 mt-0 relative">
+          {/* Loading overlay for filter changes */}
+          {loading && initialLoadDone && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-start justify-center pt-20">
+              <div className="flex items-center gap-2 text-muted-foreground bg-background/80 px-4 py-2 rounded-full shadow-sm">
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="text-sm">Loading...</span>
+              </div>
+            </div>
+          )}
+
+          {expenses.length === 0 && !loading ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                 <SparklesIcon className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No expenses yet</h3>
-              <p className="text-muted-foreground mb-6 max-w-xs">
-                Start tracking your spending by adding your first expense
-              </p>
-              <Button
-                onClick={() => setAddDialogOpen(true)}
-                className="rounded-xl px-6 h-11 shadow-md hover:shadow-lg transition-shadow"
-              >
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Add your first expense
-              </Button>
+              {period === 'all' ? (
+                <>
+                  <h3 className="text-lg font-semibold mb-2">No expenses yet</h3>
+                  <p className="text-muted-foreground mb-6 max-w-xs">
+                    Start tracking your spending by adding your first expense
+                  </p>
+                  <Button
+                    onClick={() => setAddDialogOpen(true)}
+                    className="rounded-xl px-6 h-11 shadow-md hover:shadow-lg transition-shadow"
+                  >
+                    <PlusIcon className="mr-2 h-4 w-4" />
+                    Add your first expense
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold mb-2">No expenses found</h3>
+                  <p className="text-muted-foreground mb-6 max-w-xs">
+                    No expenses match the selected time period
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePeriodChange('all')}
+                    className="rounded-xl px-6 h-11"
+                  >
+                    View all expenses
+                  </Button>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-2 p-4 pb-24">
