@@ -16,38 +16,70 @@ export function useMonthlyStats(ledgerId: string | null, filters?: MonthlyStatsF
 
   // Serialize filters to compare by value instead of reference
   const filtersKey = JSON.stringify(filters || {});
-  const filtersRef = useRef(filters);
-  filtersRef.current = filters;
 
-  const fetchMonthlyStats = useCallback(async () => {
+  // Track the current request to handle race conditions
+  const requestIdRef = useRef(0);
+
+  // Fetch when ledgerId or filters change
+  useEffect(() => {
     if (!ledgerId) return;
+
+    // Increment request ID to track this specific request
+    const currentRequestId = ++requestIdRef.current;
+
+    const fetchMonthlyStats = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await statsApi.getMonthlyStats(ledgerId, filters);
+
+        // Only update state if this is still the latest request
+        if (currentRequestId !== requestIdRef.current) return;
+
+        if (response.success && response.data) {
+          setMonthlyStats(response.data);
+        } else {
+          setError(response.error || 'Failed to fetch monthly stats');
+        }
+      } catch {
+        // Only update error if this is still the latest request
+        if (currentRequestId !== requestIdRef.current) return;
+        setError('Failed to fetch monthly stats');
+      } finally {
+        // Only update loading if this is still the latest request
+        if (currentRequestId === requestIdRef.current) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchMonthlyStats();
+  }, [ledgerId, filtersKey, filters]);
+
+  const refetch = useCallback(() => {
+    if (!ledgerId) return;
+
+    const currentRequestId = ++requestIdRef.current;
 
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await statsApi.getMonthlyStats(ledgerId, filtersRef.current);
+    statsApi.getMonthlyStats(ledgerId, filters).then((response) => {
+      if (currentRequestId !== requestIdRef.current) return;
 
       if (response.success && response.data) {
         setMonthlyStats(response.data);
       } else {
         setError(response.error || 'Failed to fetch monthly stats');
       }
-    } catch {
-      setError('Failed to fetch monthly stats');
-    } finally {
       setLoading(false);
-    }
-  }, [ledgerId, filtersKey]);
-
-  // Fetch when ledgerId or filters change
-  useEffect(() => {
-    fetchMonthlyStats();
-  }, [fetchMonthlyStats]);
-
-  const refetch = useCallback(() => {
-    return fetchMonthlyStats();
-  }, [fetchMonthlyStats]);
+    }).catch(() => {
+      if (currentRequestId !== requestIdRef.current) return;
+      setError('Failed to fetch monthly stats');
+      setLoading(false);
+    });
+  }, [ledgerId, filters]);
 
   return {
     monthlyStats,
