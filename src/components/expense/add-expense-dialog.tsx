@@ -23,8 +23,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Spinner } from '@/components/ui/spinner';
 import { useExpenseData } from '@/contexts/expense-data-context';
-import { AddCurrencyDialog } from './add-currency-dialog';
+import { CurrencyCombobox } from './currency-combobox';
 import { format } from 'date-fns';
+import type { CurrencyExchange } from '@/lib/api';
 
 function CalendarIcon({ className }: { className?: string }) {
   return (
@@ -198,7 +199,8 @@ export function AddExpenseDialog({
 }: AddExpenseDialogProps) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
-  const [currencyId, setCurrencyId] = useState('');
+  const [currencyCode, setCurrencyCode] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyExchange | null>(null);
   const [categoryId, setCategoryId] = useState('');
   const [paymentMethodId, setPaymentMethodId] = useState('');
   const [date, setDate] = useState<Date>(new Date());
@@ -212,21 +214,22 @@ export function AddExpenseDialog({
   const [newCategory, setNewCategory] = useState('');
   const [newPaymentMethod, setNewPaymentMethod] = useState('');
   const [showNewCategory, setShowNewCategory] = useState(false);
-  const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [showNewPaymentMethod, setShowNewPaymentMethod] = useState(false);
 
-  const { categories, currencies, paymentMethods, createCategory, createCurrency, createPaymentMethod } = useExpenseData();
+  const { categories, currencies, paymentMethods, createCategory, getOrCreateCurrencyByCode, createPaymentMethod } = useExpenseData();
 
   useEffect(() => {
-    if (currencies.length > 0 && !currencyId) {
+    if (currencies.length > 0 && !currencyCode) {
       // Use ledger's default currency if available, otherwise first currency
-      if (defaultCurrencyId && currencies.find((c) => c.id === defaultCurrencyId)) {
-        setCurrencyId(defaultCurrencyId);
-      } else {
-        setCurrencyId(currencies[0].id);
+      const defaultCurrency = defaultCurrencyId
+        ? currencies.find((c) => c.id === defaultCurrencyId)
+        : currencies[0];
+      if (defaultCurrency) {
+        setCurrencyCode(defaultCurrency.code.toLowerCase());
+        setSelectedCurrency({ code: defaultCurrency.code, name: defaultCurrency.name, rate: 1 });
       }
     }
-  }, [currencies, currencyId, defaultCurrencyId]);
+  }, [currencies, currencyCode, defaultCurrencyId]);
 
   const resetForm = () => {
     setName('');
@@ -249,7 +252,7 @@ export function AddExpenseDialog({
       setError('Valid amount is required');
       return;
     }
-    if (!currencyId) {
+    if (!currencyCode || !selectedCurrency) {
       setError('Currency is required');
       return;
     }
@@ -277,12 +280,18 @@ export function AddExpenseDialog({
         setShowNewPaymentMethod(false);
       }
 
+      // Get or create ledger currency for the selected currency
+      const ledgerCurrency = await getOrCreateCurrencyByCode(
+        selectedCurrency.code,
+        selectedCurrency.name
+      );
+
       // When "add another" is checked, skip refetch until dialog closes
       await onSubmit(
         {
           name: name.trim(),
           amount: parseFloat(amount),
-          currency_id: currencyId,
+          currency_id: ledgerCurrency.id,
           category_id: finalCategoryId || undefined,
           description: description.trim() || undefined,
           payment_method_id: finalPaymentMethodId || undefined,
@@ -319,9 +328,9 @@ export function AddExpenseDialog({
     }
   };
 
-  const handleCreateCurrency = async (data: { code: string; name: string }) => {
-    const currency = await createCurrency(data);
-    setCurrencyId(currency.id);
+  const handleCurrencyChange = (code: string, currency: CurrencyExchange) => {
+    setCurrencyCode(code);
+    setSelectedCurrency(currency);
   };
 
   const handleCreatePaymentMethod = async () => {
@@ -342,7 +351,6 @@ export function AddExpenseDialog({
       onOpenChange(false, hasChanges);
       resetForm();
       setShowNewCategory(false);
-      setShowCurrencyDialog(false);
       setShowNewPaymentMethod(false);
       setHasChanges(false);
     } else {
@@ -404,29 +412,13 @@ export function AddExpenseDialog({
             {/* Currency */}
             <div className="grid gap-1">
               <Label className="text-sm font-medium">Currency <span className="text-destructive">*</span></Label>
-              <div className="flex gap-2">
-                <Select value={currencyId} onValueChange={setCurrencyId}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currencies.map((currency) => (
-                      <SelectItem key={currency.id} value={currency.id}>
-                        {currency.code} - {currency.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setShowCurrencyDialog(true)}
-                  className="shrink-0"
-                >
-                  <PlusIcon className="h-4 w-4" />
-                </Button>
-              </div>
+              <CurrencyCombobox
+                value={currencyCode}
+                onValueChange={handleCurrencyChange}
+                placeholder="Search currency..."
+                disabled={loading}
+                ledgerCurrencies={currencies}
+              />
             </div>
 
             {/* Category */}
@@ -621,12 +613,6 @@ export function AddExpenseDialog({
           </DialogFooter>
         </form>
       </DialogContent>
-
-      <AddCurrencyDialog
-        open={showCurrencyDialog}
-        onOpenChange={setShowCurrencyDialog}
-        onSubmit={handleCreateCurrency}
-      />
     </Dialog>
   );
 }

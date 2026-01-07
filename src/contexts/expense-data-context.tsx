@@ -15,6 +15,7 @@ interface ExpenseDataContextType {
   updateCategory: (id: string, name: string) => Promise<ExpenseCategory>;
   createCurrency: (data: { code: string; name: string }) => Promise<Currency>;
   updateCurrency: (id: string, data: { code?: string; name?: string }) => Promise<Currency>;
+  getOrCreateCurrencyByCode: (code: string, name: string) => Promise<Currency>;
   createPaymentMethod: (data: { name: string; description?: string }) => Promise<PaymentMethod>;
   updatePaymentMethod: (id: string, data: { name?: string; description?: string }) => Promise<PaymentMethod>;
   deleteCategory: (id: string) => Promise<boolean>;
@@ -117,15 +118,6 @@ export function ExpenseDataProvider({ children, ledgerId }: ExpenseDataProviderP
     fetchAll();
   }, [ledgerId, fetchAll]);
 
-  // Refresh data when window regains focus (sync with changes from other tabs/users)
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchAll();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [fetchAll]);
 
   const refetchCategories = useCallback(async () => {
     const response = await categoryApi.getAll(ledgerIdRef.current);
@@ -182,6 +174,17 @@ export function ExpenseDataProvider({ children, ledgerId }: ExpenseDataProviderP
       return response.data;
     }
     throw new Error(response.error || 'Failed to create currency');
+  };
+
+  // Get existing currency by code or create new one
+  const getOrCreateCurrencyByCode = async (code: string, name: string): Promise<Currency> => {
+    // Check if currency already exists in this ledger
+    const existing = currencies.find((c) => c.code.toLowerCase() === code.toLowerCase());
+    if (existing) {
+      return existing;
+    }
+    // Create new currency in ledger
+    return createCurrency({ code: code.toUpperCase(), name });
   };
 
   const updateCurrency = async (id: string, data: { code?: string; name?: string }) => {
@@ -270,6 +273,7 @@ export function ExpenseDataProvider({ children, ledgerId }: ExpenseDataProviderP
         updateCategory,
         createCurrency,
         updateCurrency,
+        getOrCreateCurrencyByCode,
         createPaymentMethod,
         updatePaymentMethod,
         deleteCategory,

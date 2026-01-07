@@ -20,12 +20,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ErrorAlert } from '@/components/ui/error-alert';
-import { CoinsIcon, PencilIcon, TrashIcon, CheckIcon, XIcon, PlusIcon } from '@/components/icons';
+import { StarIcon, XIcon } from 'lucide-react';
 import { useExpenseData } from '@/contexts/expense-data-context';
+import { CurrencyCombobox } from '@/components/expense/currency-combobox';
 import type { Currency } from '@/types';
+import type { CurrencyExchange } from '@/lib/api';
 
 interface CurrencyManageDialogProps {
   open: boolean;
@@ -33,12 +34,8 @@ interface CurrencyManageDialogProps {
 }
 
 export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialogProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingCode, setEditingCode] = useState('');
-  const [editingName, setEditingName] = useState('');
-  const [newCode, setNewCode] = useState('');
-  const [newName, setNewName] = useState('');
-  const [showAddNew, setShowAddNew] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyExchange | null>(null);
+  const [currencyCode, setCurrencyCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -46,79 +43,45 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
     usageCount: number;
   } | null>(null);
 
-  const { currencies, createCurrency, updateCurrency, deleteCurrency, getCurrencyUsageCount } =
+  const { currencies, createCurrency, deleteCurrency, getCurrencyUsageCount } =
     useExpenseData();
 
-  // Reset state when dialog closes
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      setEditingId(null);
-      setEditingCode('');
-      setEditingName('');
-      setNewCode('');
-      setNewName('');
-      setShowAddNew(false);
+      setSelectedCurrency(null);
+      setCurrencyCode('');
       setError(null);
     }
     onOpenChange(newOpen);
   };
 
-  const handleStartEdit = (currency: Currency) => {
-    setEditingId(currency.id);
-    setEditingCode(currency.code);
-    setEditingName(currency.name);
-    setError(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditingCode('');
-    setEditingName('');
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingId || !editingCode.trim() || !editingName.trim()) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      await updateCurrency(editingId, {
-        code: editingCode.trim().toUpperCase(),
-        name: editingName.trim(),
-      });
-      setEditingId(null);
-      setEditingCode('');
-      setEditingName('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update currency');
-    } finally {
-      setLoading(false);
+  const handleCurrencySelect = async (code: string, currency: CurrencyExchange) => {
+    // Check if already exists
+    if (currencies.some((c) => c.code.toLowerCase() === currency.code.toLowerCase())) {
+      setError('This currency is already in your favorites');
+      setCurrencyCode('');
+      setSelectedCurrency(null);
+      return;
     }
-  };
-
-  const handleAddCurrency = async () => {
-    if (!newCode.trim() || !newName.trim()) return;
 
     setLoading(true);
     setError(null);
 
     try {
       await createCurrency({
-        code: newCode.trim().toUpperCase(),
-        name: newName.trim(),
+        code: currency.code.toUpperCase(),
+        name: currency.name,
       });
-      setNewCode('');
-      setNewName('');
-      setShowAddNew(false);
+      setCurrencyCode('');
+      setSelectedCurrency(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create currency');
+      setError(err instanceof Error ? err.message : 'Failed to add currency');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteClick = async (currency: Currency) => {
+  const handleRemove = async (currency: Currency) => {
     setError(null);
     setLoading(true);
 
@@ -126,14 +89,12 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
       const usageCount = await getCurrencyUsageCount(currency.id);
 
       if (usageCount === 0) {
-        // No expenses using this currency, delete directly
         await deleteCurrency(currency.id);
       } else {
-        // Show confirmation dialog
         setDeleteConfirm({ currency, usageCount });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to check currency usage');
+      setError(err instanceof Error ? err.message : 'Failed to remove currency');
     } finally {
       setLoading(false);
     }
@@ -149,7 +110,7 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
       await deleteCurrency(deleteConfirm.currency.id);
       setDeleteConfirm(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete currency');
+      setError(err instanceof Error ? err.message : 'Failed to remove currency');
     } finally {
       setLoading(false);
     }
@@ -159,198 +120,89 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader className="pb-2">
+          <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <CoinsIcon className="h-5 w-5 text-primary" />
+              <div className="p-2 rounded-xl bg-amber-500/10">
+                <StarIcon className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <DialogTitle>Manage Currencies</DialogTitle>
-                <DialogDescription>Add currencies you use in this ledger</DialogDescription>
+                <DialogTitle>Favorite Currencies</DialogTitle>
+                <DialogDescription>
+                  Quick access currencies for this ledger
+                </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="py-2">
+          <div className="space-y-4">
             <ErrorAlert message={error} />
 
-            <ScrollArea className="h-[350px] pr-4">
-              <div className="space-y-1">
-                {currencies.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    No currencies yet. Add your first currency below.
-                  </p>
-                ) : (
-                  currencies.map((currency) => {
-                    const isEditing = editingId === currency.id;
+            {/* Add currency */}
+            <div>
+              <CurrencyCombobox
+                value={currencyCode}
+                onValueChange={handleCurrencySelect}
+                placeholder="Search to add a currency..."
+                disabled={loading}
+              />
+            </div>
 
-                    return (
+            {/* Favorites list */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">
+                {currencies.length === 0
+                  ? 'No favorites yet. Search above to add currencies.'
+                  : `${currencies.length} favorite${currencies.length === 1 ? '' : 's'}`}
+              </p>
+
+              {currencies.length > 0 && (
+                <ScrollArea className="h-[200px]">
+                  <div className="space-y-1">
+                    {currencies.map((currency) => (
                       <div
                         key={currency.id}
-                        className="p-2 rounded-lg hover:bg-accent/50 transition-colors group"
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors group"
                       >
-                        {isEditing ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={editingCode}
-                              onChange={(e) => setEditingCode(e.target.value.toUpperCase())}
-                              className="w-20 h-8 uppercase"
-                              placeholder="USD"
-                              maxLength={3}
-                              disabled={loading}
-                            />
-                            <Input
-                              value={editingName}
-                              onChange={(e) => setEditingName(e.target.value)}
-                              className="flex-1 h-8"
-                              placeholder="US Dollar"
-                              disabled={loading}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveEdit();
-                                if (e.key === 'Escape') handleCancelEdit();
-                              }}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
-                              onClick={handleSaveEdit}
-                              disabled={loading}
-                            >
-                              <CheckIcon className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                              onClick={handleCancelEdit}
-                              disabled={loading}
-                            >
-                              <XIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-semibold text-sm w-12">{currency.code}</span>
-                            <span className="flex-1 text-sm truncate">{currency.name}</span>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 opacity-50 hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStartEdit(currency);
-                                }}
-                                disabled={loading}
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-50 hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteClick(currency);
-                                }}
-                                disabled={loading}
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
+                        <StarIcon className="h-4 w-4 text-amber-500 fill-amber-500" />
+                        <span className="font-mono font-semibold text-sm">{currency.code}</span>
+                        <span className="flex-1 text-sm text-muted-foreground truncate">
+                          {currency.name}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleRemove(currency)}
+                          disabled={loading}
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </Button>
                       </div>
-                    );
-                  })
-                )}
-
-                {/* Add new currency section */}
-                {showAddNew ? (
-                  <div className="p-2 rounded-lg bg-accent/30">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={newCode}
-                        onChange={(e) => setNewCode(e.target.value.toUpperCase())}
-                        className="w-20 h-8 uppercase"
-                        placeholder="USD"
-                        maxLength={3}
-                        autoFocus
-                        disabled={loading}
-                      />
-                      <Input
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        className="flex-1 h-8"
-                        placeholder="US Dollar"
-                        disabled={loading}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleAddCurrency();
-                          if (e.key === 'Escape') {
-                            setShowAddNew(false);
-                            setNewCode('');
-                            setNewName('');
-                          }
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
-                        onClick={handleAddCurrency}
-                        disabled={loading || !newCode.trim() || !newName.trim()}
-                      >
-                        <CheckIcon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={() => {
-                          setShowAddNew(false);
-                          setNewCode('');
-                          setNewName('');
-                        }}
-                        disabled={loading}
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    ))}
                   </div>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-muted-foreground hover:text-foreground mt-2"
-                    onClick={() => setShowAddNew(true)}
-                    disabled={loading}
-                  >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Add currency
-                  </Button>
-                )}
-              </div>
-            </ScrollArea>
+                </ScrollArea>
+              )}
+            </div>
           </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter>
             <Button variant="outline" onClick={() => handleOpenChange(false)}>
-              Close
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation dialog */}
+      {/* Delete confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Currency</AlertDialogTitle>
+            <AlertDialogTitle>Remove Currency</AlertDialogTitle>
             <AlertDialogDescription>
-              The currency &quot;{deleteConfirm?.currency.code}&quot; is used by{' '}
+              <span className="font-semibold">{deleteConfirm?.currency.code}</span> is used by{' '}
               <span className="font-semibold">{deleteConfirm?.usageCount}</span> expense
-              {deleteConfirm?.usageCount === 1 ? '' : 's'}. Deleting it will affect all these expenses.
-              This action cannot be undone.
+              {deleteConfirm?.usageCount === 1 ? '' : 's'}.
+              Removing it will affect these expenses.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -360,7 +212,7 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
               disabled={loading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {loading ? 'Deleting...' : 'Delete'}
+              {loading ? 'Removing...' : 'Remove'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

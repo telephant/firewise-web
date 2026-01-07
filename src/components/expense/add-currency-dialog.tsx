@@ -10,9 +10,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { CurrencyCombobox } from './currency-combobox';
+import type { CurrencyExchange } from '@/lib/api';
 
 function CoinsIcon({ className }: { className?: string }) {
   return (
@@ -40,40 +40,43 @@ interface AddCurrencyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: { code: string; name: string }) => Promise<void>;
+  existingCurrencyCodes?: string[];
 }
 
 export function AddCurrencyDialog({
   open,
   onOpenChange,
   onSubmit,
+  existingCurrencyCodes = [],
 }: AddCurrencyDialogProps) {
-  const [code, setCode] = useState('');
-  const [name, setName] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyExchange | null>(null);
+  const [currencyCode, setCurrencyCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const resetForm = () => {
-    setCode('');
-    setName('');
+    setSelectedCurrency(null);
+    setCurrencyCode('');
+    setError(null);
+  };
+
+  const handleCurrencyChange = (code: string, currency: CurrencyExchange) => {
+    setCurrencyCode(code);
+    setSelectedCurrency(currency);
     setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const trimmedCode = code.trim().toUpperCase();
-    const trimmedName = name.trim();
+    if (!selectedCurrency) {
+      setError('Please select a currency');
+      return;
+    }
 
-    if (!trimmedCode) {
-      setError('Currency code is required');
-      return;
-    }
-    if (trimmedCode.length !== 3) {
-      setError('Currency code must be exactly 3 characters (e.g., USD, EUR)');
-      return;
-    }
-    if (!trimmedName) {
-      setError('Currency name is required');
+    // Check if currency already exists in ledger
+    if (existingCurrencyCodes.some((c) => c.toLowerCase() === selectedCurrency.code.toLowerCase())) {
+      setError('This currency already exists in your ledger');
       return;
     }
 
@@ -82,13 +85,13 @@ export function AddCurrencyDialog({
 
     try {
       await onSubmit({
-        code: trimmedCode,
-        name: trimmedName,
+        code: selectedCurrency.code.toUpperCase(),
+        name: selectedCurrency.name,
       });
       resetForm();
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create currency');
+      setError(err instanceof Error ? err.message : 'Failed to add currency');
     } finally {
       setLoading(false);
     }
@@ -111,9 +114,9 @@ export function AddCurrencyDialog({
                 <CoinsIcon className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <DialogTitle>Add Currency</DialogTitle>
+                <DialogTitle>Add Currency to Ledger</DialogTitle>
                 <DialogDescription>
-                  Add a new currency to your ledger.
+                  Add a currency for quick access when creating expenses.
                 </DialogDescription>
               </div>
             </div>
@@ -121,35 +124,25 @@ export function AddCurrencyDialog({
 
           <div className="grid gap-5 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="currency-code" className="text-sm font-medium">
-                Code <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="currency-code"
-                placeholder="USD"
-                maxLength={3}
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
+              <CurrencyCombobox
+                value={currencyCode}
+                onValueChange={handleCurrencyChange}
+                placeholder="Search and select a currency..."
                 disabled={loading}
-                className="uppercase"
               />
               <p className="text-xs text-muted-foreground">
-                3-letter ISO code (e.g., USD, EUR, CNY)
+                Search by currency code or name
               </p>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="currency-name" className="text-sm font-medium">
-                Currency Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="currency-name"
-                placeholder="US Dollar"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-              />
-            </div>
+            {selectedCurrency && (
+              <div className="p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono font-bold text-lg">{selectedCurrency.code.toUpperCase()}</span>
+                  <span className="text-muted-foreground">{selectedCurrency.name}</span>
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
@@ -172,7 +165,7 @@ export function AddCurrencyDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="min-w-[100px]">
+            <Button type="submit" disabled={loading || !selectedCurrency} className="min-w-[100px]">
               {loading ? (
                 <span className="flex items-center gap-2">
                   <Spinner variant="fire" />

@@ -23,9 +23,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { useExpenseData } from '@/contexts/expense-data-context';
-import { AddCurrencyDialog } from './add-currency-dialog';
+import { CurrencyCombobox } from './currency-combobox';
 import { format, parseISO } from 'date-fns';
 import type { Expense } from '@/types';
+import type { CurrencyExchange } from '@/lib/api';
 
 function PlusIcon({ className }: { className?: string }) {
   return (
@@ -100,7 +101,8 @@ export function ExpenseDetailDialog({
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
-  const [currencyId, setCurrencyId] = useState('');
+  const [currencyCode, setCurrencyCode] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyExchange | null>(null);
   const [categoryId, setCategoryId] = useState('');
   const [paymentMethodId, setPaymentMethodId] = useState('');
   const [date, setDate] = useState<Date>(new Date());
@@ -112,16 +114,20 @@ export function ExpenseDetailDialog({
   const [newCategory, setNewCategory] = useState('');
   const [newPaymentMethod, setNewPaymentMethod] = useState('');
   const [showNewCategory, setShowNewCategory] = useState(false);
-  const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [showNewPaymentMethod, setShowNewPaymentMethod] = useState(false);
 
-  const { categories, currencies, paymentMethods, createCategory, createCurrency, createPaymentMethod } = useExpenseData();
+  const { categories, currencies, paymentMethods, createCategory, getOrCreateCurrencyByCode, createPaymentMethod } = useExpenseData();
 
   useEffect(() => {
     if (expense && open) {
       setName(expense.name);
       setAmount(expense.amount.toString());
-      setCurrencyId(expense.currency_id);
+      // Find currency by id to get code
+      const expenseCurrency = currencies.find((c) => c.id === expense.currency_id);
+      if (expenseCurrency) {
+        setCurrencyCode(expenseCurrency.code.toLowerCase());
+        setSelectedCurrency({ code: expenseCurrency.code, name: expenseCurrency.name, rate: 1 });
+      }
       setCategoryId(expense.category_id || '');
       setPaymentMethodId(expense.payment_method_id || '');
       setDate(parseISO(expense.date));
@@ -130,12 +136,11 @@ export function ExpenseDetailDialog({
       setDeleteConfirm(false);
       setError(null);
       setShowNewCategory(false);
-      setShowCurrencyDialog(false);
       setShowNewPaymentMethod(false);
       setNewCategory('');
       setNewPaymentMethod('');
     }
-  }, [expense, open, startInEditMode]);
+  }, [expense, open, startInEditMode, currencies]);
 
   const handleCreateCategory = async () => {
     if (!newCategory.trim()) return;
@@ -149,9 +154,9 @@ export function ExpenseDetailDialog({
     }
   };
 
-  const handleCreateCurrency = async (data: { code: string; name: string }) => {
-    const currency = await createCurrency(data);
-    setCurrencyId(currency.id);
+  const handleCurrencyChange = (code: string, currency: CurrencyExchange) => {
+    setCurrencyCode(code);
+    setSelectedCurrency(currency);
   };
 
   const handleCreatePaymentMethod = async () => {
@@ -178,15 +183,25 @@ export function ExpenseDetailDialog({
       setError('Valid amount is required');
       return;
     }
+    if (!currencyCode || !selectedCurrency) {
+      setError('Currency is required');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
+      // Get or create ledger currency for the selected currency
+      const ledgerCurrency = await getOrCreateCurrencyByCode(
+        selectedCurrency.code,
+        selectedCurrency.name
+      );
+
       await onUpdate(expense.id, {
         name: name.trim(),
         amount: parseFloat(amount),
-        currency_id: currencyId,
+        currency_id: ledgerCurrency.id,
         category_id: categoryId || null,
         description: description.trim() || null,
         payment_method_id: paymentMethodId || null,
@@ -272,44 +287,28 @@ export function ExpenseDetailDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-amount">Amount</Label>
-                  <Input
-                    id="edit-amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Currency</Label>
-                  <div className="flex gap-2">
-                    <Select value={currencyId} onValueChange={setCurrencyId}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currencies.map((currency) => (
-                          <SelectItem key={currency.id} value={currency.id}>
-                            {currency.code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setShowCurrencyDialog(true)}
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-amount">Amount</Label>
+                <Input
+                  id="edit-amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Currency</Label>
+                <CurrencyCombobox
+                  value={currencyCode}
+                  onValueChange={handleCurrencyChange}
+                  placeholder="Select currency..."
+                  disabled={loading}
+                  ledgerCurrencies={currencies}
+                />
               </div>
 
               <div className="grid gap-2">
@@ -522,12 +521,6 @@ export function ExpenseDetailDialog({
           </>
         )}
       </DialogContent>
-
-      <AddCurrencyDialog
-        open={showCurrencyDialog}
-        onOpenChange={setShowCurrencyDialog}
-        onSubmit={handleCreateCurrency}
-      />
     </Dialog>
   );
 }

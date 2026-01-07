@@ -264,3 +264,24 @@ export const statsApi = {
     return fetchApi<MonthlyStats>(`/ledgers/${ledgerId}/stats/monthly${query ? `?${query}` : ''}`);
   },
 };
+
+// Currency Exchange types
+export interface CurrencyExchange {
+  code: string;
+  name: string;
+  rate: number;
+}
+
+// Currency Exchange API (global currency search)
+export const currencyExchangeApi = {
+  search: (q?: string, limit?: number) => {
+    const searchParams = new URLSearchParams();
+    if (q) searchParams.set('q', q);
+    if (limit) searchParams.set('limit', limit.toString());
+
+    const query = searchParams.toString();
+    return fetchApi<CurrencyExchange[]>(`/currency-exchange/search${query ? `?${query}` : ''}`);
+  },
+
+  get: (code: string) => fetchApi<CurrencyExchange>(`/currency-exchange/${code}`),
+};
