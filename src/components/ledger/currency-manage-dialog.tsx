@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ErrorAlert } from '@/components/ui/error-alert';
 import { CoinsIcon, PencilIcon, TrashIcon, CheckIcon, XIcon, PlusIcon } from '@/components/icons';
@@ -37,10 +36,8 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingCode, setEditingCode] = useState('');
   const [editingName, setEditingName] = useState('');
-  const [editingRate, setEditingRate] = useState('');
   const [newCode, setNewCode] = useState('');
   const [newName, setNewName] = useState('');
-  const [newRate, setNewRate] = useState('');
   const [showAddNew, setShowAddNew] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,10 +55,8 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
       setEditingId(null);
       setEditingCode('');
       setEditingName('');
-      setEditingRate('');
       setNewCode('');
       setNewName('');
-      setNewRate('');
       setShowAddNew(false);
       setError(null);
     }
@@ -72,7 +67,6 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
     setEditingId(currency.id);
     setEditingCode(currency.code);
     setEditingName(currency.name);
-    setEditingRate(currency.rate.toString());
     setError(null);
   };
 
@@ -80,17 +74,10 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
     setEditingId(null);
     setEditingCode('');
     setEditingName('');
-    setEditingRate('');
   };
 
   const handleSaveEdit = async () => {
-    if (!editingId || !editingCode.trim() || !editingName.trim() || !editingRate.trim()) return;
-
-    const rate = parseFloat(editingRate);
-    if (isNaN(rate) || rate <= 0) {
-      setError('Rate must be a positive number');
-      return;
-    }
+    if (!editingId || !editingCode.trim() || !editingName.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -99,12 +86,10 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
       await updateCurrency(editingId, {
         code: editingCode.trim().toUpperCase(),
         name: editingName.trim(),
-        rate,
       });
       setEditingId(null);
       setEditingCode('');
       setEditingName('');
-      setEditingRate('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update currency');
     } finally {
@@ -113,13 +98,7 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
   };
 
   const handleAddCurrency = async () => {
-    if (!newCode.trim() || !newName.trim() || !newRate.trim()) return;
-
-    const rate = parseFloat(newRate);
-    if (isNaN(rate) || rate <= 0) {
-      setError('Rate must be a positive number');
-      return;
-    }
+    if (!newCode.trim() || !newName.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -128,11 +107,9 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
       await createCurrency({
         code: newCode.trim().toUpperCase(),
         name: newName.trim(),
-        rate,
       });
       setNewCode('');
       setNewName('');
-      setNewRate('');
       setShowAddNew(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create currency');
@@ -189,7 +166,7 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
               </div>
               <div>
                 <DialogTitle>Manage Currencies</DialogTitle>
-                <DialogDescription>e.g. 1 USD = 3.67 AED, rate is 3.67</DialogDescription>
+                <DialogDescription>Add currencies you use in this ledger</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -213,63 +190,49 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
                         className="p-2 rounded-lg hover:bg-accent/50 transition-colors group"
                       >
                         {isEditing ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Input
-                                value={editingCode}
-                                onChange={(e) => setEditingCode(e.target.value.toUpperCase())}
-                                className="w-20 h-8 uppercase"
-                                placeholder="USD"
-                                maxLength={3}
-                                disabled={loading}
-                              />
-                              <Input
-                                value={editingName}
-                                onChange={(e) => setEditingName(e.target.value)}
-                                className="flex-1 h-8"
-                                placeholder="US Dollar"
-                                disabled={loading}
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1 flex-1">
-                                <Label className="text-xs text-muted-foreground shrink-0">Rate:</Label>
-                                <Input
-                                  value={editingRate}
-                                  onChange={(e) => setEditingRate(e.target.value)}
-                                  className="h-8"
-                                  placeholder="1.0"
-                                  inputMode="decimal"
-                                  disabled={loading}
-                                />
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
-                                onClick={handleSaveEdit}
-                                disabled={loading}
-                              >
-                                <CheckIcon className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                onClick={handleCancelEdit}
-                                disabled={loading}
-                              >
-                                <XIcon className="h-4 w-4" />
-                              </Button>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={editingCode}
+                              onChange={(e) => setEditingCode(e.target.value.toUpperCase())}
+                              className="w-20 h-8 uppercase"
+                              placeholder="USD"
+                              maxLength={3}
+                              disabled={loading}
+                            />
+                            <Input
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              className="flex-1 h-8"
+                              placeholder="US Dollar"
+                              disabled={loading}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit();
+                                if (e.key === 'Escape') handleCancelEdit();
+                              }}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
+                              onClick={handleSaveEdit}
+                              disabled={loading}
+                            >
+                              <CheckIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                              onClick={handleCancelEdit}
+                              disabled={loading}
+                            >
+                              <XIcon className="h-4 w-4" />
+                            </Button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
                             <span className="font-mono font-semibold text-sm w-12">{currency.code}</span>
                             <span className="flex-1 text-sm truncate">{currency.name}</span>
-                            <span className="text-xs text-muted-foreground tabular-nums">
-                              Rate: {currency.rate}
-                            </span>
                             <div className="flex items-center gap-1 shrink-0">
                               <Button
                                 variant="ghost"
@@ -305,7 +268,7 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
 
                 {/* Add new currency section */}
                 {showAddNew ? (
-                  <div className="p-2 rounded-lg bg-accent/30 space-y-2">
+                  <div className="p-2 rounded-lg bg-accent/30">
                     <div className="flex items-center gap-2">
                       <Input
                         value={newCode}
@@ -322,35 +285,21 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
                         className="flex-1 h-8"
                         placeholder="US Dollar"
                         disabled={loading}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleAddCurrency();
+                          if (e.key === 'Escape') {
+                            setShowAddNew(false);
+                            setNewCode('');
+                            setNewName('');
+                          }
+                        }}
                       />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 flex-1">
-                        <Label className="text-xs text-muted-foreground shrink-0">Rate:</Label>
-                        <Input
-                          value={newRate}
-                          onChange={(e) => setNewRate(e.target.value)}
-                          className="h-8"
-                          placeholder="1.0"
-                          inputMode="decimal"
-                          disabled={loading}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleAddCurrency();
-                            if (e.key === 'Escape') {
-                              setShowAddNew(false);
-                              setNewCode('');
-                              setNewName('');
-                              setNewRate('');
-                            }
-                          }}
-                        />
-                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
                         onClick={handleAddCurrency}
-                        disabled={loading || !newCode.trim() || !newName.trim() || !newRate.trim()}
+                        disabled={loading || !newCode.trim() || !newName.trim()}
                       >
                         <CheckIcon className="h-4 w-4" />
                       </Button>
@@ -362,7 +311,6 @@ export function CurrencyManageDialog({ open, onOpenChange }: CurrencyManageDialo
                           setShowAddNew(false);
                           setNewCode('');
                           setNewName('');
-                          setNewRate('');
                         }}
                         disabled={loading}
                       >

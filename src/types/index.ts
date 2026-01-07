@@ -11,7 +11,6 @@ export interface Currency {
   id: string;
   code: string;
   name: string;
-  rate: number;
   created_at: string;
 }
 

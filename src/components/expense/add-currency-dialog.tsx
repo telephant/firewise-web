@@ -39,7 +39,7 @@ function CoinsIcon({ className }: { className?: string }) {
 interface AddCurrencyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { code: string; name: string; rate: number }) => Promise<void>;
+  onSubmit: (data: { code: string; name: string }) => Promise<void>;
 }
 
 export function AddCurrencyDialog({
@@ -49,14 +49,12 @@ export function AddCurrencyDialog({
 }: AddCurrencyDialogProps) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
-  const [rate, setRate] = useState('1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const resetForm = () => {
     setCode('');
     setName('');
-    setRate('1');
     setError(null);
   };
 
@@ -78,11 +76,6 @@ export function AddCurrencyDialog({
       setError('Currency name is required');
       return;
     }
-    const rateValue = parseFloat(rate);
-    if (isNaN(rateValue) || rateValue <= 0) {
-      setError('Exchange rate must be a positive number');
-      return;
-    }
 
     setLoading(true);
     setError(null);
@@ -91,7 +84,6 @@ export function AddCurrencyDialog({
       await onSubmit({
         code: trimmedCode,
         name: trimmedName,
-        rate: rateValue,
       });
       resetForm();
       onOpenChange(false);
@@ -121,47 +113,29 @@ export function AddCurrencyDialog({
               <div>
                 <DialogTitle>Add Currency</DialogTitle>
                 <DialogDescription>
-                  Add a new currency with its exchange rate.
+                  Add a new currency to your ledger.
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
           <div className="grid gap-5 py-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="currency-code" className="text-sm font-medium">
-                  Code <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="currency-code"
-                  placeholder="USD"
-                  maxLength={3}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  disabled={loading}
-                  className="uppercase"
-                />
-                <p className="text-xs text-muted-foreground">
-                  3-letter ISO code
-                </p>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="currency-rate" className="text-sm font-medium">Exchange Rate</Label>
-                <Input
-                  id="currency-rate"
-                  type="number"
-                  step="0.000001"
-                  min="0"
-                  placeholder="1.0"
-                  value={rate}
-                  onChange={(e) => setRate(e.target.value)}
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Default: 1.0
-                </p>
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="currency-code" className="text-sm font-medium">
+                Code <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="currency-code"
+                placeholder="USD"
+                maxLength={3}
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                disabled={loading}
+                className="uppercase"
+              />
+              <p className="text-xs text-muted-foreground">
+                3-letter ISO code (e.g., USD, EUR, CNY)
+              </p>
             </div>
 
             <div className="grid gap-2">

@@ -170,3 +170,32 @@
 .animate-coin-flip {
   animation: coin-flip 1s linear infinite;
 }
+
+/* Global sepia filter for emojis - vintage/retro aesthetic */
+.emoji-sepia {
+  filter: sepia(0.6) saturate(0.8);
+}
+
+/* Auto-apply sepia to emoji font faces */
+@font-face {
+  font-family: 'Emoji';
+  src: local('Apple Color Emoji'), local('Segoe UI Emoji'), local('Noto Color Emoji');
+}
+
+/* Target common emoji containers and apply sepia effect */
+[data-emoji],
+.emoji,
+span:has(> img[alt*="emoji"]) {
+  filter: sepia(0.6) saturate(0.8);
+}
+
+/* Shake animation for error states */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}

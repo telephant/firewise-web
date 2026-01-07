@@ -13,8 +13,8 @@ interface ExpenseDataContextType {
   loading: boolean;
   createCategory: (name: string) => Promise<ExpenseCategory>;
   updateCategory: (id: string, name: string) => Promise<ExpenseCategory>;
-  createCurrency: (data: { code: string; name: string; rate: number }) => Promise<Currency>;
-  updateCurrency: (id: string, data: { code?: string; name?: string; rate?: number }) => Promise<Currency>;
+  createCurrency: (data: { code: string; name: string }) => Promise<Currency>;
+  updateCurrency: (id: string, data: { code?: string; name?: string }) => Promise<Currency>;
   createPaymentMethod: (data: { name: string; description?: string }) => Promise<PaymentMethod>;
   updatePaymentMethod: (id: string, data: { name?: string; description?: string }) => Promise<PaymentMethod>;
   deleteCategory: (id: string) => Promise<boolean>;
@@ -175,7 +175,7 @@ export function ExpenseDataProvider({ children, ledgerId }: ExpenseDataProviderP
     throw new Error(response.error || 'Failed to get category usage');
   };
 
-  const createCurrency = async (data: { code: string; name: string; rate: number }) => {
+  const createCurrency = async (data: { code: string; name: string }) => {
     const response = await currencyApi.create(ledgerIdRef.current, data);
     if (response.success && response.data) {
       await refetchCurrencies();
@@ -184,7 +184,7 @@ export function ExpenseDataProvider({ children, ledgerId }: ExpenseDataProviderP
     throw new Error(response.error || 'Failed to create currency');
   };
 
-  const updateCurrency = async (id: string, data: { code?: string; name?: string; rate?: number }) => {
+  const updateCurrency = async (id: string, data: { code?: string; name?: string }) => {
     const response = await currencyApi.update(ledgerIdRef.current, id, data);
     if (response.success && response.data) {
       await refetchCurrencies();

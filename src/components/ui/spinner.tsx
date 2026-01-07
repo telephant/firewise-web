@@ -90,7 +90,7 @@ function BounceSpinner({ size, className }: { size: SpinnerSize; className?: str
 
   return (
     <span
-      className={cn('inline-block animate-bounce', textSizes[size], className)}
+      className={cn('inline-block animate-bounce emoji-sepia', textSizes[size], className)}
       style={{ animationDuration: '0.5s' }}
     >
       💰
@@ -108,7 +108,7 @@ function FireSpinner({ size, className }: { size: SpinnerSize; className?: strin
   };
 
   return (
-    <span className={cn('inline-block animate-fire-flicker', textSizes[size], className)}>
+    <span className={cn('inline-block animate-fire-flicker emoji-sepia', textSizes[size], className)}>
       🔥
     </span>
   );

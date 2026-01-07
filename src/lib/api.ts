@@ -184,13 +184,13 @@ export const categoryApi = {
 export const currencyApi = {
   getAll: (ledgerId: string) => fetchApi<Currency[]>(`/ledgers/${ledgerId}/currencies`),
 
-  create: (ledgerId: string, data: { code: string; name: string; rate: number }) =>
+  create: (ledgerId: string, data: { code: string; name: string }) =>
     fetchApi<Currency>(`/ledgers/${ledgerId}/currencies`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (ledgerId: string, id: string, data: { code?: string; name?: string; rate?: number }) =>
+  update: (ledgerId: string, id: string, data: { code?: string; name?: string }) =>
     fetchApi<Currency>(`/ledgers/${ledgerId}/currencies/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

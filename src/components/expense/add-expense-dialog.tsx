@@ -319,7 +319,7 @@ export function AddExpenseDialog({
     }
   };
 
-  const handleCreateCurrency = async (data: { code: string; name: string; rate: number }) => {
+  const handleCreateCurrency = async (data: { code: string; name: string }) => {
     const currency = await createCurrency(data);
     setCurrencyId(currency.id);
   };
