@@ -26,7 +26,13 @@ export function StockTickerInput({
   label,
   error,
 }: StockTickerInputProps) {
-  const [inputValue, setInputValue] = useState(value);
+  // Local input value for typing - separate from selected value
+  // When user is typing, we show their input. When they select or clear, we sync with value prop
+  const [localInput, setLocalInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Display value: show local input while typing, otherwise show the controlled value
+  const inputValue = isTyping ? localInput : value;
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<StockSymbol[]>([]);
@@ -74,7 +80,8 @@ export function StockTickerInput({
   // Debounced search
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value.toUpperCase();
-    setInputValue(newValue);
+    setLocalInput(newValue);
+    setIsTyping(true);
 
     // Clear previous debounce
     if (debounceRef.current) {
@@ -89,7 +96,8 @@ export function StockTickerInput({
 
   // Select a symbol
   const handleSelect = (symbol: StockSymbol) => {
-    setInputValue(symbol.symbol);
+    setIsTyping(false); // Stop typing mode - show controlled value
+    setLocalInput('');
     onChange(symbol.symbol, symbol.name);
     setIsOpen(false);
     setResults([]);
@@ -98,7 +106,8 @@ export function StockTickerInput({
 
   // Clear selection
   const handleClear = () => {
-    setInputValue('');
+    setIsTyping(false);
+    setLocalInput('');
     onChange('', '');
     setResults([]);
     setIsOpen(false);
@@ -166,11 +175,6 @@ export function StockTickerInput({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Sync input value with prop value
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
 
   // Cleanup debounce on unmount
   useEffect(() => {

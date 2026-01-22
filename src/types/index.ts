@@ -101,9 +101,16 @@ export interface ExpenseStats {
 }
 
 // Monthly stats types
+export interface MonthCategoryStats {
+  category_id: string | null;
+  category_name: string;
+  amount: number;
+}
+
 export interface MonthTotal {
   month: string; // 'YYYY-MM' format
   total: number;
+  by_category: MonthCategoryStats[];
 }
 
 export interface MonthlyStats {

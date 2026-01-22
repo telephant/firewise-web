@@ -7,6 +7,7 @@ import type { MonthlyStats } from '@/types';
 interface MonthlyStatsFilters {
   currency_id?: string;
   months?: number;
+  category_id?: string;
 }
 
 export function useMonthlyStats(ledgerId: string | null, filters?: MonthlyStatsFilters) {

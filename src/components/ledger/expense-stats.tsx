@@ -21,11 +21,26 @@ interface ExpenseStatsProps {
 export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps) {
   const { currencies, onCategoryChange, onCurrencyChange, onPaymentMethodChange } = useExpenseData();
   const [userSelectedCurrencyId, setUserSelectedCurrencyId] = useState<string | null>(null);
+  // Excluded categories (unchecked) - empty means all categories are included
+  const [excludedCategoryIds, setExcludedCategoryIds] = useState<Set<string>>(new Set());
 
   // Selected month in 'YYYY-MM' format, defaults to current month
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthKey);
+
+  // Toggle category inclusion/exclusion
+  const toggleCategory = (categoryKey: string) => {
+    setExcludedCategoryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryKey)) {
+        next.delete(categoryKey);
+      } else {
+        next.add(categoryKey);
+      }
+      return next;
+    });
+  };
 
   // Compute effective currency ID: user selection > default > USD > first available
   const selectedCurrencyId = useMemo(() => {
@@ -51,6 +66,31 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
     refetch: refetchMonthly,
   } = useMonthlyStats(selectedCurrencyId ? ledgerId : null, monthlyFilters);
 
+  // Compute filtered months based on excluded categories
+  const filteredMonths = useMemo(() => {
+    if (!monthlyStats?.months) return [];
+
+    return monthlyStats.months.map((m) => {
+      if (excludedCategoryIds.size === 0) {
+        // No exclusions - show total
+        return { month: m.month, total: m.total, by_category: m.by_category };
+      }
+      // Sum only included categories (not in excluded set)
+      const includedTotal = m.by_category
+        .filter((c) => {
+          const categoryKey = c.category_id || 'uncategorized';
+          return !excludedCategoryIds.has(categoryKey);
+        })
+        .reduce((sum, c) => sum + c.amount, 0);
+
+      return {
+        month: m.month,
+        total: Math.round(includedTotal * 100) / 100,
+        by_category: m.by_category,
+      };
+    });
+  }, [monthlyStats, excludedCategoryIds]);
+
   // Get selected month date range
   const filters = useMemo(() => {
     const monthDate = parse(selectedMonth, 'yyyy-MM', new Date());
@@ -69,16 +109,16 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
   // We have data if stats or monthlyStats exist (means we've loaded at least once)
   const hasData = Boolean(stats || monthlyStats);
 
-  // Calculate comparison with previous month
+  // Calculate comparison with previous month (using filtered data)
   const comparison = useMemo(() => {
-    if (!monthlyStats?.months || monthlyStats.months.length < 2) return null;
+    if (!filteredMonths || filteredMonths.length < 2) return null;
 
-    const selectedIndex = monthlyStats.months.findIndex((m) => m.month === selectedMonth);
+    const selectedIndex = filteredMonths.findIndex((m) => m.month === selectedMonth);
     if (selectedIndex <= 0) return null; // No previous month to compare
 
-    const currentTotal = monthlyStats.months[selectedIndex].total;
-    const previousTotal = monthlyStats.months[selectedIndex - 1].total;
-    const previousMonth = monthlyStats.months[selectedIndex - 1].month;
+    const currentTotal = filteredMonths[selectedIndex].total;
+    const previousTotal = filteredMonths[selectedIndex - 1].total;
+    const previousMonth = filteredMonths[selectedIndex - 1].month;
 
     if (previousTotal === 0) return null;
 
@@ -90,7 +130,7 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
       previousMonthLabel,
       isIncrease: percentChange > 0,
     };
-  }, [monthlyStats, selectedMonth]);
+  }, [filteredMonths, selectedMonth]);
 
   // Subscribe to category, currency, and payment method changes to refresh stats
   useEffect(() => {
@@ -176,12 +216,12 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
       </div>
 
       {/* Monthly Chart */}
-      {monthlyStats && monthlyStats.months.length > 0 && (
+      {filteredMonths.length > 0 && (
         <MonthlyChart
-          months={monthlyStats.months}
+          months={filteredMonths}
           selectedMonth={selectedMonth}
           onSelectMonth={setSelectedMonth}
-          currencyCode={monthlyStats.currency_code}
+          currencyCode={monthlyStats?.currency_code}
         />
       )}
 
@@ -211,7 +251,15 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
               <CoinsIcon className="h-4 w-4" />
               <span className="text-sm font-medium">Total Spending</span>
             </div>
-            <p className="text-lg font-semibold tabular-nums">{formatAmount(stats?.total || 0)}</p>
+            <p className="text-lg font-semibold tabular-nums">
+              {formatAmount(
+                excludedCategoryIds.size === 0
+                  ? stats?.total || 0
+                  : (stats?.by_category || [])
+                      .filter((c) => !excludedCategoryIds.has(c.category_id || 'uncategorized'))
+                      .reduce((sum, c) => sum + c.amount, 0)
+              )}
+            </p>
           </div>
         </div>
 
@@ -223,35 +271,62 @@ export function ExpenseStats({ ledgerId, defaultCurrencyId }: ExpenseStatsProps)
         ) : (
           stats.by_category.map((cat) => {
             const colors = getCategoryColor(cat.category_name);
+            const categoryKey = cat.category_id || 'uncategorized';
+            const isExcluded = excludedCategoryIds.has(categoryKey);
 
             return (
-              <div
-                key={cat.category_id || 'uncategorized'}
-                className="p-3 rounded-2xl border-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 bg-card/80 backdrop-blur-sm"
+              <button
+                key={categoryKey}
+                onClick={() => toggleCategory(categoryKey)}
+                className={`w-full text-left p-3 rounded-2xl border-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 bg-card/80 backdrop-blur-sm ${
+                  isExcluded ? 'opacity-50' : ''
+                }`}
               >
                 <div className="flex items-center gap-4">
                   {/* Category Color Indicator */}
-                  <div className={`w-1 self-stretch rounded-full ${colors.bar}`} />
+                  <div
+                    className={`w-1 self-stretch rounded-full transition-colors duration-200 ${
+                      isExcluded ? 'bg-muted-foreground/30' : colors.bar
+                    }`}
+                  />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-[15px]">{cat.category_name}</span>
-                      <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${colors.badge}`}>
+                      <span
+                        className={`font-semibold text-[15px] transition-colors duration-200 ${
+                          isExcluded ? 'text-muted-foreground' : ''
+                        }`}
+                      >
+                        {cat.category_name}
+                      </span>
+                      <span
+                        className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full transition-colors duration-200 ${
+                          isExcluded ? 'bg-muted text-muted-foreground' : colors.badge
+                        }`}
+                      >
                         {cat.percentage.toFixed(1)}%
                       </span>
                     </div>
                     {/* Progress bar */}
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <div
-                        className={`h-full ${colors.bar} rounded-full transition-all duration-500`}
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          isExcluded ? 'bg-muted-foreground/30' : colors.bar
+                        }`}
                         style={{ width: `${cat.percentage}%` }}
                       />
                     </div>
                   </div>
 
-                  <p className="font-semibold text-[15px] tabular-nums shrink-0">{formatAmount(cat.amount)}</p>
+                  <p
+                    className={`font-semibold text-[15px] tabular-nums shrink-0 transition-colors duration-200 ${
+                      isExcluded ? 'text-muted-foreground line-through' : ''
+                    }`}
+                  >
+                    {formatAmount(cat.amount)}
+                  </p>
                 </div>
-              </div>
+              </button>
             );
           })
         )}

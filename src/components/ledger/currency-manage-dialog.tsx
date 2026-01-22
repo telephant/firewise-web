@@ -24,7 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ErrorAlert } from '@/components/ui/error-alert';
 import { StarIcon, XIcon } from 'lucide-react';
 import { useExpenseData } from '@/contexts/expense-data-context';
-import { CurrencyCombobox } from '@/components/expense/currency-combobox';
+import { CurrencyCombobox } from './currency-combobox';
 import type { Currency } from '@/types';
 import type { CurrencyExchange } from '@/lib/api';
 

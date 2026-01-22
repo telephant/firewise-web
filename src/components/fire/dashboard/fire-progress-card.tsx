@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { retro, Card, ProgressBar, Loader } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { formatCurrency, calculateNetWorth } from '@/lib/fire/utils';
 import { useAssets, useFlowStats } from '@/hooks/fire/use-fire-data';
 
 interface FireProgressCardProps {
@@ -21,17 +21,7 @@ export function FireProgressCard({
   const isLoading = assetsLoading || statsLoading;
 
   // Calculate net worth from assets
-  const netWorth = useMemo(() => {
-    const totalAssets = assets.reduce(
-      (sum, a) => sum + (a.balance > 0 ? a.balance : 0),
-      0
-    );
-    const totalDebts = assets.reduce(
-      (sum, a) => sum + (a.balance < 0 ? Math.abs(a.balance) : 0),
-      0
-    );
-    return totalAssets - totalDebts;
-  }, [assets]);
+  const { netWorth } = useMemo(() => calculateNetWorth(assets), [assets]);
 
   // Calculate savings rate
   const savingsRate = useMemo(() => {
@@ -82,7 +72,7 @@ export function FireProgressCard({
   };
 
   const yearsToFire = calculateYearsToFire();
-  const CARD_HEIGHT = '200px';
+  const CARD_HEIGHT = '160px';
 
   if (isLoading) {
     return (

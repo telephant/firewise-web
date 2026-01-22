@@ -1,7 +1,7 @@
 'use client';
 
 import type { FlowCategoryPreset, AssetWithBalance, AssetType, RecurringFrequency } from '@/types/fire';
-import { retro, Input, Select, Label, Button, IconArrow } from '@/components/fire/ui';
+import { retro, Input, Select, CurrencyCombobox, Label, Button, IconArrow } from '@/components/fire/ui';
 import { NewAssetForm } from './new-asset-form';
 import { FormActions } from './form-actions';
 import { CURRENCY_OPTIONS, ASSET_TYPE_OPTIONS, RECURRING_OPTIONS, getFieldLabels } from './constants';
@@ -79,22 +79,19 @@ export function TransferFlowForm({
       )}
 
       {/* Amount & Currency */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2">
-          <Input
-            label="Amount"
-            type="number"
-            placeholder="0.00"
-            value={form.amount}
-            onChange={(e) => updateForm('amount', e.target.value)}
-            error={formErrors.amount}
-          />
-        </div>
-        <Select
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="Amount"
+          type="number"
+          placeholder="0.00"
+          value={form.amount}
+          onChange={(e) => updateForm('amount', e.target.value)}
+          error={formErrors.amount}
+        />
+        <CurrencyCombobox
           label="Currency"
           value={form.currency}
-          onChange={(e) => updateForm('currency', e.target.value)}
-          options={CURRENCY_OPTIONS}
+          onChange={(value) => updateForm('currency', value)}
         />
       </div>
 

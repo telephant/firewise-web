@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { retro, retroStyles } from './theme';
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root {...props} />;
+  return <DialogPrimitive.Root modal={true} {...props} />;
 }
 
 function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
@@ -59,6 +59,20 @@ function DialogContent({
           className
         )}
         style={retroStyles.raised}
+        // Prevent dialog from closing when clicking on portalled Select dropdowns
+        onPointerDownOutside={(e) => {
+          // Check if the click target is inside a Select dropdown (portalled to body)
+          const target = e.target as HTMLElement;
+          if (target.closest('[data-select-dropdown]')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('[data-select-dropdown]')) {
+            e.preventDefault();
+          }
+        }}
         {...props}
       >
         {/* Content wrapper with padding - header is outside this */}
@@ -72,7 +86,7 @@ function DialogContent({
 function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      className={cn('p-6 overflow-y-auto flex-1', className)}
+      className={cn('px-6 pt-6 pb-4 overflow-y-auto flex-1', className)}
       {...props}
     />
   );
@@ -121,7 +135,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
 function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      className={cn('flex justify-end gap-2 pt-4', className)}
+      className={cn('flex justify-end gap-2 px-6 pb-6', className)}
       {...props}
     />
   );

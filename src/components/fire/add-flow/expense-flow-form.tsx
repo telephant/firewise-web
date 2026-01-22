@@ -29,6 +29,7 @@ interface ExpenseFlowFormProps {
   expenseTab: ExpenseTab;
   setExpenseTab: (tab: ExpenseTab) => void;
   savingLinkedLedgers: boolean;
+  linkedLedgers: LinkedLedger[];
   updateForm: <K extends keyof FlowFormState>(field: K, value: FlowFormState[K]) => void;
   updateNewAsset: <K extends keyof NewAssetState>(field: K, value: NewAssetState[K]) => void;
   handleInvestmentTypeChange: (type: InvestmentType) => void;
@@ -53,6 +54,7 @@ export function ExpenseFlowForm({
   expenseTab,
   setExpenseTab,
   savingLinkedLedgers,
+  linkedLedgers,
   updateForm,
   updateNewAsset,
   handleInvestmentTypeChange,
@@ -71,7 +73,7 @@ export function ExpenseFlowForm({
       {/* Link to Ledger Tab Content */}
       <TabsContent value="link" className="space-y-4 pt-4" forceMount>
         <LedgerSelector
-          value={form.linkedLedgers}
+          value={linkedLedgers}
           onChange={(ledgers) => updateForm('linkedLedgers', ledgers as LinkedLedger[])}
         />
         <div className="flex justify-end gap-2 pt-2">

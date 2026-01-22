@@ -8,6 +8,7 @@ import {
   IconArrow,
 } from '@/components/fire/ui';
 import { useFlows } from '@/hooks/fire/use-fire-data';
+import { formatCurrency } from '@/lib/fire/utils';
 import type { FlowWithDetails } from '@/types/fire';
 
 interface FlowListProps {
@@ -26,18 +27,8 @@ export function FlowList({
   maxItems = 5,
   showViewAll = true,
 }: FlowListProps) {
-  // Use SWR hook for data fetching
-  const { flows, isLoading } = useFlows({ limit: maxItems });
-
-  const formatCurrency = (amount: number, curr: string) => {
-    if (amount === 0) return '$0';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: curr,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  // Use SWR hook for data fetching (adjustments filtered at SQL level)
+  const { flows, isLoading } = useFlows({ limit: maxItems, exclude_category: 'adjustment' });
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -76,7 +67,6 @@ export function FlowList({
     return flow.to_asset?.name || flow.from_asset?.name || '';
   };
 
-  const displayFlows = flows;
   const CARD_HEIGHT = '280px';
 
   if (isLoading) {
@@ -92,7 +82,7 @@ export function FlowList({
   return (
     <Card title="Recent Flows" contentHeight={CARD_HEIGHT}>
       <div className="h-full flex flex-col">
-        {displayFlows.length === 0 ? (
+        {flows.length === 0 ? (
           <div
             className="flex-1 flex items-center justify-center text-xs"
             style={{ color: retro.muted }}
@@ -103,7 +93,7 @@ export function FlowList({
           <>
             {/* Scrollable flow list */}
             <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
-              {displayFlows.map((flow) => {
+              {flows.map((flow) => {
                 const rotation = FLOW_ROTATIONS[flow.type] || 0;
                 return (
                   <div
@@ -136,8 +126,21 @@ export function FlowList({
                         style={{ color: getFlowColor(flow.type) }}
                       >
                         {getFlowSign(flow.type)}
-                        {formatCurrency(flow.amount, flow.currency)}
+                        {formatCurrency(
+                          flow.converted_amount ?? flow.amount,
+                          { currency: flow.converted_currency ?? flow.currency }
+                        )}
                       </p>
+                      {flow.converted_amount !== undefined &&
+                        flow.converted_currency &&
+                        flow.converted_currency !== flow.currency && (
+                        <p
+                          className="text-[10px] tabular-nums"
+                          style={{ color: retro.muted }}
+                        >
+                          ({formatCurrency(flow.amount, { currency: flow.currency })})
+                        </p>
+                      )}
                       <p
                         className="text-[10px]"
                         style={{ color: retro.muted }}

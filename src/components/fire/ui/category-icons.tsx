@@ -14,6 +14,7 @@ import {
   IconCreditCard,
   IconRecycle,
   IconMore,
+  IconDebt,
 } from './icons';
 
 // Shared category icon mapping - used in add-flow-dialog and category-selector
@@ -24,7 +25,8 @@ export const CATEGORY_ICONS: Record<string, (size: number) => React.ReactNode> =
   rental: (size) => <IconHome size={size} />,
   gift: (size) => <IconGift size={size} />,
   dividend: (size) => <IconCoin size={size} />,
-  interest: (size) => <IconBank size={size} />,
+  interest: (size) => <IconCoin size={size} />,
+  deposit: (size) => <IconBank size={size} />,
   expense: (size) => (
     <span style={{ display: 'inline-block', transform: 'rotate(90deg)' }}>
       <IconArrow size={size} />
@@ -35,6 +37,8 @@ export const CATEGORY_ICONS: Record<string, (size: number) => React.ReactNode> =
   transfer: (size) => <IconTransfer size={size} />,
   sell: (size) => <IconChartDown size={size} />,
   reinvest: (size) => <IconRecycle size={size} />,
+  add_mortgage: (size) => <IconHome size={size} />,
+  add_loan: (size) => <IconDebt size={size} />,
   other: (size) => <IconMore size={size} />,
 };
 

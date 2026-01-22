@@ -4,6 +4,12 @@ import { useMemo } from 'react';
 import { StatCard } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 import { useAssets, useFlows, useFlowStats } from '@/hooks/fire/use-fire-data';
+import type { FlowWithDetails } from '@/types/fire';
+
+// Helper to get effective amount for stats (use converted amount when available)
+function getEffectiveAmount(flow: FlowWithDetails): number {
+  return flow.converted_amount ?? flow.amount;
+}
 
 export function StatsRow() {
   // Use SWR hooks for data fetching
@@ -11,14 +17,21 @@ export function StatsRow() {
   const { flows, isLoading: flowsLoading } = useFlows();
   const { stats, isLoading: statsLoading } = useFlowStats();
 
-  // Calculate net worth from assets
+  // Calculate net worth from assets (use converted balance when available)
   const netWorth = useMemo(() => {
+    const getBalance = (a: typeof assets[0]) => a.converted_balance ?? a.balance;
     const totalAssets = assets.reduce(
-      (sum, a) => sum + (a.balance > 0 ? a.balance : 0),
+      (sum, a) => {
+        const balance = getBalance(a);
+        return sum + (balance > 0 ? balance : 0);
+      },
       0
     );
     const totalDebts = assets.reduce(
-      (sum, a) => sum + (a.balance < 0 ? Math.abs(a.balance) : 0),
+      (sum, a) => {
+        const balance = getBalance(a);
+        return sum + (balance < 0 ? Math.abs(balance) : 0);
+      },
       0
     );
     return totalAssets - totalDebts;
@@ -46,7 +59,7 @@ export function StatsRow() {
           f.type === 'income' &&
           ['dividend', 'rental', 'interest'].includes(f.category || '')
       )
-      .reduce((sum, f) => sum + f.amount, 0);
+      .reduce((sum, f) => sum + getEffectiveAmount(f), 0);
   }, [flows]);
 
   // Safe Withdrawal Rate (4% rule)

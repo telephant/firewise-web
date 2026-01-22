@@ -1,7 +1,7 @@
 'use client';
 
 import type { FlowCategoryPreset, AssetWithBalance, AssetType, RecurringFrequency } from '@/types/fire';
-import { retro, Input, Select, Label, Button, IconArrow } from '@/components/fire/ui';
+import { retro, Input, Select, CurrencyCombobox, Label, Button, IconArrow } from '@/components/fire/ui';
 import { NewAssetForm } from './new-asset-form';
 import { FormActions } from './form-actions';
 import { CURRENCY_OPTIONS, ASSET_TYPE_OPTIONS, RECURRING_OPTIONS, getFieldLabels } from './constants';
@@ -86,35 +86,21 @@ export function IncomeFlowForm({
       )}
 
       {/* Amount & Currency */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2">
-          <Input
-            label="Amount"
-            type="number"
-            placeholder="0.00"
-            value={form.amount}
-            onChange={(e) => updateForm('amount', e.target.value)}
-            error={formErrors.amount}
-          />
-        </div>
-        <Select
-          label="Currency"
-          value={form.currency}
-          onChange={(e) => updateForm('currency', e.target.value)}
-          options={CURRENCY_OPTIONS}
-        />
-      </div>
-
-      {/* Tax Withheld (for dividend/interest) */}
-      {selectedPreset.extraFields?.includes('tax_withheld') && (
+      <div className="grid grid-cols-2 gap-3">
         <Input
-          label="Tax Withheld"
+          label="Amount"
           type="number"
           placeholder="0.00"
-          value={form.taxWithheld}
-          onChange={(e) => updateForm('taxWithheld', e.target.value)}
+          value={form.amount}
+          onChange={(e) => updateForm('amount', e.target.value)}
+          error={formErrors.amount}
         />
-      )}
+        <CurrencyCombobox
+          label="Currency"
+          value={form.currency}
+          onChange={(value) => updateForm('currency', value)}
+        />
+      </div>
 
       {/* Flow Arrow */}
       <div className="flex justify-center py-1">

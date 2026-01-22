@@ -36,9 +36,9 @@ export function MonthlyChart({ months, selectedMonth, onSelectMonth, currencyCod
   const maxBarHeight = 80; // pixels
 
   return (
-    <div className="px-4 pt-2 pb-3">
+    <div className="px-4 pt-2 pb-3 h-[140px]">
       {/* Chart container */}
-      <div className="flex items-end justify-between gap-2">
+      <div className="flex items-end justify-between gap-2 h-full">
         {months.map((m) => {
           const isSelected = m.month === selectedMonth;
           const heightPercent = maxTotal > 0 ? m.total / maxTotal : 0;
@@ -48,7 +48,7 @@ export function MonthlyChart({ months, selectedMonth, onSelectMonth, currencyCod
             <button
               key={m.month}
               onClick={() => onSelectMonth(m.month)}
-              className="flex-1 flex flex-col items-center gap-1.5 group"
+              className="flex-1 flex flex-col items-center justify-end gap-1.5 group h-full"
             >
               {/* Amount label */}
               <span

@@ -5,8 +5,10 @@ import {
   Card,
   retroStyles,
   Loader,
+  SimpleProgressBar,
 } from '@/components/fire/ui';
 import { useExpenseStats } from '@/hooks/fire/use-fire-data';
+import { formatCurrency } from '@/lib/fire/utils';
 import type { ExpenseCategoryBreakdown } from '@/types/fire';
 
 interface ExpenseCardProps {
@@ -16,16 +18,6 @@ interface ExpenseCardProps {
 export function ExpenseCard({ className }: ExpenseCardProps) {
   // Use SWR hook for data fetching
   const { stats, isLoading: loading } = useExpenseStats();
-
-  const formatCurrency = (amount: number) => {
-    if (amount === 0) return '$0';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const getTrendIcon = (direction: 'up' | 'down' | 'same') => {
     switch (direction) {
@@ -184,16 +176,6 @@ export function ExpenseCard({ className }: ExpenseCardProps) {
 
 // Category progress bar component
 function CategoryBar({ category }: { category: ExpenseCategoryBreakdown }) {
-  const formatCurrency = (amount: number) => {
-    if (amount === 0) return '$0';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
@@ -215,26 +197,12 @@ function CategoryBar({ category }: { category: ExpenseCategoryBreakdown }) {
           </span>
         </div>
       </div>
-      {/* Retro sunken progress bar */}
-      <div
-        className="h-2.5 rounded-sm p-[1px]"
-        style={retroStyles.sunken}
-      >
-        <div
-          className="h-full rounded-sm transition-all duration-300"
-          style={{
-            width: `${Math.min(100, category.percentage)}%`,
-            backgroundColor: retro.accent,
-            backgroundImage: `repeating-linear-gradient(
-              90deg,
-              ${retro.accent} 0px,
-              ${retro.accent} 4px,
-              ${retro.accentLight} 4px,
-              ${retro.accentLight} 8px
-            )`,
-          }}
-        />
-      </div>
+      {/* Progress bar */}
+      <SimpleProgressBar
+        value={Math.min(100, category.percentage)}
+        size="sm"
+        color={retro.accent}
+      />
     </div>
   );
 }

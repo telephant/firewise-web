@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
-import { ExpenseList } from '@/components/expense/expense-list';
+import { ExpenseList } from '@/components/ledger/expense-list';
 import { LedgerSettings } from '@/components/ledger/ledger-settings';
 import { InviteUserDialog } from '@/components/ledger/invite-user-dialog';
 import { ExpenseDataProvider } from '@/contexts/expense-data-context';

@@ -6,6 +6,7 @@ import {
   Button,
   Input,
   Select,
+  CurrencyCombobox,
   Label,
   IconArrow,
 } from '@/components/fire/ui';
@@ -153,37 +154,24 @@ export function FlowFormFields({
       ) : (
         <>
           {/* Amount & Currency for non-invest flows */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <Input
-                label="Amount"
-                type="number"
-                placeholder="0.00"
-                value={form.amount}
-                onChange={(e) => updateForm('amount', e.target.value)}
-                error={formErrors.amount}
-              />
-            </div>
-            <Select
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Amount"
+              type="number"
+              placeholder="0.00"
+              value={form.amount}
+              onChange={(e) => updateForm('amount', e.target.value)}
+              error={formErrors.amount}
+            />
+            <CurrencyCombobox
               label="Currency"
               value={form.currency}
-              onChange={(e) => updateForm('currency', e.target.value)}
-              options={CURRENCY_OPTIONS}
+              onChange={(value) => updateForm('currency', value)}
               disabled={currencyLocked}
             />
           </div>
 
           {/* Extra Fields based on category */}
-          {selectedPreset.extraFields?.includes('tax_withheld') && (
-            <Input
-              label="Tax Withheld"
-              type="number"
-              placeholder="0.00"
-              value={form.taxWithheld}
-              onChange={(e) => updateForm('taxWithheld', e.target.value)}
-            />
-          )}
-
           {selectedPreset.extraFields?.includes('shares') && (
             <Input
               label="Shares"

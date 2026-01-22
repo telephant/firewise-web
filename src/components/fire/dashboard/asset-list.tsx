@@ -7,18 +7,21 @@ import {
   Button,
   Loader,
   IconCash,
+  IconBank,
   IconStock,
   IconEtf,
   IconBond,
   IconRealEstate,
   IconCrypto,
-  IconDebt,
   IconBox,
   IconEdit,
+  IconPlus,
 } from '@/components/fire/ui';
 import { AdjustBalanceDialog } from './adjust-balance-dialog';
-import { useAssets, useStockPrices } from '@/hooks/fire/use-fire-data';
-import type { Asset } from '@/types/fire';
+import { AddAssetDialog } from './add-asset-dialog';
+import { useAssets, useStockPrices, useAssetInterestSettings } from '@/hooks/fire/use-fire-data';
+import { formatCurrency, formatPrice, formatShares, formatPercent } from '@/lib/fire/utils';
+import type { Asset, AssetWithBalance } from '@/types/fire';
 
 interface AssetListProps {
   maxItems?: number;
@@ -26,23 +29,23 @@ interface AssetListProps {
 
 const ASSET_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   cash: IconCash,
+  deposit: IconBank,
   stock: IconStock,
   etf: IconEtf,
   bond: IconBond,
   real_estate: IconRealEstate,
   crypto: IconCrypto,
-  debt: IconDebt,
   other: IconBox,
 };
 
 const ASSET_TYPE_LABELS: Record<string, string> = {
   cash: 'Cash',
+  deposit: 'Deposit',
   stock: 'Stock',
   etf: 'ETF',
   bond: 'Bond',
   real_estate: 'Real Estate',
   crypto: 'Crypto',
-  debt: 'Debt',
   other: 'Other',
 };
 
@@ -50,97 +53,84 @@ const ASSET_TYPE_LABELS: Record<string, string> = {
 const SHARE_BASED_TYPES = ['stock', 'etf', 'crypto'];
 
 // Asset types that can be adjusted (currency-based, not share-based)
-const ADJUSTABLE_TYPES = ['cash', 'debt', 'real_estate', 'bond', 'other'];
+const ADJUSTABLE_TYPES = ['cash', 'real_estate', 'bond', 'other'];
+
+// Types that open edit dialog instead of adjust dialog
+const EDITABLE_TYPES = ['real_estate'];
 
 export function AssetList({ maxItems = 6 }: AssetListProps) {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
+  const [addAssetDialogOpen, setAddAssetDialogOpen] = useState(false);
+  const [editAsset, setEditAsset] = useState<Asset | null>(null);
 
   // Use SWR hooks for data fetching
   const { assets, isLoading: assetsLoading } = useAssets();
 
-  // Get all tickers from stock/etf assets
+  // Get all tickers from stock/etf assets (uppercase for API consistency)
   const tickers = useMemo(() => {
     return assets
       .filter((a) => ['stock', 'etf'].includes(a.type) && a.ticker)
-      .map((a) => a.ticker as string);
+      .map((a) => (a.ticker as string).toUpperCase());
   }, [assets]);
 
   // Use SWR for stock prices (handles caching internally)
   const { prices: stockPrices, isLoading: pricesLoading } = useStockPrices(tickers);
 
+  // Fetch asset interest settings for deposit accounts
+  const { settingsMap: interestSettingsMap } = useAssetInterestSettings();
+
   const handleAssetClick = (asset: Asset) => {
+    // Real estate opens edit dialog
+    if (EDITABLE_TYPES.includes(asset.type)) {
+      setEditAsset(asset);
+      setAddAssetDialogOpen(true);
+      return;
+    }
+    // Other adjustable types open adjust dialog
     if (ADJUSTABLE_TYPES.includes(asset.type)) {
       setSelectedAsset(asset);
-      setDialogOpen(true);
+      setAdjustDialogOpen(true);
     }
-  };
-
-  const formatCurrency = (amount: number, curr: string) => {
-    if (amount === 0) return '$0';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: curr,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatPrice = (amount: number, curr: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: curr,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
-
-  const formatShares = (amount: number) => {
-    if (amount === 0) return '0';
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
-
-  const formatPercent = (value: number | null | undefined) => {
-    if (value == null) return '';
-    const sign = value >= 0 ? '+' : '';
-    return `${sign}${value.toFixed(2)}%`;
   };
 
   // Calculate total value including real-time stock prices
   const totalValue = useMemo(() => {
-    return assets.reduce((sum, asset) => {
-      if (SHARE_BASED_TYPES.includes(asset.type) && asset.ticker) {
-        const price = stockPrices[asset.ticker];
-        if (price) {
-          return sum + asset.balance * price.price;
+    return assets
+      .reduce((sum, asset) => {
+        if (SHARE_BASED_TYPES.includes(asset.type) && asset.ticker) {
+          const price = stockPrices[asset.ticker.toUpperCase()];
+          if (price) {
+            return sum + asset.balance * price.price;
+          }
+          // No price available, skip this asset from total
+          return sum;
         }
-        // No price available, skip this asset from total
-        return sum;
-      }
-      return sum + asset.balance;
-    }, 0);
+        return sum + asset.balance;
+      }, 0);
   }, [assets, stockPrices]);
 
   // Group assets by category (each asset appears in exactly one group)
+  // Note: Debts are excluded here - they have their own DebtList card
   const cashAssets = assets.filter((a) => a.type === 'cash');
+  const depositAssets = assets.filter((a) => a.type === 'deposit');
   const investmentAssets = assets.filter((a) =>
     ['stock', 'etf', 'bond', 'crypto'].includes(a.type)
   );
   const realEstateAssets = assets.filter((a) => a.type === 'real_estate');
-  const debtAssets = assets.filter((a) => a.type === 'debt');
   const otherAssets = assets.filter((a) => a.type === 'other');
 
   // Combine in display order, limit to maxItems
   const orderedAssets = [
     ...cashAssets,
+    ...depositAssets,
     ...investmentAssets,
     ...realEstateAssets,
     ...otherAssets,
-    ...debtAssets,
   ].slice(0, maxItems);
+
+  // Total asset count for "show more" indicator
+  const totalAssetCount = assets.length;
 
   const CARD_HEIGHT = '280px';
 
@@ -155,7 +145,21 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
   }
 
   return (
-    <Card title="Assets" contentHeight={CARD_HEIGHT}>
+    <Card
+      title="Assets"
+      contentHeight={CARD_HEIGHT}
+      action={
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setAddAssetDialogOpen(true)}
+          className="!px-1.5 !py-0.5"
+          title="Add asset"
+        >
+          <IconPlus size={12} />
+        </Button>
+      }
+    >
       <div className="h-full flex flex-col">
         {orderedAssets.length === 0 ? (
           <div
@@ -169,13 +173,13 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
             {/* Scrollable asset list */}
             <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
               {orderedAssets.map((asset) => {
-                const isDebt = asset.type === 'debt' || asset.balance < 0;
+                const isDeposit = asset.type === 'deposit';
                 const IconComponent = ASSET_ICONS[asset.type] || ASSET_ICONS.other;
-                const typeLabel =
-                  asset.ticker || ASSET_TYPE_LABELS[asset.type] || asset.type;
+                const typeLabel = asset.ticker || ASSET_TYPE_LABELS[asset.type] || asset.type;
                 const isAdjustable = ADJUSTABLE_TYPES.includes(asset.type);
                 const isShareBased = SHARE_BASED_TYPES.includes(asset.type);
-                const stockPrice = asset.ticker ? stockPrices[asset.ticker] : null;
+                const stockPrice = asset.ticker ? stockPrices[asset.ticker.toUpperCase()] : null;
+                const interestSettings = isDeposit ? interestSettingsMap[asset.id] : null;
 
                 return (
                   <div
@@ -199,6 +203,11 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
                           style={{ color: retro.muted }}
                         >
                           {typeLabel}
+                          {interestSettings && (
+                            <span style={{ color: retro.positive }}>
+                              {' '}{formatPercent(interestSettings.interest_rate * 100)} APY
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -210,7 +219,7 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
                             className="text-xs font-bold tabular-nums"
                             style={{ color: retro.text }}
                           >
-                            {formatCurrency(asset.balance * stockPrice.price, stockPrice.currency)}
+                            {formatCurrency(asset.balance * stockPrice.price, { currency: stockPrice.currency })}
                           </p>
                           <div className="flex items-center gap-1 text-[10px]">
                             <span style={{ color: retro.muted }}>
@@ -246,12 +255,27 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
                         </div>
                       ) : (
                         // Show currency amount for non-share assets
-                        <p
-                          className="text-xs font-bold tabular-nums"
-                          style={{ color: isDebt ? retro.negative : retro.text }}
-                        >
-                          {formatCurrency(asset.balance, asset.currency)}
-                        </p>
+                        <div className="text-right">
+                          <p
+                            className="text-xs font-bold tabular-nums"
+                            style={{ color: retro.text }}
+                          >
+                            {formatCurrency(asset.balance, { currency: asset.currency })}
+                          </p>
+                          {/* Show converted balance when available and different currency */}
+                          {(asset as AssetWithBalance).converted_balance !== undefined &&
+                           (asset as AssetWithBalance).converted_currency &&
+                           (asset as AssetWithBalance).converted_currency !== asset.currency && (
+                            <p
+                              className="text-[10px] tabular-nums"
+                              style={{ color: retro.muted }}
+                            >
+                              ≈ {formatCurrency((asset as AssetWithBalance).converted_balance!, {
+                                currency: (asset as AssetWithBalance).converted_currency!,
+                              })}
+                            </p>
+                          )}
+                        </div>
                       )}
                       {isAdjustable && (
                         <Button
@@ -270,12 +294,12 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
               })}
 
               {/* Show more indicator */}
-              {assets.length > maxItems && (
+              {totalAssetCount > maxItems && (
                 <p
                   className="text-[10px] text-center pt-1"
                   style={{ color: retro.muted }}
                 >
-                  +{assets.length - maxItems} more
+                  +{totalAssetCount - maxItems} more
                 </p>
               )}
             </div>
@@ -295,7 +319,7 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
                 className="text-sm font-bold tabular-nums"
                 style={{ color: retro.text }}
               >
-                {formatCurrency(totalValue, 'USD')}
+                {formatCurrency(totalValue)}
               </span>
             </div>
           </>
@@ -305,8 +329,18 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
       {/* Adjust Balance Dialog */}
       <AdjustBalanceDialog
         asset={selectedAsset}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={adjustDialogOpen}
+        onOpenChange={setAdjustDialogOpen}
+      />
+
+      {/* Add/Edit Asset Dialog */}
+      <AddAssetDialog
+        open={addAssetDialogOpen}
+        onOpenChange={(open) => {
+          setAddAssetDialogOpen(open);
+          if (!open) setEditAsset(null); // Clear edit asset when closing
+        }}
+        asset={editAsset}
       />
     </Card>
   );

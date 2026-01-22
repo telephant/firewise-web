@@ -1,0 +1,508 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { AddFlowDialog } from '@/components/fire/add-flow';
+import {
+  retro,
+  Button,
+  SidebarTrigger,
+  IconPlus,
+} from '@/components/fire/ui';
+import {
+  MonthSelector,
+  MoneyMovement,
+  TopIncomeSources,
+  FlowsTable,
+  FlowDetailDialog,
+  EditFlowDialog,
+  DeleteFlowDialog,
+  FlowsFilterBar,
+  FLOW_CATEGORIES,
+} from '@/components/fire/flows';
+import type { FlowCategory } from '@/components/fire/flows';
+import { useFlows, useAssets, useUserPreferences, useExpenseStats } from '@/hooks/fire/use-fire-data';
+import type { FlowWithDetails } from '@/types/fire';
+
+// Helper to get start/end dates for a month
+function getMonthDateRange(year: number, month: number) {
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0);
+  return {
+    start_date: startDate.toISOString().split('T')[0],
+    end_date: endDate.toISOString().split('T')[0],
+  };
+}
+
+// Passive income categories
+const PASSIVE_CATEGORIES = ['dividend', 'interest', 'rental', 'gift'];
+
+// Outflow destination categories
+const INVESTMENT_CATEGORIES = ['invest', 'reinvest'];
+const DEBT_CATEGORIES = ['pay_debt'];
+
+// Helper to get effective amount for stats (use converted amount when available)
+function getEffectiveAmount(flow: FlowWithDetails): number {
+  return flow.converted_amount ?? flow.amount;
+}
+
+const PAGE_SIZE = 20;
+
+export default function FlowsPage() {
+  const [isAddFlowOpen, setIsAddFlowOpen] = useState(false);
+  const [selectedFlow, setSelectedFlow] = useState<FlowWithDetails | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  // Current month state (for summary stats)
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState({
+    year: now.getFullYear(),
+    month: now.getMonth(),
+  });
+
+  // Table filter state
+  const [selectedCategories, setSelectedCategories] = useState<FlowCategory[]>([]);
+  const [tableStartDate, setTableStartDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 3); // Default to last 3 months
+    return d.toISOString().split('T')[0];
+  });
+  const [tableEndDate, setTableEndDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Get date range for selected month (for stats)
+  const statsDateRange = useMemo(
+    () => getMonthDateRange(selectedMonth.year, selectedMonth.month),
+    [selectedMonth]
+  );
+
+  // Fetch flows for stats (selected month)
+  const { flows: statsFlows, isLoading: statsLoading, mutate: mutateStats } = useFlows({
+    start_date: statsDateRange.start_date,
+    end_date: statsDateRange.end_date,
+    limit: 200,
+    exclude_category: 'adjustment',
+  });
+
+  // Fetch all flows for the table (with date range filter)
+  const { flows: allFlows, total: totalFlows, isLoading: tableLoading, mutate: mutateTable } = useFlows({
+    start_date: tableStartDate,
+    end_date: tableEndDate,
+    limit: 500, // Fetch more for client-side filtering
+    exclude_category: 'adjustment',
+  });
+
+  // Fetch expense stats for the selected month (includes linked ledger expenses)
+  const { stats: expenseStats, isLoading: expenseStatsLoading } = useExpenseStats({
+    year: selectedMonth.year,
+    month: selectedMonth.month + 1,
+  });
+
+  // Fetch assets for reference
+  const { assets } = useAssets();
+
+  // Get user preferences for currency
+  const { preferences } = useUserPreferences();
+
+  // Use preferred currency when conversion is enabled, otherwise USD
+  const displayCurrency = preferences?.convert_all_to_preferred
+    ? preferences.preferred_currency
+    : 'USD';
+
+  // Filter flows for table (client-side filtering for categories and search)
+  const filteredFlows = useMemo(() => {
+    if (!allFlows) return [];
+
+    return allFlows.filter((flow) => {
+      // Category filter
+      if (selectedCategories.length > 0) {
+        const flowCategory = flow.category || flow.type;
+        if (!selectedCategories.includes(flowCategory as FlowCategory)) {
+          return false;
+        }
+      }
+
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesCategory = flow.category?.toLowerCase().includes(query);
+        const matchesFrom = flow.from_asset?.name.toLowerCase().includes(query);
+        const matchesTo = flow.to_asset?.name.toLowerCase().includes(query);
+        const matchesDesc = flow.description?.toLowerCase().includes(query);
+        if (!matchesCategory && !matchesFrom && !matchesTo && !matchesDesc) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allFlows, selectedCategories, searchQuery]);
+
+  // Paginate filtered flows
+  const paginatedFlows = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredFlows.slice(start, start + PAGE_SIZE);
+  }, [filteredFlows, currentPage]);
+
+  const totalPages = Math.ceil(filteredFlows.length / PAGE_SIZE);
+
+  // Reset to page 1 when filters change
+  const handleCategoriesChange = (categories: FlowCategory[]) => {
+    setSelectedCategories(categories);
+    setCurrentPage(1);
+  };
+
+  const handleDateRangeChange = (start: string, end: string) => {
+    setTableStartDate(start);
+    setTableEndDate(end);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
+  // Calculate summary data from flows and expense stats
+  const summaryData = useMemo(() => {
+    const expenseStatsTotal = expenseStats?.current_month?.total ?? 0;
+
+    if (!statsFlows || statsFlows.length === 0) {
+      return {
+        sources: [],
+        destinations: expenseStatsTotal > 0 ? [{
+          name: 'Spent',
+          amount: expenseStatsTotal,
+          percentage: 100,
+        }] : [],
+        totalIn: 0,
+        totalSpent: expenseStatsTotal,
+        totalAllocated: 0,
+        topIncomeSources: [],
+        passiveTotal: 0,
+        activeTotal: 0,
+        assetActivity: [],
+        pendingReviewCount: 0,
+      };
+    }
+
+    const incomeByCategoryMap = new Map<
+      string,
+      { sources: Map<string, number>; total: number }
+    >();
+
+    let investmentTotal = 0;
+    let savingsTotal = 0;
+    let debtTotal = 0;
+
+    const assetActivityMap = new Map<
+      string,
+      { name: string; flowCount: number; totalIn: number; totalOut: number }
+    >();
+
+    let totalIn = 0;
+    let passiveTotal = 0;
+    let activeTotal = 0;
+
+    const sourceMap = new Map<string, { label: string; amount: number }>();
+
+    const formatCategoryLabel = (cat: string): string => {
+      const labels: Record<string, string> = {
+        dividend: 'Dividend',
+        salary: 'Salary',
+        bonus: 'Bonus',
+        freelance: 'Freelance',
+        rental: 'Rental',
+        interest: 'Interest',
+        gift: 'Gift',
+      };
+      return labels[cat] || cat.charAt(0).toUpperCase() + cat.slice(1);
+    };
+
+    // Filter out flows that need review - they shouldn't count in stats until reviewed
+    const reviewedFlows = statsFlows.filter((flow) => !flow.needs_review);
+
+    reviewedFlows.forEach((flow: FlowWithDetails) => {
+      const category = flow.category || flow.type;
+      const amount = getEffectiveAmount(flow);
+
+      if (flow.type === 'income') {
+        totalIn += amount;
+
+        const sourceName =
+          flow.from_asset?.name ||
+          ((flow.metadata as Record<string, unknown>)?.source_name as string) ||
+          '';
+
+        const key = `${category}:${sourceName}`;
+        const label = sourceName
+          ? `${formatCategoryLabel(category)} from ${sourceName}`
+          : formatCategoryLabel(category);
+
+        const existingSource = sourceMap.get(key);
+        if (existingSource) {
+          existingSource.amount += amount;
+        } else {
+          sourceMap.set(key, { label, amount });
+        }
+
+        const existingCategory = incomeByCategoryMap.get(category) || {
+          sources: new Map<string, number>(),
+          total: 0,
+        };
+        const currentAmount = existingCategory.sources.get(sourceName) || 0;
+        existingCategory.sources.set(sourceName, currentAmount + amount);
+        existingCategory.total += amount;
+        incomeByCategoryMap.set(category, existingCategory);
+
+        if (PASSIVE_CATEGORIES.includes(category)) {
+          passiveTotal += amount;
+        } else {
+          activeTotal += amount;
+        }
+      }
+
+      if (flow.type === 'expense' || flow.type === 'transfer') {
+        if (INVESTMENT_CATEGORIES.includes(category)) {
+          investmentTotal += amount;
+        } else if (DEBT_CATEGORIES.includes(category)) {
+          debtTotal += amount;
+        } else if (category === 'deposit') {
+          savingsTotal += amount;
+        }
+      }
+
+      if (flow.from_asset) {
+        const existing = assetActivityMap.get(flow.from_asset.id) || {
+          name: flow.from_asset.name,
+          flowCount: 0,
+          totalIn: 0,
+          totalOut: 0,
+        };
+        existing.flowCount += 1;
+        existing.totalOut += amount;
+        assetActivityMap.set(flow.from_asset.id, existing);
+      }
+
+      if (flow.to_asset) {
+        const existing = assetActivityMap.get(flow.to_asset.id) || {
+          name: flow.to_asset.name,
+          flowCount: 0,
+          totalIn: 0,
+          totalOut: 0,
+        };
+        existing.flowCount += 1;
+        existing.totalIn += amount;
+        assetActivityMap.set(flow.to_asset.id, existing);
+      }
+    });
+
+    const sources = Array.from(sourceMap.values())
+      .map(({ label, amount }) => ({ name: label, amount }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const topIncomeSources = Array.from(incomeByCategoryMap.entries())
+      .map(([category, data]) => ({
+        name: category,
+        amount: data.total,
+        category,
+        isPassive: PASSIVE_CATEGORIES.includes(category),
+        items: Array.from(data.sources.entries())
+          .map(([sourceName, sourceAmount]) => ({
+            name: sourceName,
+            amount: sourceAmount,
+          }))
+          .sort((a, b) => b.amount - a.amount),
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const allOutflows = investmentTotal + savingsTotal + debtTotal + expenseStatsTotal;
+    const destinations = [
+      {
+        name: 'Investments',
+        amount: investmentTotal,
+        percentage: allOutflows > 0 ? Math.round((investmentTotal / allOutflows) * 100) : 0,
+      },
+      {
+        name: 'Savings',
+        amount: savingsTotal,
+        percentage: allOutflows > 0 ? Math.round((savingsTotal / allOutflows) * 100) : 0,
+      },
+      {
+        name: 'Debt Payoff',
+        amount: debtTotal,
+        percentage: allOutflows > 0 ? Math.round((debtTotal / allOutflows) * 100) : 0,
+      },
+      {
+        name: 'Spent',
+        amount: expenseStatsTotal,
+        percentage: allOutflows > 0 ? Math.round((expenseStatsTotal / allOutflows) * 100) : 0,
+      },
+    ].filter((d) => d.amount > 0);
+
+    const assetActivity = Array.from(assetActivityMap.values())
+      .sort((a, b) => b.flowCount - a.flowCount)
+      .slice(0, 5);
+
+    const totalSpent = expenseStatsTotal;
+    const totalAllocated = investmentTotal + savingsTotal + debtTotal;
+    const pendingReviewCount = statsFlows.filter((flow) => flow.needs_review).length;
+
+    return {
+      sources,
+      destinations,
+      totalIn,
+      totalSpent,
+      totalAllocated,
+      topIncomeSources,
+      passiveTotal,
+      activeTotal,
+      assetActivity,
+      pendingReviewCount,
+    };
+  }, [statsFlows, expenseStats]);
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <header
+        className="flex items-center justify-between px-3 py-2"
+        style={{
+          backgroundColor: 'transparent',
+          borderBottom: `2px solid ${retro.border}`,
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <SidebarTrigger />
+          <h1 className="text-sm font-bold" style={{ color: retro.text }}>
+            Flows
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <MonthSelector value={selectedMonth} onChange={setSelectedMonth} />
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => setIsAddFlowOpen(true)}
+            className="gap-1.5"
+          >
+            <IconPlus size={12} />
+            <span>Add Flow</span>
+          </Button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto p-4">
+        <div className="max-w-5xl mx-auto space-y-4">
+          {/* Money Movement */}
+          <MoneyMovement
+            sources={summaryData.sources}
+            destinations={summaryData.destinations}
+            totalIn={summaryData.totalIn}
+            totalSpent={summaryData.totalSpent}
+            totalAllocated={summaryData.totalAllocated}
+            currency={displayCurrency}
+            isLoading={statsLoading || expenseStatsLoading}
+            pendingReviewCount={summaryData.pendingReviewCount}
+          />
+
+          {/* Top Income Sources */}
+          <TopIncomeSources
+            sources={summaryData.topIncomeSources}
+            passiveTotal={summaryData.passiveTotal}
+            activeTotal={summaryData.activeTotal}
+            currency={displayCurrency}
+            isLoading={statsLoading}
+          />
+
+          {/* Flows Table Section */}
+          <div>
+            <h2
+              className="text-sm font-bold mb-3"
+              style={{ color: retro.text }}
+            >
+              All Flows
+            </h2>
+
+            {/* Filter Bar */}
+            <FlowsFilterBar
+              selectedCategories={selectedCategories}
+              onCategoriesChange={handleCategoriesChange}
+              startDate={tableStartDate}
+              endDate={tableEndDate}
+              onDateRangeChange={handleDateRangeChange}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+            />
+
+            {/* Table */}
+            <FlowsTable
+              flows={paginatedFlows}
+              isLoading={tableLoading}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalCount={filteredFlows.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+              onRowClick={(flow) => {
+                setSelectedFlow(flow);
+                setIsDetailOpen(true);
+              }}
+              onEdit={(flow) => {
+                setSelectedFlow(flow);
+                setIsEditOpen(true);
+              }}
+              onDelete={(flow) => {
+                setSelectedFlow(flow);
+                setIsDeleteOpen(true);
+              }}
+            />
+          </div>
+        </div>
+      </main>
+
+      {/* Add Flow Dialog */}
+      <AddFlowDialog open={isAddFlowOpen} onOpenChange={setIsAddFlowOpen} />
+
+      {/* Flow Detail Dialog */}
+      <FlowDetailDialog
+        flow={selectedFlow}
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        onEdit={(flow) => {
+          setIsDetailOpen(false);
+          setSelectedFlow(flow);
+          setIsEditOpen(true);
+        }}
+        onDelete={(flow) => {
+          setIsDetailOpen(false);
+          setSelectedFlow(flow);
+          setIsDeleteOpen(true);
+        }}
+      />
+
+      {/* Edit Flow Dialog */}
+      <EditFlowDialog
+        flow={selectedFlow}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+      />
+
+      {/* Delete Flow Dialog */}
+      <DeleteFlowDialog
+        flow={selectedFlow}
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        onDeleted={() => {
+          mutateStats();
+          mutateTable();
+        }}
+      />
+    </div>
+  );
+}

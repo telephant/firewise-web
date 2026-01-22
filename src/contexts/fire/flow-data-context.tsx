@@ -1,10 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useCallback } from 'react';
+import { toast } from 'sonner';
 import {
   useAssets,
-  useFlows,
-  useFlowStats,
   useExpenseCategories,
   useLinkedLedgers,
   mutateAssets,
@@ -12,12 +11,10 @@ import {
   mutateStats,
   mutateExpenseCategories,
   mutateLinkedLedgers,
+  mutateExpenseStats,
 } from '@/hooks/fire';
 import { flowApi, assetApi, fireLinkedLedgerApi, flowExpenseCategoryApi } from '@/lib/fire/api';
 import type {
-  FlowWithDetails,
-  FlowFilters,
-  FlowStats,
   Asset,
   CreateFlowData,
   UpdateFlowData,
@@ -26,23 +23,16 @@ import type {
   FlowExpenseCategory,
 } from '@/types/fire';
 
+// Context provides mutations and shared data (assets, categories, linked ledgers)
+// Components should use useFlows/useFlowStats hooks directly with their own filters
+// SWR handles caching per unique filter combination
 interface FlowDataContextValue {
-  // Flows
-  flows: FlowWithDetails[];
-  flowsTotal: number;
-  flowsLoading: boolean;
-  flowsError: string | null;
-  refetchFlows: () => Promise<void>;
+  // Flow mutations (data fetched via useFlows hook directly in components)
   createFlow: (data: CreateFlowData) => Promise<boolean>;
   updateFlow: (id: string, data: UpdateFlowData) => Promise<boolean>;
   deleteFlow: (id: string) => Promise<boolean>;
 
-  // Stats
-  stats: FlowStats | null;
-  statsLoading: boolean;
-  refetchStats: () => Promise<void>;
-
-  // Assets
+  // Assets (shared across components)
   assets: Asset[];
   assetsLoading: boolean;
   refetchAssets: () => Promise<void>;
@@ -64,26 +54,13 @@ interface FlowDataContextValue {
 const FlowDataContext = createContext<FlowDataContextValue | undefined>(undefined);
 
 export function FlowDataProvider({ children }: { children: React.ReactNode }) {
-  // SWR hooks for data fetching
+  // SWR hooks for shared data (assets, categories, linked ledgers)
+  // Flows and stats are fetched directly by components with their own filters
   const {
     assets,
     isLoading: assetsLoading,
     mutate: refetchAssets,
   } = useAssets();
-
-  const {
-    flows,
-    total: flowsTotal,
-    isLoading: flowsLoading,
-    error: flowsError,
-    mutate: refetchFlows,
-  } = useFlows();
-
-  const {
-    stats,
-    isLoading: statsLoading,
-    mutate: refetchStats,
-  } = useFlowStats();
 
   const {
     categories: expenseCategories,
@@ -102,12 +79,16 @@ export function FlowDataProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await flowApi.create(data);
       if (response.success) {
-        // Revalidate related data
+        // Revalidate all flow-related caches (SWR will refetch each unique key)
         await Promise.all([
           mutateFlows(),
           mutateStats(),
-          data.from_asset_id || data.to_asset_id ? mutateAssets() : Promise.resolve(),
+          mutateExpenseStats(),
         ]);
+        // Remind user to adjust account balance if flow involves assets
+        if (data.from_asset_id || data.to_asset_id) {
+          toast.info('Remember to adjust your account balance if needed', { duration: 4000 });
+        }
         return true;
       }
       return false;
@@ -121,7 +102,11 @@ export function FlowDataProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await flowApi.update(id, data);
       if (response.success) {
-        await Promise.all([mutateFlows(), mutateStats(), mutateAssets()]);
+        await Promise.all([mutateFlows(), mutateStats(), mutateExpenseStats()]);
+        // Remind user to adjust account balance if flow involves assets
+        if (data.from_asset_id || data.to_asset_id) {
+          toast.info('Remember to adjust your account balance if needed', { duration: 4000 });
+        }
         return true;
       }
       return false;
@@ -135,7 +120,8 @@ export function FlowDataProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await flowApi.delete(id);
       if (response.success) {
-        await Promise.all([mutateFlows(), mutateStats(), mutateAssets()]);
+        await Promise.all([mutateFlows(), mutateStats(), mutateExpenseStats()]);
+        toast.info('Remember to adjust your account balance if needed', { duration: 4000 });
         return true;
       }
       return false;
@@ -187,17 +173,9 @@ export function FlowDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value: FlowDataContextValue = {
-    flows,
-    flowsTotal,
-    flowsLoading,
-    flowsError,
-    refetchFlows,
     createFlow,
     updateFlow,
     deleteFlow,
-    stats,
-    statsLoading,
-    refetchStats,
     assets,
     assetsLoading,
     refetchAssets,

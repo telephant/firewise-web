@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useFlowData } from '@/contexts/fire/flow-data-context';
 import {
   retro,
@@ -22,7 +22,6 @@ export function ExpenseCategorySelector({ value, onChange }: ExpenseCategorySele
   const {
     expenseCategories: categories,
     expenseCategoriesLoading: loading,
-    refetchExpenseCategories,
     createExpenseCategory,
   } = useFlowData();
 
@@ -31,10 +30,8 @@ export function ExpenseCategorySelector({ value, onChange }: ExpenseCategorySele
   const [creating, setCreating] = useState(false);
   const [categoryNameError, setCategoryNameError] = useState<string | undefined>();
 
-  // Load categories on mount (uses cache from context)
-  useEffect(() => {
-    refetchExpenseCategories();
-  }, [refetchExpenseCategories]);
+  // Categories are fetched by FlowDataProvider's useExpenseCategories hook via SWR
+  // No need for useEffect to refetch - SWR handles initial fetch and caching
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {

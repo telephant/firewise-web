@@ -11,15 +11,15 @@ import {
   IconChart,
   IconTransfer,
   IconPlus,
+  IconBank,
 } from '@/components/fire/ui';
 import {
-  NetWorthCard,
-  FireProgressCard,
-  AssetList,
-  FlowList,
-  ExpenseCard,
-  StatsRow,
+  CoreMetricsRow,
+  HumanInsightCard,
+  MonthlySnapshotCard,
+  RunwayCard,
 } from '@/components/fire/dashboard';
+import { useUserPreferences } from '@/hooks/fire/use-fire-data';
 
 // Quick action buttons for common flows
 const QUICK_ACTIONS = [
@@ -27,12 +27,22 @@ const QUICK_ACTIONS = [
   { id: 'expense', label: 'Spent', Icon: IconArrow, rotate: 90 },
   { id: 'invest', label: 'Invested', Icon: IconChart, rotate: 0 },
   { id: 'transfer', label: 'Transferred', Icon: IconTransfer, rotate: 0 },
+  { id: 'deposit', label: 'Deposit', Icon: IconBank, rotate: 0 },
+  { id: 'interest', label: 'Interest', Icon: IconDollar, rotate: 0 },
 ];
 
 export default function FireDashboardPage() {
   const [isAddFlowOpen, setIsAddFlowOpen] = useState(false);
   const [initialCategory, setInitialCategory] = useState<string | undefined>();
   const [currentDate, setCurrentDate] = useState<string>('');
+
+  // Get user preferences for currency
+  const { preferences } = useUserPreferences();
+
+  // Use preferred currency when conversion is enabled, otherwise USD
+  const displayCurrency = preferences?.convert_all_to_preferred
+    ? preferences.preferred_currency
+    : 'USD';
 
   // Set date on client side only to avoid hydration mismatch
   useEffect(() => {
@@ -105,24 +115,20 @@ export default function FireDashboardPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          Main Content - All components fetch their own data via SWR
+          Main Content - Simplified Dashboard
       ═══════════════════════════════════════════════════════════════ */}
       <main className="flex-1 overflow-auto p-4">
-        <div className="max-w-5xl mx-auto space-y-4">
-          {/* ROW 1: Hero Cards (Net Worth + FIRE Progress) */}
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* ROW 1: Core Metrics (Net Worth, Flow Freedom %, Runway) */}
+          <CoreMetricsRow currency={displayCurrency} />
+
+          {/* ROW 2: Human Insight */}
+          <HumanInsightCard currency={displayCurrency} />
+
+          {/* ROW 3: Monthly Snapshot + Runway Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <NetWorthCard />
-            <FireProgressCard />
-          </div>
-
-          {/* ROW 2: Quick Stats (4 metrics) */}
-          <StatsRow />
-
-          {/* ROW 3: Details (Assets + Expenses + Recent Flows) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <AssetList />
-            <ExpenseCard />
-            <FlowList />
+            <MonthlySnapshotCard currency={displayCurrency} />
+            <RunwayCard currency={displayCurrency} />
           </div>
         </div>
       </main>

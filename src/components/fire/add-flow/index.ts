@@ -7,8 +7,12 @@ export { CategorySelector } from './category-selector';
 // Flow type forms
 export { InvestFlowForm } from './invest-flow-form';
 export { IncomeFlowForm } from './income-flow-form';
+export { DividendFlowForm } from './dividend-flow-form';
+export { InterestFlowForm } from './interest-flow-form';
+export { DepositFlowForm } from './deposit-flow-form';
 export { TransferFlowForm } from './transfer-flow-form';
 export { ExpenseFlowForm } from './expense-flow-form';
+export { DebtFlowForm } from './debt-flow-form';
 export { FlowFormFields } from './flow-form-fields';
 export { FormActions } from './form-actions';
 

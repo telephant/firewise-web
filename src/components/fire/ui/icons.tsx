@@ -11,7 +11,19 @@ interface IconProps {
 export function IconDollar({ size = 16, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
-      <path d="M7 1h2v2h2v2h-2v2h2v2h-2v2h-2v2h2v2H7v-2H5v-2h2V9H5V7h2V5H5V3h2V1z" />
+      {/* Clean pixel-art dollar sign $ */}
+      {/* Vertical line through center */}
+      <rect x="7" y="1" width="2" height="14" />
+      {/* Top of S: horizontal bar */}
+      <rect x="4" y="3" width="8" height="2" />
+      {/* Top left curve */}
+      <rect x="4" y="5" width="2" height="2" />
+      {/* Middle bar */}
+      <rect x="5" y="7" width="6" height="2" />
+      {/* Bottom right curve */}
+      <rect x="10" y="9" width="2" height="2" />
+      {/* Bottom of S: horizontal bar */}
+      <rect x="4" y="11" width="8" height="2" />
     </svg>
   );
 }
@@ -28,10 +40,16 @@ export function IconCoin({ size = 16, className }: IconProps) {
 export function IconTransfer({ size = 16, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
-      <path d="M1 4h10v2h2v2h-2V6H1V4z" />
-      <path d="M11 3h2v2h-2V3zM13 5h2v2h-2V5z" />
-      <path d="M5 10h10v2H5v-2z" />
-      <path d="M3 9h2v2H3V9zM1 11h2v2H1v-2z" />
+      {/* Top arrow pointing right → */}
+      <rect x="1" y="3" width="10" height="2" />
+      <rect x="9" y="1" width="2" height="2" />
+      <rect x="11" y="3" width="2" height="2" />
+      <rect x="9" y="5" width="2" height="2" />
+      {/* Bottom arrow pointing left ← */}
+      <rect x="5" y="11" width="10" height="2" />
+      <rect x="5" y="9" width="2" height="2" />
+      <rect x="3" y="11" width="2" height="2" />
+      <rect x="5" y="13" width="2" height="2" />
     </svg>
   );
 }
@@ -240,6 +258,139 @@ export function IconEdit({ size = 16, className }: IconProps) {
       <path d="M4 10l6-6 2 2-6 6-2-2z" />
       {/* Pencil top */}
       <path d="M11 3l2-2 2 2-2 2-2-2z" />
+    </svg>
+  );
+}
+
+export function IconCheck({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      <path d="M13.5 4.5l-7 7-4-4 1.5-1.5 2.5 2.5 5.5-5.5 1.5 1.5z" />
+    </svg>
+  );
+}
+
+export function IconTrash({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      {/* Lid handle */}
+      <rect x="6" y="1" width="4" height="2" />
+      {/* Lid */}
+      <rect x="2" y="3" width="12" height="2" />
+      {/* Bin body outline */}
+      <path d="M3 6h2v8H3V6z" />
+      <path d="M11 6h2v8h-2V6z" />
+      <path d="M5 13h6v1H5v-1z" />
+      {/* Bin ridges */}
+      <rect x="6" y="6" width="1" height="7" />
+      <rect x="9" y="6" width="1" height="7" />
+    </svg>
+  );
+}
+
+export function IconBell({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      <path d="M8 1.5c-.7 0-1.3.6-1.3 1.3v.5C4.5 4 3 6.1 3 8.5v3l-1 2h12l-1-2v-3c0-2.4-1.5-4.5-3.7-5.2v-.5c0-.7-.6-1.3-1.3-1.3zM8 15c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2z" />
+    </svg>
+  );
+}
+
+export function IconSettings({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      {/* Gear with center hole */}
+      {/* Cardinal teeth */}
+      <rect x="7" y="1" width="2" height="3" />
+      <rect x="12" y="7" width="3" height="2" />
+      <rect x="7" y="12" width="2" height="3" />
+      <rect x="1" y="7" width="3" height="2" />
+      {/* Diagonal teeth */}
+      <rect x="11" y="4" width="2" height="2" />
+      <rect x="11" y="10" width="2" height="2" />
+      <rect x="3" y="10" width="2" height="2" />
+      <rect x="3" y="4" width="2" height="2" />
+      {/* Ring body - top and bottom */}
+      <rect x="5" y="4" width="6" height="2" />
+      <rect x="5" y="10" width="6" height="2" />
+      {/* Ring body - left and right */}
+      <rect x="4" y="5" width="2" height="6" />
+      <rect x="10" y="5" width="2" height="6" />
+    </svg>
+  );
+}
+
+export function IconRepeat({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      {/* Refresh/cycle icon - two curved arrows */}
+      {/* Top arc with arrow pointing right */}
+      <rect x="4" y="2" width="6" height="2" />
+      <rect x="2" y="4" width="2" height="4" />
+      <rect x="10" y="0" width="2" height="2" />
+      <rect x="12" y="2" width="2" height="2" />
+      <rect x="10" y="4" width="2" height="2" />
+      {/* Bottom arc with arrow pointing left */}
+      <rect x="6" y="12" width="6" height="2" />
+      <rect x="12" y="8" width="2" height="4" />
+      <rect x="4" y="10" width="2" height="2" />
+      <rect x="2" y="12" width="2" height="2" />
+      <rect x="4" y="14" width="2" height="2" />
+    </svg>
+  );
+}
+
+export function IconPause({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      {/* Two vertical bars */}
+      <rect x="3" y="2" width="4" height="12" />
+      <rect x="9" y="2" width="4" height="12" />
+    </svg>
+  );
+}
+
+export function IconPlay({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      {/* Play triangle pointing right */}
+      <path d="M4 2v12l10-6L4 2z" />
+    </svg>
+  );
+}
+
+export function IconUpload({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      {/* Arrow pointing up */}
+      <rect x="7" y="2" width="2" height="8" />
+      <rect x="5" y="4" width="2" height="2" />
+      <rect x="9" y="4" width="2" height="2" />
+      <rect x="3" y="6" width="2" height="2" />
+      <rect x="11" y="6" width="2" height="2" />
+      {/* Base line */}
+      <rect x="2" y="12" width="12" height="2" />
+    </svg>
+  );
+}
+
+export function IconWarning({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      {/* Triangle warning shape */}
+      <path d="M8 1l7 13H1L8 1zm0 3l-4 8h8L8 4z" />
+      {/* Exclamation mark */}
+      <rect x="7" y="6" width="2" height="3" />
+      <rect x="7" y="10" width="2" height="2" />
+    </svg>
+  );
+}
+
+export function IconX({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+      {/* X shape */}
+      <path d="M3 3l2 2 3 3 3-3 2-2 2 2-2 2-3 3 3 3 2 2-2 2-2-2-3-3-3 3-2 2-2-2 2-2 3-3-3-3-2-2 2-2z" />
     </svg>
   );
 }

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { retro } from './theme';
 import { cn } from '@/lib/utils';
 
-type ButtonVariant = 'default' | 'primary' | 'ghost' | 'outline';
+type ButtonVariant = 'default' | 'primary' | 'danger' | 'ghost' | 'outline';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps
@@ -50,6 +50,28 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       );
     }
 
+    // Danger: red destructive action button
+    if (variant === 'danger') {
+      return (
+        <button
+          className={cn(baseClasses, disabledClasses, sizeClasses[size], className)}
+          style={{
+            color: '#ffffff',
+            backgroundColor: retro.negative,
+            border: `2px solid ${retro.border}`,
+            boxShadow: disabled
+              ? 'none'
+              : `inset -1px -1px 0 rgba(0,0,0,0.3), inset 1px 1px 0 rgba(255,255,255,0.4), 2px 2px 0 ${retro.bevelDark}`,
+          }}
+          disabled={disabled}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+    }
+
     // Ghost: minimal, no background
     if (variant === 'ghost') {
       return (
@@ -74,7 +96,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       );
     }
 
-    // Outline: bordered but not raised
+    // Outline: retro 3D raised button (secondary action)
     if (variant === 'outline') {
       return (
         <button
@@ -82,8 +104,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           style={{
             color: retro.text,
             backgroundColor: retro.surface,
-            border: `1px solid ${retro.bevelMid}`,
-            boxShadow: disabled ? 'none' : `1px 1px 0 ${retro.bevelDark}`,
+            border: `2px solid ${retro.border}`,
+            boxShadow: disabled
+              ? 'none'
+              : `inset -1px -1px 0 ${retro.bevelDark}, inset 1px 1px 0 ${retro.bevelLight}, 2px 2px 0 ${retro.bevelDark}`,
           }}
           disabled={disabled}
           ref={ref}

@@ -254,11 +254,13 @@ export const statsApi = {
     params?: {
       currency_id?: string;
       months?: number;
+      category_id?: string;
     }
   ) => {
     const searchParams = new URLSearchParams();
     if (params?.currency_id) searchParams.set('currency_id', params.currency_id);
     if (params?.months) searchParams.set('months', params.months.toString());
+    if (params?.category_id) searchParams.set('category_id', params.category_id);
 
     const query = searchParams.toString();
     return fetchApi<MonthlyStats>(`/ledgers/${ledgerId}/stats/monthly${query ? `?${query}` : ''}`);

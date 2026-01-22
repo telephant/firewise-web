@@ -9,35 +9,18 @@ import {
   IconTriangleDown,
 } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
-import { useAssets, useFlowStats } from '@/hooks/fire/use-fire-data';
+import { useNetWorthStats, useFlowStats } from '@/hooks/fire/use-fire-data';
 
 interface NetWorthCardProps {
   currency?: string;
 }
 
-export function NetWorthCard({ currency = 'USD' }: NetWorthCardProps) {
-  // Use SWR hooks for data fetching
-  const { assets, isLoading: assetsLoading } = useAssets();
+export function NetWorthCard({ currency: _currency }: NetWorthCardProps) {
+  // Use dedicated net worth stats API (handles all currency conversion server-side)
+  const { netWorth, totalAssets, totalDebts, currency, isLoading: netWorthLoading } = useNetWorthStats();
   const { stats, isLoading: statsLoading } = useFlowStats();
 
-  const isLoading = assetsLoading || statsLoading;
-
-  // Calculate totals from assets
-  const { netWorth, totalAssets, totalDebts } = useMemo(() => {
-    const totalAssets = assets.reduce(
-      (sum, a) => sum + (a.balance > 0 ? a.balance : 0),
-      0
-    );
-    const totalDebts = assets.reduce(
-      (sum, a) => sum + (a.balance < 0 ? Math.abs(a.balance) : 0),
-      0
-    );
-    return {
-      netWorth: totalAssets - totalDebts,
-      totalAssets,
-      totalDebts,
-    };
-  }, [assets]);
+  const isLoading = netWorthLoading || statsLoading;
 
   // Calculate monthly cashflow
   const monthlyChange = useMemo(() => {
@@ -48,7 +31,7 @@ export function NetWorthCard({ currency = 'USD' }: NetWorthCardProps) {
   const changeDirection = monthlyChange ? (monthlyChange >= 0 ? 'up' : 'down') : null;
   const changeColor = changeDirection === 'up' ? retro.positive : retro.negative;
   const ChangeIcon = changeDirection === 'up' ? IconTriangleUp : IconTriangleDown;
-  const CARD_HEIGHT = '200px';
+  const CARD_HEIGHT = '160px';
 
   if (isLoading) {
     return (

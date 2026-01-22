@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
   retro,
   Button,
@@ -15,6 +15,7 @@ import {
 } from '@/components/fire/ui';
 import { useFlowData } from '@/contexts/fire/flow-data-context';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/fire/utils';
 
 interface Asset {
   id: string;
@@ -35,16 +36,34 @@ export function AdjustBalanceDialog({
   open,
   onOpenChange,
 }: AdjustBalanceDialogProps) {
-  const { createFlow } = useFlowData();
+  const { createFlow, refetchAssets } = useFlowData();
   const [newBalance, setNewBalance] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Reset form when dialog opens
-  useEffect(() => {
-    if (open && asset) {
-      setNewBalance(asset.balance.toString());
+  // Track previous open state to detect transitions
+  const prevOpenRef = useRef(open);
+  const initializedAssetIdRef = useRef<string | null>(null);
+
+  // Handle open/close transitions - replaces useEffect
+  const handleOpenChange = (newOpen: boolean) => {
+    const wasOpen = prevOpenRef.current;
+    prevOpenRef.current = newOpen;
+
+    if (!wasOpen && newOpen && asset) {
+      // Dialog just opened - initialize from asset
+      if (asset.id !== initializedAssetIdRef.current) {
+        setNewBalance(asset.balance.toString());
+        initializedAssetIdRef.current = asset.id;
+      }
+    } else if (wasOpen && !newOpen) {
+      // Dialog closed - reset
+      setNewBalance('');
+      setLoading(false);
+      initializedAssetIdRef.current = null;
     }
-  }, [open, asset]);
+
+    onOpenChange(newOpen);
+  };
 
   if (!asset) return null;
 
@@ -64,15 +83,14 @@ export function AdjustBalanceDialog({
 
     try {
       // Create adjustment flow
-      // Positive difference = income (money coming in)
-      // Negative difference = expense (money going out)
+      // Positive difference = income, Negative difference = expense
       const flowData = {
-        type: difference > 0 ? 'income' : 'expense',
+        type: difference > 0 ? ('income' as const) : ('expense' as const),
         amount: Math.abs(difference),
         currency: asset.currency,
         from_asset_id: difference < 0 ? asset.id : undefined,
         to_asset_id: difference > 0 ? asset.id : undefined,
-        category: 'adjustment',
+        category: 'other',
         date: new Date().toISOString().split('T')[0],
         description: `Balance adjustment for ${asset.name}`,
       };
@@ -80,6 +98,13 @@ export function AdjustBalanceDialog({
       const success = await createFlow(flowData as Parameters<typeof createFlow>[0]);
 
       if (success) {
+        // Update asset balance
+        const { assetApi } = await import('@/lib/fire/api');
+        await assetApi.update(asset.id, { balance: targetBalance });
+
+        // Refresh assets list
+        await refetchAssets();
+
         toast.success('Balance adjusted');
         onOpenChange(false);
       } else {
@@ -92,17 +117,10 @@ export function AdjustBalanceDialog({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: asset.currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
+  const formatAmount = (amount: number) => formatCurrency(amount, { currency: asset.currency });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Adjust Balance</DialogTitle>
@@ -115,7 +133,7 @@ export function AdjustBalanceDialog({
                 {asset.name}
               </p>
               <p className="text-[10px]" style={{ color: retro.muted }}>
-                Current balance: {formatCurrency(currentBalance)}
+                Current balance: {formatAmount(currentBalance)}
               </p>
             </div>
 
@@ -137,7 +155,7 @@ export function AdjustBalanceDialog({
                 }}
               >
                 {difference > 0 ? '+ ' : ''}
-                {formatCurrency(difference)} adjustment
+                {formatAmount(difference)} adjustment
               </div>
             )}
 

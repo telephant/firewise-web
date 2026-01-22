@@ -1,8 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import type { AssetType } from '@/types/fire';
 import { retroStyles, Button, Input, Select } from '@/components/fire/ui';
+
+// Placeholder examples based on asset type
+const ASSET_NAME_PLACEHOLDERS: Record<AssetType, string> = {
+  cash: 'e.g. Chase Checking',
+  stock: 'e.g. Apple Inc.',
+  etf: 'e.g. Vanguard S&P 500',
+  bond: 'e.g. Treasury Bond',
+  crypto: 'e.g. Bitcoin',
+  deposit: 'e.g. Chase Savings',
+  real_estate: 'e.g. Primary Home',
+  other: 'e.g. Gold, Art',
+};
 
 interface NewAssetFormProps {
   name: string;
@@ -38,12 +50,23 @@ export function NewAssetForm({
     ? assetTypeOptions.filter((opt) => suggestedTypes.includes(opt.value as AssetType))
     : assetTypeOptions;
 
-  // Set default type to first suggested type
-  useEffect(() => {
+  // Track previous suggested types to detect changes
+  const prevSuggestedTypesRef = useRef<AssetType[] | undefined>(undefined);
+
+  // Set default type to first suggested type when suggestedTypes changes
+  // This happens during render, not in useEffect
+  if (suggestedTypes !== prevSuggestedTypesRef.current) {
+    prevSuggestedTypesRef.current = suggestedTypes;
     if (suggestedTypes && suggestedTypes.length > 0 && !suggestedTypes.includes(type)) {
-      setType(suggestedTypes[0]);
+      // Schedule the update after render to avoid setState during render
+      queueMicrotask(() => setType(suggestedTypes[0]));
     }
-  }, [suggestedTypes, type, setType]);
+  }
+
+  // Get placeholder based on current asset type
+  const namePlaceholder = useMemo(() => {
+    return ASSET_NAME_PLACEHOLDERS[type] || 'Enter asset name';
+  }, [type]);
 
   return (
     <div
@@ -52,7 +75,7 @@ export function NewAssetForm({
     >
       <Input
         label="Asset Name"
-        placeholder="e.g., Chase Checking, AAPL"
+        placeholder={namePlaceholder}
         value={name}
         onChange={(e) => setName(e.target.value)}
         onBlur={() => setTouched(true)}

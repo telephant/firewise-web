@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import useSWR from 'swr';
 import {
   retro,
+  retroStyles,
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -13,33 +16,85 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  IconHome,
+  IconTransfer,
+  IconChart,
+  IconBell,
+  IconArrow,
+  IconSettings,
+  IconRepeat,
+  IconDebt,
 } from '@/components/fire/ui';
+import { TaxSettingsDialog } from '@/components/fire/tax-settings-dialog';
+import { CurrencyPreferencesDialog } from '@/components/fire/currency-preferences-dialog';
+import { flowApi } from '@/lib/fire/api';
 
 const navItems = [
   {
     title: 'Dashboard',
     href: '/fire',
+    icon: IconHome,
   },
   {
     title: 'Flows',
     href: '/fire/flows',
+    icon: IconTransfer,
+  },
+  {
+    title: 'Recurring',
+    href: '/fire/recurring',
+    icon: IconRepeat,
   },
   {
     title: 'Assets',
     href: '/fire/assets',
+    icon: IconChart,
+  },
+  {
+    title: 'Debts',
+    href: '/fire/debts',
+    icon: IconDebt,
+  },
+  {
+    title: 'Review',
+    href: '/fire/review',
+    icon: IconBell,
+    showBadge: true,
   },
 ];
 
 export function FireSidebar() {
   const pathname = usePathname();
+  const [taxSettingsOpen, setTaxSettingsOpen] = useState(false);
+  const [currencySettingsOpen, setCurrencySettingsOpen] = useState(false);
+  const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
+
+  // Fetch review count for badge
+  const { data: reviewCount } = useSWR(
+    '/fire/flows/review-count',
+    async () => {
+      const res = await flowApi.getReviewCount();
+      return res.success ? res.data?.count || 0 : 0;
+    },
+    {
+      refreshInterval: 60000, // Refresh every minute
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+    }
+  );
 
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/fire" className="flex items-center gap-2">
-          <span className="text-lg font-medium" style={{ color: retro.text }}>
-            FIRE
-          </span>
+        <Link href="/fire" className="flex items-center gap-2 px-1">
+          <div>
+            <span className="text-base font-bold tracking-tight" style={{ color: retro.text }}>
+              FIRE
+            </span>
+            <span className="block text-[10px] -mt-0.5" style={{ color: retro.muted }}>
+              Financial Independence
+            </span>
+          </div>
         </Link>
       </SidebarHeader>
 
@@ -49,11 +104,27 @@ export function FireSidebar() {
             <SidebarMenu>
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
+                const badgeCount = item.showBadge && reviewCount ? reviewCount : 0;
+                const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.href}>
-                        <span>{item.title}</span>
+                      <Link href={item.href} className="flex items-center justify-between w-full">
+                        <span className="flex items-center gap-2">
+                          <Icon size={16} />
+                          <span>{item.title}</span>
+                        </span>
+                        {badgeCount > 0 && (
+                          <span
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
+                            style={{
+                              backgroundColor: retro.warning,
+                              color: retro.text,
+                            }}
+                          >
+                            {badgeCount}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -62,17 +133,67 @@ export function FireSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Settings section */}
+        <SidebarGroup>
+          <div className="px-2 pt-2" style={{ borderTop: `1px solid ${retro.border}` }}>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => setSettingsMenuOpen(!settingsMenuOpen)}>
+                  <span className="flex items-center gap-2">
+                    <IconSettings size={16} />
+                    <span>Settings</span>
+                  </span>
+                  <span
+                    className="text-[10px] ml-auto transition-transform"
+                    style={{
+                      color: retro.muted,
+                      transform: settingsMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                    }}
+                  >
+                    ▶
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {settingsMenuOpen && (
+                <>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setCurrencySettingsOpen(true)} className="pl-6">
+                      <span className="text-xs">Currency</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setTaxSettingsOpen(true)} className="pl-6">
+                      <span className="text-xs">Tax Rates</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
+              )}
+            </SidebarMenu>
+          </div>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
-        <Link
-          href="/dashboard"
-          className="text-sm transition-colors"
-          style={{ color: retro.muted }}
+        <div
+          className="rounded-sm p-2"
+          style={{
+            ...retroStyles.sunken,
+          }}
         >
-          Expense Tracker →
-        </Link>
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-between text-xs transition-colors hover:opacity-80"
+            style={{ color: retro.muted }}
+          >
+            <span>Expense Tracker</span>
+            <IconArrow size={12} />
+          </Link>
+        </div>
       </SidebarFooter>
+
+      <TaxSettingsDialog open={taxSettingsOpen} onOpenChange={setTaxSettingsOpen} />
+      <CurrencyPreferencesDialog open={currencySettingsOpen} onOpenChange={setCurrencySettingsOpen} />
     </Sidebar>
   );
 }

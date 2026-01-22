@@ -23,7 +23,7 @@ export function SidebarProvider({ children, ...props }: React.ComponentProps<typ
   return <BaseSidebarProvider {...props}>{children}</BaseSidebarProvider>;
 }
 
-export function Sidebar({ children, style, ...props }: React.ComponentProps<typeof BaseSidebar>) {
+export function Sidebar({ children, style, className, ...props }: React.ComponentProps<typeof BaseSidebar>) {
   return (
     <BaseSidebar
       style={{
@@ -32,21 +32,33 @@ export function Sidebar({ children, style, ...props }: React.ComponentProps<type
         '--sidebar-border': retro.border,
         ...style,
       } as React.CSSProperties}
+      className={`${className || ''} [&_[data-slot=sidebar-inner]]:bg-transparent`}
       {...props}
     >
-      {children}
+      <div
+        className="m-2 rounded-sm"
+        style={{
+          height: 'calc(100% - 16px)',
+          ...retroStyles.raised,
+          backgroundColor: 'transparent',
+        }}
+      >
+        {children}
+      </div>
     </BaseSidebar>
   );
 }
 
-export function SidebarInset({ children, style, ...props }: React.ComponentProps<typeof BaseSidebarInset>) {
+export function SidebarInset({ children, style, className, ...props }: React.ComponentProps<typeof BaseSidebarInset>) {
   return (
     <BaseSidebarInset
       style={{
         backgroundColor: 'transparent',
-        minHeight: '100vh',
+        height: '100vh',
+        overflow: 'auto',
         ...style,
       }}
+      className={className}
       {...props}
     >
       {children}

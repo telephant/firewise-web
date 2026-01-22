@@ -1,6 +1,6 @@
 'use client';
 
-import { retro, getCategoryIcon, ButtonGroup, type ButtonGroupOption } from '@/components/fire/ui';
+import { retro, retroStyles, getCategoryIcon, ButtonGroup, type ButtonGroupOption } from '@/components/fire/ui';
 import { FlowCategoryPreset, FLOW_CATEGORY_PRESETS } from '@/types/fire';
 
 interface CategorySelectorProps {
@@ -20,7 +20,11 @@ const DISPLAY_GROUPS = [
   },
   {
     label: 'Move Money',
-    categories: ['transfer', 'sell', 'reinvest'],
+    categories: ['transfer', 'deposit', 'sell', 'reinvest'],
+  },
+  {
+    label: 'Add Debt',
+    categories: ['add_mortgage', 'add_loan'],
   },
 ];
 
@@ -76,14 +80,13 @@ export function CategorySelector({
         <button
           type="button"
           onClick={() => onSelect(FLOW_CATEGORY_PRESETS.find((p) => p.id === 'other')!)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-sm transition-all active:translate-y-[1px] text-xs"
+          className="flex items-center gap-2 px-3 py-2 rounded-sm transition-all active:translate-y-[1px] text-sm hover:opacity-90"
           style={{
-            backgroundColor: retro.surface,
-            border: `1px solid ${retro.bevelMid}`,
-            color: retro.muted,
+            ...retroStyles.raised,
+            color: retro.text,
           }}
         >
-          <span className="opacity-70">{getCategoryIcon('other', 20)}</span>
+          <span>{getCategoryIcon('other', 16)}</span>
           <span>Other</span>
         </button>
       </div>

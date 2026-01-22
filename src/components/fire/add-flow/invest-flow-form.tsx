@@ -1,12 +1,12 @@
 'use client';
 
-import type { FlowCategoryPreset, AssetWithBalance, AssetType, RecurringFrequency } from '@/types/fire';
+import type { FlowCategoryPreset, AssetWithBalance, AssetType } from '@/types/fire';
 import { retro, Input, Select, Label, Button, IconArrow } from '@/components/fire/ui';
 import { InvestmentTypeSelector, type InvestmentType, getInvestmentTypeConfig } from './investment-type-selector';
 import { StockTickerInput } from './stock-ticker-input';
 import { NewAssetForm } from './new-asset-form';
 import { FormActions } from './form-actions';
-import { ASSET_TYPE_OPTIONS, RECURRING_OPTIONS, getFieldLabels } from './constants';
+import { ASSET_TYPE_OPTIONS, getFieldLabels } from './constants';
 import type { FlowFormState, FlowFormErrors, NewAssetState } from './types';
 
 interface InvestFlowFormProps {
@@ -178,21 +178,13 @@ export function InvestFlowForm({
         </>
       )}
 
-      {/* Date & Recurring */}
-      <div className="grid grid-cols-2 gap-3">
-        <Input
-          label="Date"
-          type="date"
-          value={form.date}
-          onChange={(e) => updateForm('date', e.target.value)}
-        />
-        <Select
-          label="Recurring"
-          options={RECURRING_OPTIONS}
-          value={form.recurringFrequency}
-          onChange={(e) => updateForm('recurringFrequency', e.target.value as RecurringFrequency)}
-        />
-      </div>
+      {/* Date */}
+      <Input
+        label="Date"
+        type="date"
+        value={form.date}
+        onChange={(e) => updateForm('date', e.target.value)}
+      />
 
       {/* Description */}
       <Input

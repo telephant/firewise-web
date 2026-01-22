@@ -9,10 +9,12 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'flat';
   /** Fixed height for the card content area (e.g., '280px') */
   contentHeight?: string;
+  /** Optional action element to render in the title bar (e.g., add button) */
+  action?: React.ReactNode;
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, title, variant = 'default', contentHeight, children, ...props }, ref) => {
+  ({ className, title, variant = 'default', contentHeight, action, children, ...props }, ref) => {
     // Use minHeight to prevent shrinking, height to fix size, overflow for scrolling
     const contentStyle: React.CSSProperties = contentHeight
       ? { minHeight: contentHeight, height: contentHeight, maxHeight: contentHeight, overflowY: 'auto' }
@@ -57,7 +59,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
             className="flex items-center justify-between px-2 py-1 flex-shrink-0"
             style={retroStyles.titleBar}
           >
-            <span className="text-xs font-medium" style={{ color: retro.text }}>{title}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium" style={{ color: retro.text }}>{title}</span>
+              {action}
+            </div>
             {/* Decorative window buttons (disabled) */}
             <div className="flex gap-1 pointer-events-none select-none opacity-50">
               <div
