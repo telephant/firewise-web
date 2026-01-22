@@ -265,6 +265,12 @@ export const statsApi = {
     const query = searchParams.toString();
     return fetchApi<MonthlyStats>(`/ledgers/${ledgerId}/stats/monthly${query ? `?${query}` : ''}`);
   },
+
+  getFrequentExpenses: (ledgerId: string) => {
+    return fetchApi<{ expenses: { name: string; category_id: string | null; count: number }[] }>(
+      `/ledgers/${ledgerId}/stats/frequent`
+    );
+  },
 };
 
 // Currency Exchange types

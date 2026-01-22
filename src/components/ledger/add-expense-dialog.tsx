@@ -173,6 +173,12 @@ function ReceiptIcon({ className }: { className?: string }) {
   );
 }
 
+interface FrequentExpense {
+  name: string;
+  category_id: string | null;
+  count: number;
+}
+
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean, hasChanges: boolean) => void;
@@ -189,6 +195,7 @@ interface AddExpenseDialogProps {
     options?: { skipRefetch?: boolean }
   ) => Promise<void>;
   defaultCurrencyId?: string | null;
+  frequentExpenses?: FrequentExpense[];
 }
 
 export function AddExpenseDialog({
@@ -196,6 +203,7 @@ export function AddExpenseDialog({
   onOpenChange,
   onSubmit,
   defaultCurrencyId,
+  frequentExpenses = [],
 }: AddExpenseDialogProps) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -388,6 +396,27 @@ export function AddExpenseDialog({
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
               />
+              {/* Quick Actions - Top 5 most frequent expenses */}
+              {frequentExpenses.length > 0 && !name && (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {frequentExpenses.map((expense, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => {
+                        setName(expense.name);
+                        if (expense.category_id) {
+                          setCategoryId(expense.category_id);
+                        }
+                      }}
+                      className="px-2.5 py-1 text-xs font-medium rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={loading}
+                    >
+                      {expense.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Amount */}

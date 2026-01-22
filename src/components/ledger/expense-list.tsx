@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusIcon, ReceiptIcon, ChartIcon, SparklesIcon, RefreshIcon } from '@/components/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { useExpenses } from '@/hooks/use-expenses';
+import { useFrequentExpenses } from '@/hooks/use-frequent-expenses';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import { useExpenseData } from '@/contexts/expense-data-context';
 import { type PeriodOption, type CustomDateRange, getPeriodDateRange } from '@/lib/date-utils';
@@ -52,6 +53,9 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
 
   const { expenses, loading, loadingMore, error, hasMore, refetch, loadMore, createExpense, updateExpense, deleteExpense } =
     useExpenses(ledgerId, filters);
+
+  // Load frequent expenses for quick actions (checks cache first)
+  const { expenses: frequentExpenses } = useFrequentExpenses(ledgerId);
 
   // Track when initial load is complete
   useEffect(() => {
@@ -321,6 +325,7 @@ export function ExpenseList({ ledgerId, defaultCurrencyId }: ExpenseListProps) {
         onOpenChange={handleAddDialogClose}
         onSubmit={handleAddExpense}
         defaultCurrencyId={defaultCurrencyId}
+        frequentExpenses={frequentExpenses}
       />
 
       <ExpenseDetailDialog
