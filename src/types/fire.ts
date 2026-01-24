@@ -162,10 +162,15 @@ export interface FlowFilters {
   limit?: number;
 }
 
+export type AssetSortField = 'name' | 'type' | 'balance' | 'created_at' | 'updated_at';
+export type SortOrder = 'asc' | 'desc';
+
 export interface AssetFilters {
   type?: AssetType;
   page?: number;
   limit?: number;
+  sortBy?: AssetSortField;
+  sortOrder?: SortOrder;
 }
 
 export interface FlowStats {

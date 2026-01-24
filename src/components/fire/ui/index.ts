@@ -6,8 +6,8 @@ export { retro, typography, retroStyles } from './theme';
 export type { RetroTheme } from './theme';
 
 // Charts
-export { RetroBarShape, RetroBarChart, RetroStackedBarChart } from './charts';
-export type { RetroBarShapeProps, RetroBarChartProps, RetroBarChartData, RetroStackedBarChartProps, StackedBarItem } from './charts';
+export { RetroBarShape, RetroBarChart, RetroStackedBarChart, RetroPieChart } from './charts';
+export type { RetroBarShapeProps, RetroBarChartProps, RetroBarChartData, RetroStackedBarChartProps, StackedBarItem, RetroPieChartProps, PieSegment } from './charts';
 
 // Icons
 export * from './icons';

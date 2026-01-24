@@ -43,6 +43,8 @@ const SWR_KEYS = {
     if (filters?.type) params.set('type', filters.type);
     if (filters?.page) params.set('page', filters.page.toString());
     if (filters?.limit) params.set('limit', filters.limit.toString());
+    if (filters?.sortBy) params.set('sortBy', filters.sortBy);
+    if (filters?.sortOrder) params.set('sortOrder', filters.sortOrder);
     const query = params.toString();
     return `/fire/assets${query ? `?${query}` : ''}`;
   },

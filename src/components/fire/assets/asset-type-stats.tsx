@@ -200,6 +200,9 @@ export function AssetTypeStats({
               <span style={{ color: retro.muted }}>
                 {stats.count} {stats.count === 1 ? config.countLabel.slice(0, -1) : config.countLabel}
               </span>
+              <span style={{ color: retro.accent }}>
+                {grandTotal > 0 ? ((stats.totalValue / grandTotal) * 100).toFixed(1) : 0}%
+              </span>
               {showDayChange && (
                 <span
                   style={{

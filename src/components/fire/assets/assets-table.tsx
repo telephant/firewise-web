@@ -19,7 +19,7 @@ import {
 } from '@/components/fire/ui';
 import type { FilterOption } from '@/components/fire/ui';
 import { formatCurrency, formatShares, formatPercent } from '@/lib/fire/utils';
-import type { AssetWithBalance, AssetType } from '@/types/fire';
+import type { AssetWithBalance, AssetType, AssetSortField, SortOrder } from '@/types/fire';
 import type { StockPrice } from '@/lib/fire/api';
 
 interface AssetsTableProps {
@@ -39,6 +39,10 @@ interface AssetsTableProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   currency: string;
+  // Sorting
+  sortBy?: AssetSortField;
+  sortOrder?: SortOrder;
+  onSort?: (field: AssetSortField) => void;
   // Actions
   onRowClick?: (asset: AssetWithBalance) => void;
   onEdit?: (asset: AssetWithBalance) => void;
@@ -97,6 +101,9 @@ export function AssetsTable({
   searchQuery,
   onSearchChange,
   currency,
+  sortBy,
+  sortOrder,
+  onSort,
   onRowClick,
   onEdit,
   onAdjust,
@@ -198,17 +205,54 @@ export function AssetsTable({
       >
         {/* Table Header */}
         <div
-          className="grid grid-cols-[1fr_80px_140px_100px_80px_60px] gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wide"
+          className="grid grid-cols-[1fr_80px_140px_100px_50px_70px_60px] gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wide"
           style={{
             backgroundColor: retro.bevelMid,
             color: retro.text,
             borderBottom: `2px solid ${retro.border}`,
           }}
         >
-          <div>Name</div>
-          <div>Type</div>
+          <button
+            onClick={() => onSort?.('name')}
+            className="flex items-center gap-1 hover:opacity-70 text-left"
+            style={{ color: sortBy === 'name' ? retro.accent : retro.text }}
+          >
+            Name
+            {sortBy === 'name' && (
+              <span className="text-[10px]">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+            )}
+          </button>
+          <button
+            onClick={() => onSort?.('type')}
+            className="flex items-center gap-1 hover:opacity-70 text-left"
+            style={{ color: sortBy === 'type' ? retro.accent : retro.text }}
+          >
+            Type
+            {sortBy === 'type' && (
+              <span className="text-[10px]">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+            )}
+          </button>
           <div>Details</div>
-          <div className="text-right">Value</div>
+          <button
+            onClick={() => onSort?.('balance')}
+            className="flex items-center gap-1 justify-end hover:opacity-70 text-right w-full"
+            style={{ color: sortBy === 'balance' ? retro.accent : retro.text }}
+          >
+            Value
+            {sortBy === 'balance' && (
+              <span className="text-[10px]">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+            )}
+          </button>
+          <button
+            onClick={() => onSort?.('balance')}
+            className="flex items-center gap-1 justify-end hover:opacity-70 text-right w-full"
+            style={{ color: sortBy === 'balance' ? retro.accent : retro.text }}
+          >
+            %
+            {sortBy === 'balance' && (
+              <span className="text-[10px]">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+            )}
+          </button>
           <div className="text-right">Change</div>
           <div></div>
         </div>
@@ -242,11 +286,12 @@ export function AssetsTable({
               const details = getAssetDetails(asset);
               const dayChange = getDayChange(asset);
               const isAdjustable = ADJUSTABLE_TYPES.includes(asset.type);
+              const percentOfTotal = totalValue > 0 ? (value / totalValue) * 100 : 0;
 
               return (
                 <div
                   key={asset.id}
-                  className="grid grid-cols-[1fr_80px_140px_100px_80px_60px] gap-2 px-3 py-2 items-center text-sm group hover:bg-[var(--hover)] cursor-pointer"
+                  className="grid grid-cols-[1fr_80px_140px_100px_50px_70px_60px] gap-2 px-3 py-2 items-center text-sm group hover:bg-[var(--hover)] cursor-pointer"
                   style={{
                     '--hover': retro.surface,
                     borderBottom:
@@ -306,6 +351,16 @@ export function AssetsTable({
                           ({formatCurrency(asset.balance, { currency: asset.currency })})
                         </div>
                       )}
+                  </div>
+
+                  {/* Percentage */}
+                  <div className="text-right">
+                    <span
+                      className="text-xs tabular-nums"
+                      style={{ color: retro.muted }}
+                    >
+                      {percentOfTotal.toFixed(1)}%
+                    </span>
                   </div>
 
                   {/* Day Change */}

@@ -1,0 +1,219 @@
+'use client';
+
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { retro } from '../theme';
+
+export interface PieSegment {
+  name: string;
+  value: number;
+  color: string;
+  [key: string]: unknown;
+}
+
+export interface RetroPieChartProps {
+  /** Outer ring data (categories) */
+  outerData: PieSegment[];
+  /** Inner ring data (individual items) */
+  innerData?: PieSegment[];
+  /** Chart size in pixels */
+  size?: number;
+  /** Show legend below chart */
+  showLegend?: boolean;
+  /** Format function for values */
+  valueFormatter?: (value: number) => string;
+  /** Format function for percentages */
+  percentFormatter?: (percent: number) => string;
+  /** Inner radius of outer ring (0-1) */
+  outerInnerRadius?: number;
+  /** Outer radius of outer ring (0-1) */
+  outerOuterRadius?: number;
+  /** Inner radius of inner ring (0-1) */
+  innerInnerRadius?: number;
+  /** Outer radius of inner ring (0-1) */
+  innerOuterRadius?: number;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    payload: PieSegment & { percent?: number };
+  }>;
+  valueFormatter: (value: number) => string;
+  percentFormatter: (percent: number) => string;
+  total: number;
+}
+
+function CustomTooltip({
+  active,
+  payload,
+  valueFormatter,
+  percentFormatter,
+  total,
+}: CustomTooltipProps) {
+  if (!active || !payload || !payload.length) return null;
+
+  const data = payload[0];
+  const percent = total > 0 ? (data.value / total) * 100 : 0;
+
+  return (
+    <div
+      style={{
+        backgroundColor: retro.surface,
+        border: `2px solid ${retro.border}`,
+        boxShadow: `2px 2px 0 ${retro.border}`,
+        padding: '8px 12px',
+        fontSize: 11,
+      }}
+    >
+      <div style={{ fontWeight: 'bold', color: retro.text, marginBottom: 4 }}>
+        {data.name}
+      </div>
+      <div style={{ color: retro.muted }}>
+        <span style={{ fontFamily: 'monospace', color: retro.text }}>
+          {valueFormatter(data.value)}
+        </span>
+        <span style={{ marginLeft: 8, color: data.payload.color }}>
+          {percentFormatter(percent)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Retro-styled two-layer pie/donut chart with Windows 95 aesthetic
+ *
+ * Usage:
+ * ```tsx
+ * <RetroPieChart
+ *   outerData={[
+ *     { name: 'Stocks', value: 50000, color: retro.accent },
+ *     { name: 'Cash', value: 20000, color: retro.positive },
+ *   ]}
+ *   innerData={[
+ *     { name: 'AAPL', value: 30000, color: retro.accent + 'cc' },
+ *     { name: 'GOOGL', value: 20000, color: retro.accent + '99' },
+ *     { name: 'Savings', value: 20000, color: retro.positive + 'cc' },
+ *   ]}
+ *   valueFormatter={(v) => formatCurrency(v)}
+ * />
+ * ```
+ */
+export function RetroPieChart({
+  outerData,
+  innerData,
+  size = 200,
+  showLegend = true,
+  valueFormatter = (v) => v.toLocaleString(),
+  percentFormatter = (p) => `${p.toFixed(1)}%`,
+  outerInnerRadius = 0.55,
+  outerOuterRadius = 0.85,
+  innerInnerRadius = 0.25,
+  innerOuterRadius = 0.50,
+}: RetroPieChartProps) {
+  const total = outerData.reduce((sum, d) => sum + d.value, 0);
+
+  // Filter out zero values
+  const filteredOuter = outerData.filter((d) => d.value > 0);
+  const filteredInner = innerData?.filter((d) => d.value > 0) || [];
+
+  return (
+    <div>
+      <ResponsiveContainer width="100%" height={size}>
+        <PieChart>
+          {/* Inner ring - individual items */}
+          {filteredInner.length > 0 && (
+            <Pie
+              data={filteredInner}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={`${innerInnerRadius * 100}%`}
+              outerRadius={`${innerOuterRadius * 100}%`}
+              paddingAngle={1}
+              isAnimationActive={true}
+              animationDuration={400}
+            >
+              {filteredInner.map((entry, index) => (
+                <Cell
+                  key={`inner-${index}`}
+                  fill={entry.color}
+                  stroke={retro.border}
+                  strokeWidth={1}
+                />
+              ))}
+            </Pie>
+          )}
+
+          {/* Outer ring - categories */}
+          <Pie
+            data={filteredOuter}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius={`${outerInnerRadius * 100}%`}
+            outerRadius={`${outerOuterRadius * 100}%`}
+            paddingAngle={2}
+            isAnimationActive={true}
+            animationDuration={400}
+          >
+            {filteredOuter.map((entry, index) => (
+              <Cell
+                key={`outer-${index}`}
+                fill={entry.color}
+                stroke={retro.border}
+                strokeWidth={2}
+                style={{
+                  filter: 'drop-shadow(1px 1px 0 rgba(0,0,0,0.2))',
+                }}
+              />
+            ))}
+          </Pie>
+
+          <Tooltip
+            content={
+              <CustomTooltip
+                valueFormatter={valueFormatter}
+                percentFormatter={percentFormatter}
+                total={total}
+              />
+            }
+          />
+        </PieChart>
+      </ResponsiveContainer>
+
+      {/* Legend */}
+      {showLegend && (
+        <div
+          className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2"
+          style={{ fontSize: 10 }}
+        >
+          {filteredOuter.map((item, index) => {
+            const percent = total > 0 ? (item.value / total) * 100 : 0;
+            return (
+              <div key={index} className="flex items-center gap-1">
+                <div
+                  className="w-3 h-3 rounded-sm"
+                  style={{
+                    backgroundColor: item.color,
+                    border: `1px solid ${retro.border}`,
+                  }}
+                />
+                <span style={{ color: retro.muted }}>{item.name}</span>
+                <span
+                  style={{ color: retro.text, fontFamily: 'monospace' }}
+                >
+                  {percentFormatter(percent)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

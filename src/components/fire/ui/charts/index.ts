@@ -9,3 +9,6 @@ export type { RetroBarChartProps, RetroBarChartData } from './retro-bar-chart';
 
 export { RetroStackedBarChart } from './retro-stacked-bar-chart';
 export type { RetroStackedBarChartProps, StackedBarItem } from './retro-stacked-bar-chart';
+
+export { RetroPieChart } from './retro-pie-chart';
+export type { RetroPieChartProps, PieSegment } from './retro-pie-chart';

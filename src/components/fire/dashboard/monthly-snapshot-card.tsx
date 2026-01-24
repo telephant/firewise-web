@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { retro, retroStyles, Loader } from '@/components/fire/ui';
+import { retro, retroStyles, Loader, SimpleProgressBar } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 import { useFlowFreedom } from '@/hooks/fire/use-fire-data';
 
@@ -145,19 +145,12 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
               </div>
             }
           >
-            <div
-              className="h-6 rounded-sm overflow-hidden cursor-pointer"
-              style={retroStyles.sunken}
-            >
-              <div
-                className="h-full transition-all duration-500"
-                style={{
-                  width: `${incomeWidth}%`,
-                  backgroundColor: retro.positive,
-                  minWidth: income > 0 ? '4px' : '0',
-                }}
-              />
-            </div>
+            <SimpleProgressBar
+              value={incomeWidth}
+              color={retro.positive}
+              size="lg"
+              className="cursor-pointer"
+            />
           </Tooltip>
         </div>
 
@@ -200,31 +193,14 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
               </div>
             }
           >
-            <div
-              className="h-6 rounded-sm overflow-hidden flex cursor-pointer"
-              style={retroStyles.sunken}
-            >
-              {/* Living expenses segment */}
-              <div
-                className="h-full transition-all duration-500"
-                style={{
-                  width: `${livingWidth}%`,
-                  backgroundColor: retro.negative,
-                  minWidth: livingExpenses > 0 ? '4px' : '0',
-                }}
-              />
-              {/* Debt payments segment */}
-              {debtPayments > 0 && (
-                <div
-                  className="h-full transition-all duration-500"
-                  style={{
-                    width: `${debtWidth}%`,
-                    backgroundColor: retro.warning,
-                    minWidth: '4px',
-                  }}
-                />
-              )}
-            </div>
+            <SimpleProgressBar
+              segments={[
+                { value: livingWidth, color: retro.negative },
+                ...(debtPayments > 0 ? [{ value: debtWidth, color: retro.warning }] : []),
+              ]}
+              size="lg"
+              className="cursor-pointer"
+            />
           </Tooltip>
           {/* Expense breakdown labels */}
           <div className="flex justify-between text-[10px] mt-1">

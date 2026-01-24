@@ -76,6 +76,8 @@ export const assetApi = {
     if (params?.type) searchParams.set('type', params.type);
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.sortOrder) searchParams.set('sortOrder', params.sortOrder);
 
     const query = searchParams.toString();
     return fetchApi<{ assets: AssetWithBalance[]; total: number }>(
@@ -706,5 +708,58 @@ export const runwayApi = {
   get: (timezone?: string) => {
     const params = timezone ? `?timezone=${encodeURIComponent(timezone)}` : '';
     return fetchApi<RunwayData>(`/fire/runway${params}`);
+  },
+};
+
+// Financial Stats API (shared cached stats for dashboard)
+export interface FinancialStats {
+  passiveIncome: {
+    monthly: number;
+    annual: number;
+    breakdown: {
+      dividends: number;
+      rental: number;
+      interest: number;
+      other: number;
+    };
+    dataQuality: DataQuality;
+  };
+  expenses: {
+    living: number;      // Annual living expenses (without debt)
+    debtPayments: number; // Annual debt payments
+    total: number;        // Annual total (living + debt)
+    monthly: number;      // Monthly total
+    dataQuality: DataQuality;
+  };
+  debts: {
+    total: number;
+    monthlyPayments: number;
+    breakdown: Array<{
+      id: string;
+      name: string;
+      type: string;
+      balance: number;
+      interestRate: number;
+      monthlyPayment: number;
+    }>;
+  };
+  netWorth: number;
+  currency: string;
+  monthlyHistory: Array<{
+    month: string;
+    income: number;
+    expenses: number;
+  }>;
+}
+
+export const financialStatsApi = {
+  get: (forceRefresh = false) => {
+    const params = forceRefresh ? '?refresh=true' : '';
+    return fetchApi<FinancialStats>(`/fire/financial-stats${params}`);
+  },
+  clearCache: () => {
+    return fetchApi<{ cleared: boolean }>('/fire/financial-stats/clear-cache', {
+      method: 'POST',
+    });
   },
 };

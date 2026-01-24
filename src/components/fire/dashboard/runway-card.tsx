@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { retro, retroStyles, Loader } from '@/components/fire/ui';
+import { retro, retroStyles, Loader, SimpleProgressBar, Button } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 import { useRunway } from '@/hooks/fire/use-fire-data';
 
@@ -78,27 +78,19 @@ export function RunwayCard({ currency = 'USD' }: RunwayCardProps) {
         </div>
 
         {/* Stacked bar */}
-        <div
-          className="h-5 flex"
-          style={{ ...retroStyles.sunken, padding: '2px' }}
-        >
-          {summary.monthly.passive_income > 0 && (
-            <div
-              className="h-full transition-all duration-300"
-              style={{
-                width: `${Math.min((summary.monthly.passive_income / summary.monthly.expenses) * 100, 100)}%`,
-                backgroundColor: retro.positive,
-                minWidth: '4px',
-              }}
-            />
-          )}
-          {summary.monthly.gap > 0 && (
-            <div
-              className="h-full flex-1"
-              style={{ backgroundColor: retro.negative + '40' }}
-            />
-          )}
-        </div>
+        <SimpleProgressBar
+          segments={[
+            ...(summary.monthly.passive_income > 0 ? [{
+              value: Math.min((summary.monthly.passive_income / summary.monthly.expenses) * 100, 100),
+              color: retro.positive,
+            }] : []),
+            ...(summary.monthly.gap > 0 ? [{
+              value: (summary.monthly.gap / summary.monthly.expenses) * 100,
+              color: retro.negative + '60',
+            }] : []),
+          ]}
+          size="md"
+        />
 
         <div className="flex justify-between text-[10px] mt-1">
           <span className="font-bold tabular-nums" style={{ color: retro.positive }}>
@@ -240,18 +232,15 @@ export function RunwayCard({ currency = 'USD' }: RunwayCardProps) {
       )}
 
       {/* Refresh Button */}
-      <button
+      <Button
         onClick={() => mutate()}
         disabled={isRefreshing}
-        className="mt-3 w-full py-1.5 text-xs rounded-sm transition-opacity hover:opacity-80 disabled:opacity-50"
-        style={{
-          backgroundColor: retro.surfaceLight,
-          border: `1px solid ${retro.border}`,
-          color: retro.muted,
-        }}
+        variant="primary"
+        size="sm"
+        className="mt-3 w-full"
       >
         {isRefreshing ? 'Refreshing...' : 'Refresh Analysis'}
-      </button>
+      </Button>
     </div>
   );
 }

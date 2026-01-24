@@ -7,7 +7,10 @@ import {
   SidebarTrigger,
   IconPlus,
   IconUpload,
+  RetroPieChart,
+  Card,
 } from '@/components/fire/ui';
+import type { PieSegment } from '@/components/fire/ui';
 import {
   AssetTypeStats,
   AssetsTable,
@@ -19,9 +22,32 @@ import {
 import { AddAssetDialog } from '@/components/fire/dashboard/add-asset-dialog';
 import { AdjustBalanceDialog } from '@/components/fire/dashboard/adjust-balance-dialog';
 import { useAssets, useStockPrices, useUserPreferences } from '@/hooks/fire/use-fire-data';
-import type { AssetWithBalance, AssetType } from '@/types/fire';
+import { formatCurrency } from '@/lib/fire/utils';
+import type { AssetWithBalance, AssetType, AssetSortField, SortOrder } from '@/types/fire';
 
 const PAGE_SIZE = 20;
+
+const CATEGORY_COLORS: Record<AssetType, string> = {
+  cash: '#2a7848',       // Green (retro.positive)
+  deposit: '#385898',    // Blue (retro.info)
+  stock: '#c86428',      // Orange (retro.accent)
+  etf: '#e89050',        // Light orange (retro.accentLight)
+  bond: '#b08020',       // Gold (retro.warning)
+  real_estate: '#8b5a2b', // Brown
+  crypto: '#9b59b6',     // Purple
+  other: '#5a5a6a',      // Gray (retro.muted)
+};
+
+const CATEGORY_LABELS: Record<AssetType, string> = {
+  cash: 'Cash',
+  deposit: 'Deposit',
+  stock: 'Stock',
+  etf: 'ETF',
+  bond: 'Bond',
+  real_estate: 'Real Estate',
+  crypto: 'Crypto',
+  other: 'Other',
+};
 
 export default function AssetsPage() {
   const [isAddAssetOpen, setIsAddAssetOpen] = useState(false);
@@ -36,6 +62,10 @@ export default function AssetsPage() {
   const [selectedType, setSelectedType] = useState<AssetType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Sort state (default to balance/% descending)
+  const [sortBy, setSortBy] = useState<AssetSortField>('balance');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   // Fetch assets
   const { assets, isLoading, mutate } = useAssets();
@@ -55,9 +85,9 @@ export default function AssetsPage() {
 
   const { prices: stockPrices } = useStockPrices(tickers);
 
-  // Filter assets
+  // Filter and sort assets
   const filteredAssets = useMemo(() => {
-    return assets.filter((asset) => {
+    const filtered = assets.filter((asset) => {
       // Type filter
       if (selectedType !== 'all' && asset.type !== selectedType) {
         return false;
@@ -75,7 +105,33 @@ export default function AssetsPage() {
 
       return true;
     });
-  }, [assets, selectedType, searchQuery]);
+
+    // Sort assets
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'type':
+          comparison = a.type.localeCompare(b.type);
+          break;
+        case 'balance':
+          // Use converted_balance for comparison when available
+          const aValue = a.converted_balance ?? a.balance;
+          const bValue = b.converted_balance ?? b.balance;
+          comparison = aValue - bValue;
+          break;
+        case 'created_at':
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case 'updated_at':
+          comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [assets, selectedType, searchQuery, sortBy, sortOrder]);
 
   // Paginate
   const paginatedAssets = useMemo(() => {
@@ -96,6 +152,18 @@ export default function AssetsPage() {
     setCurrentPage(1);
   };
 
+  const handleSort = (field: AssetSortField) => {
+    if (sortBy === field) {
+      // Toggle order if same field
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New field, default to desc for balance, asc for others
+      setSortBy(field);
+      setSortOrder(field === 'balance' ? 'desc' : 'asc');
+    }
+    setCurrentPage(1);
+  };
+
   // Calculate total value (use converted_balance for all assets)
   // Backend now returns converted_balance for stocks too (shares × price × exchange rate)
   const totalValue = useMemo(() => {
@@ -104,6 +172,50 @@ export default function AssetsPage() {
       return sum + (asset.converted_balance ?? asset.balance);
     }, 0);
   }, [filteredAssets]);
+
+  // Calculate pie chart data (use all assets, not filtered)
+  const { outerPieData, innerPieData } = useMemo(() => {
+    // Group assets by type
+    const grouped: Record<string, AssetWithBalance[]> = {};
+    assets.forEach((asset) => {
+      if (!grouped[asset.type]) {
+        grouped[asset.type] = [];
+      }
+      grouped[asset.type].push(asset);
+    });
+
+    const outer: PieSegment[] = [];
+    const inner: PieSegment[] = [];
+
+    Object.entries(grouped).forEach(([type, typeAssets]) => {
+      const assetType = type as AssetType;
+      const typeTotal = typeAssets.reduce(
+        (sum, a) => sum + (a.converted_balance ?? a.balance),
+        0
+      );
+
+      if (typeTotal > 0) {
+        outer.push({
+          name: CATEGORY_LABELS[assetType],
+          value: typeTotal,
+          color: CATEGORY_COLORS[assetType],
+        });
+
+        typeAssets.forEach((asset) => {
+          const value = asset.converted_balance ?? asset.balance;
+          if (value > 0) {
+            inner.push({
+              name: asset.name,
+              value,
+              color: CATEGORY_COLORS[assetType] + 'cc', // 80% opacity
+            });
+          }
+        });
+      }
+    });
+
+    return { outerPieData: outer, innerPieData: inner };
+  }, [assets]);
 
   return (
     <div className="flex flex-col h-full">
@@ -146,15 +258,44 @@ export default function AssetsPage() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto p-4">
         <div className="max-w-5xl mx-auto space-y-4">
-          {/* Asset Type Stats */}
-          <AssetTypeStats
-            assets={assets}
-            stockPrices={stockPrices}
-            isLoading={isLoading}
-            onTypeClick={handleTypeChange}
-            selectedType={selectedType}
-            currency={displayCurrency}
-          />
+          {/* Pie Chart + Asset Type Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4">
+            {/* Pie Chart */}
+            <Card className="p-4">
+              <h3
+                className="text-xs font-bold uppercase tracking-wider mb-2"
+                style={{ color: retro.text }}
+              >
+                Allocation
+              </h3>
+              {!isLoading && assets.length > 0 ? (
+                <RetroPieChart
+                  outerData={outerPieData}
+                  innerData={innerPieData}
+                  size={180}
+                  showLegend={false}
+                  valueFormatter={(v) => formatCurrency(v, { currency: displayCurrency, compact: true })}
+                />
+              ) : (
+                <div
+                  className="flex items-center justify-center text-xs"
+                  style={{ color: retro.muted, height: 180 }}
+                >
+                  {isLoading ? 'Loading...' : 'No assets'}
+                </div>
+              )}
+            </Card>
+
+            {/* Asset Type Stats */}
+            <AssetTypeStats
+              assets={assets}
+              stockPrices={stockPrices}
+              isLoading={isLoading}
+              onTypeClick={handleTypeChange}
+              selectedType={selectedType}
+              currency={displayCurrency}
+            />
+          </div>
 
           {/* Assets Table */}
           <AssetsTable
@@ -172,6 +313,9 @@ export default function AssetsPage() {
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
             currency={displayCurrency}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
             onRowClick={(asset) => {
               setSelectedAsset(asset);
               setIsDetailOpen(true);
