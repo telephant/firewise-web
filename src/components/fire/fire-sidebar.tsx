@@ -27,6 +27,8 @@ import {
 } from '@/components/fire/ui';
 import { TaxSettingsDialog } from '@/components/fire/tax-settings-dialog';
 import { CurrencyPreferencesDialog } from '@/components/fire/currency-preferences-dialog';
+import { FamilySettingsDialog } from '@/components/fire/family/family-settings-dialog';
+import { ViewModeSwitcher } from '@/components/fire/family/view-mode-switcher';
 import { flowApi } from '@/lib/fire/api';
 
 const navItems = [
@@ -67,6 +69,7 @@ export function FireSidebar() {
   const pathname = usePathname();
   const [taxSettingsOpen, setTaxSettingsOpen] = useState(false);
   const [currencySettingsOpen, setCurrencySettingsOpen] = useState(false);
+  const [familySettingsOpen, setFamilySettingsOpen] = useState(false);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
 
   // Fetch review count for badge
@@ -96,6 +99,7 @@ export function FireSidebar() {
             </span>
           </div>
         </Link>
+        <ViewModeSwitcher className="mt-2" />
       </SidebarHeader>
 
       <SidebarContent>
@@ -158,6 +162,11 @@ export function FireSidebar() {
               {settingsMenuOpen && (
                 <>
                   <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setFamilySettingsOpen(true)} className="pl-6">
+                      <span className="text-xs">Family</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
                     <SidebarMenuButton onClick={() => setCurrencySettingsOpen(true)} className="pl-6">
                       <span className="text-xs">Currency</span>
                     </SidebarMenuButton>
@@ -194,6 +203,7 @@ export function FireSidebar() {
 
       <TaxSettingsDialog open={taxSettingsOpen} onOpenChange={setTaxSettingsOpen} />
       <CurrencyPreferencesDialog open={currencySettingsOpen} onOpenChange={setCurrencySettingsOpen} />
+      <FamilySettingsDialog open={familySettingsOpen} onOpenChange={setFamilySettingsOpen} />
     </Sidebar>
   );
 }

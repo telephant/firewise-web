@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset, retro, Celebration } from '@/components/
 import { FireSidebar } from '@/components/fire/fire-sidebar';
 import { FlowDataProvider } from '@/contexts/fire/flow-data-context';
 import { FinancialStatsProvider } from '@/contexts/fire/financial-stats-context';
+import { ViewModeProvider } from '@/contexts/fire/view-mode-context';
 import { Toaster } from '@/components/ui/sonner';
 
 // Two-tone background with curved divider (matching ui-example4.png)
@@ -128,18 +129,20 @@ export default function FireLayout({
   children: React.ReactNode;
 }) {
   return (
-    <FlowDataProvider>
-      <FinancialStatsProvider>
-        <TwoToneBackground />
-        <SidebarProvider>
-          <FireSidebar />
-          <SidebarInset>
-            {children}
-          </SidebarInset>
-          <Toaster />
-          <Celebration />
-        </SidebarProvider>
-      </FinancialStatsProvider>
-    </FlowDataProvider>
+    <ViewModeProvider>
+      <FlowDataProvider>
+        <FinancialStatsProvider>
+          <TwoToneBackground />
+          <SidebarProvider>
+            <FireSidebar />
+            <SidebarInset>
+              {children}
+            </SidebarInset>
+            <Toaster />
+            <Celebration />
+          </SidebarProvider>
+        </FinancialStatsProvider>
+      </FlowDataProvider>
+    </ViewModeProvider>
   );
 }

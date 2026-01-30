@@ -3,9 +3,21 @@
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 
-export function GoogleButton() {
+interface GoogleButtonProps {
+  returnUrl?: string;
+}
+
+export function GoogleButton({ returnUrl }: GoogleButtonProps) {
   const handleGoogleLogin = async () => {
     const supabase = createClient();
+
+    // Store return URL in sessionStorage (OAuth can lose query params)
+    if (returnUrl) {
+      sessionStorage.setItem('auth_return_url', returnUrl);
+    } else {
+      sessionStorage.removeItem('auth_return_url');
+    }
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

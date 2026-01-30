@@ -35,10 +35,11 @@ export async function updateSession(request: NextRequest) {
 
   // Protected routes
   const isAuthPage = request.nextUrl.pathname.startsWith('/login');
-  const isCallbackPage = request.nextUrl.pathname.startsWith('/auth/callback');
+  const isAuthFlow = request.nextUrl.pathname.startsWith('/auth/');
   const isPublicPage = request.nextUrl.pathname === '/';
+  const isInvitePage = request.nextUrl.pathname.startsWith('/fire/invite/');
 
-  if (!user && !isAuthPage && !isCallbackPage && !isPublicPage) {
+  if (!user && !isAuthPage && !isAuthFlow && !isPublicPage && !isInvitePage) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

@@ -27,6 +27,7 @@ import type {
   UpdateRecurringScheduleData,
   ProcessRecurringResult,
 } from '@/types/fire';
+import { getCurrentViewMode } from '@/contexts/fire/view-mode-context';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -50,8 +51,13 @@ async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const authHeader = await getAuthHeader();
+
+  // Get current view mode for X-View-Mode header
+  const viewMode = getCurrentViewMode();
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-View-Mode': viewMode,
     ...authHeader,
   };
 

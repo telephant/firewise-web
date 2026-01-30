@@ -1,3 +1,7 @@
+'use client';
+
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { GoogleButton } from '@/components/auth/google-button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -43,6 +47,15 @@ function SparklesIcon({ className }: { className?: string }) {
   );
 }
 
+function LoginContent() {
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
+
+  return (
+    <GoogleButton returnUrl={returnUrl || undefined} />
+  );
+}
+
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 relative overflow-hidden">
@@ -69,7 +82,9 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <GoogleButton />
+          <Suspense fallback={<GoogleButton />}>
+            <LoginContent />
+          </Suspense>
 
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <SparklesIcon className="h-4 w-4 text-primary" />
