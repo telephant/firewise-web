@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import {
   retro,
   retroStyles,
@@ -39,6 +39,11 @@ interface AddFlowDialogProps {
 export function AddFlowDialog({ open, onOpenChange, initialCategory, initialDebtId, recurringOnly }: AddFlowDialogProps) {
   // Track previous open state to detect transitions
   const prevOpenRef = useRef(open);
+  const [noAssetInterest, setNoAssetInterest] = useState(false);
+
+  const handleToggleNoAsset = useCallback((value: boolean) => {
+    setNoAssetInterest(value);
+  }, []);
 
   const {
     // State
@@ -78,7 +83,7 @@ export function AddFlowDialog({ open, onOpenChange, initialCategory, initialDebt
     initializeWithCategory,
     handleStartToday,
     handleStartNextOccurrence,
-  } = useAddFlowForm({ open, onOpenChange, initialCategory, initialDebtId, recurringOnly });
+  } = useAddFlowForm({ open, onOpenChange, initialCategory, initialDebtId, recurringOnly, noAssetInterest });
 
   // Handle dialog open/close transitions
   // Reset form when dialog closes, initialize with category when it opens
@@ -94,6 +99,7 @@ export function AddFlowDialog({ open, onOpenChange, initialCategory, initialDebt
     } else if (wasOpen && !open) {
       // Dialog just closed - reset form
       resetForm();
+      setNoAssetInterest(false);
     }
   }, [open, initialCategory, initialDebtId, initializeWithCategory, resetForm]);
 
@@ -155,7 +161,7 @@ export function AddFlowDialog({ open, onOpenChange, initialCategory, initialDebt
 
     // Interest flow (special form with rate calculation)
     if (selectedPreset.id === 'interest') {
-      return <InterestFlowForm {...commonProps} cashAssets={cashAssets} interestSettingsMap={interestSettingsMap} />;
+      return <InterestFlowForm {...commonProps} cashAssets={cashAssets} interestSettingsMap={interestSettingsMap} noAsset={noAssetInterest} onToggleNoAsset={handleToggleNoAsset} />;
     }
 
     // Deposit flow (with interest rate settings)

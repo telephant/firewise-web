@@ -26,9 +26,10 @@ interface UseAddFlowFormOptions {
   initialCategory?: string;
   initialDebtId?: string;
   recurringOnly?: boolean; // If true, only create recurring schedule without a flow
+  noAssetInterest?: boolean; // If true, interest flow recorded as income without asset
 }
 
-export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDebtId, recurringOnly }: UseAddFlowFormOptions) {
+export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDebtId, recurringOnly, noAssetInterest }: UseAddFlowFormOptions) {
   const {
     assets,
     createFlow,
@@ -38,9 +39,16 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
     setLinkedLedgers: setLinkedLedgersApi,
   } = useFlowData();
 
-  // Fetch user tax settings for dividend calculations
+  // Fetch asset interest settings for deposit accounts
+  const { settingsMap: interestSettingsMap } = useAssetInterestSettings();
+
+  // Dialog state
+  const [step, setStep] = useState<DialogStep>('category');
+  const [selectedPreset, setSelectedPreset] = useState<FlowCategoryPreset | null>(null);
+
+  // Fetch user tax settings for dividend calculations (only when dividend is selected)
   const { data: taxSettings } = useSWR(
-    open ? '/fire/tax-settings' : null,
+    open && selectedPreset?.id === 'dividend' ? '/fire/tax-settings' : null,
     async () => {
       const res = await userTaxSettingsApi.get();
       if (!res.success) return null;
@@ -48,12 +56,6 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
     }
   );
 
-  // Fetch asset interest settings for deposit accounts
-  const { settingsMap: interestSettingsMap } = useAssetInterestSettings();
-
-  // Dialog state
-  const [step, setStep] = useState<DialogStep>('category');
-  const [selectedPreset, setSelectedPreset] = useState<FlowCategoryPreset | null>(null);
   const [loading, setLoading] = useState(false);
   const [expenseTab, setExpenseTab] = useState<ExpenseTab>('link');
   const [savingLinkedLedgers, setSavingLinkedLedgers] = useState(false);
@@ -321,8 +323,8 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
       }
     }
 
-    // Validate interest flow requires deposit maturity selection
-    if (selectedPreset.id === 'interest' && form.depositMatured === null) {
+    // Validate interest flow requires deposit maturity selection (only when linked to asset)
+    if (selectedPreset.id === 'interest' && !noAssetInterest && form.depositMatured === null) {
       errors.depositMatured = 'Please select what happens to the deposit';
     }
 
@@ -342,13 +344,16 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
         errors.toAsset = 'Please select an account';
       }
     }
-    // Check if from_asset is required but not selected
+    // Check if from_asset is required but not selected (skip for no-asset interest)
     if (selectedPreset.from.type === 'asset' && !form.fromAssetId && !newAsset.show) {
-      const filtered = selectedPreset.from.assetFilter
-        ? assets.filter(a => selectedPreset.from.assetFilter!.includes(a.type))
-        : assets;
-      if (filtered.length !== 1) {
-        errors.fromAsset = 'Please select an account';
+      const isNoAssetInterest = selectedPreset.id === 'interest' && noAssetInterest;
+      if (!isNoAssetInterest) {
+        const filtered = selectedPreset.from.assetFilter
+          ? assets.filter(a => selectedPreset.from.assetFilter!.includes(a.type))
+          : assets;
+        if (filtered.length !== 1) {
+          errors.fromAsset = 'Please select an account';
+        }
       }
     }
 
@@ -647,13 +652,17 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
       }
 
       if (flowType === 'transfer') {
-        if (form.fromType === 'asset' && !finalFromAssetId) {
-          assetErrors.fromAsset = 'Select source';
-          hasAssetErrors = true;
-        }
-        if (form.toType === 'asset' && !finalToAssetId) {
-          assetErrors.toAsset = 'Select destination';
-          hasAssetErrors = true;
+        // Skip asset validation for no-asset interest (handled as income below)
+        const isNoAssetInterest = selectedPreset.id === 'interest' && noAssetInterest;
+        if (!isNoAssetInterest) {
+          if (form.fromType === 'asset' && !finalFromAssetId) {
+            assetErrors.fromAsset = 'Select source';
+            hasAssetErrors = true;
+          }
+          if (form.toType === 'asset' && !finalToAssetId) {
+            assetErrors.toAsset = 'Select destination';
+            hasAssetErrors = true;
+          }
         }
       }
 
@@ -733,6 +742,39 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
         // Store tax info in metadata
         metadata.tax_rate = taxRate;
         metadata.tax_withheld = taxWithheld;
+      }
+
+      // Handle no-asset interest flow (recorded as income)
+      if (selectedPreset.id === 'interest' && noAssetInterest) {
+        if (!form.toAssetId) {
+          setFormErrors(prev => ({ ...prev, toAsset: 'Select cash account' }));
+          setLoading(false);
+          return;
+        }
+
+        metadata.payment_period = form.interestPaymentPeriod;
+
+        const success = await createFlow({
+          type: 'income',
+          amount: finalAmount,
+          currency: form.currency,
+          from_asset_id: null,
+          to_asset_id: form.toAssetId,
+          category: 'interest',
+          date: form.date,
+          description: form.description || 'Interest income',
+          metadata,
+          ...(form.recurringFrequency !== 'none' ? { recurring_frequency: form.recurringFrequency } : {}),
+        });
+
+        if (success) {
+          toast.success('Interest recorded');
+          onOpenChange(false);
+        } else {
+          toast.error('Failed to record interest');
+        }
+        setLoading(false);
+        return;
       }
 
       // Handle interest flows with maturity withdrawal option
@@ -1250,7 +1292,7 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
     } finally {
       setLoading(false);
     }
-  }, [selectedPreset, form, newAsset.show, assets, handleCreateAsset, createFlow, createAsset, onOpenChange, taxSettings, linkedLedgers, recurringOnly, showStartDateConfirm]);
+  }, [selectedPreset, form, newAsset.show, assets, handleCreateAsset, createFlow, createAsset, onOpenChange, taxSettings, linkedLedgers, recurringOnly, showStartDateConfirm, noAssetInterest]);
 
   // Handle "Start from today" choice - creates both flow and schedule
   const handleStartToday = useCallback(async () => {

@@ -22,6 +22,8 @@ interface InterestFlowFormProps {
   showFromField: boolean;
   showToField: boolean;
   loading: boolean;
+  noAsset: boolean;
+  onToggleNoAsset: (value: boolean) => void;
   interestSettingsMap?: Record<string, AssetInterestSettings>;
   updateForm: <K extends keyof FlowFormState>(field: K, value: FlowFormState[K]) => void;
   updateNewAsset: <K extends keyof NewAssetState>(field: K, value: NewAssetState[K]) => void;
@@ -37,6 +39,8 @@ export function InterestFlowForm({
   filteredFromAssets,
   cashAssets,
   loading,
+  noAsset,
+  onToggleNoAsset,
   interestSettingsMap = {},
   updateForm,
   updateNewAsset,
@@ -103,10 +107,40 @@ export function InterestFlowForm({
   // Get display name for the account
   const accountName = isNewAsset ? (newAsset.name || 'New account') : (selectedAsset?.name || 'Selected account');
 
+  const hasAsset = !noAsset && (isNewAsset || !!form.fromAssetId);
+
   return (
     <>
-      {/* Account selection or creation */}
-      {isNewAsset ? (
+      {/* Account selection or no-asset mode */}
+      {noAsset ? (
+        <>
+          <div
+            className="p-3 rounded-sm text-xs"
+            style={{ backgroundColor: retro.surfaceLight }}
+          >
+            <p className="text-sm" style={{ color: retro.text }}>
+              Recording interest as income
+            </p>
+            <button
+              type="button"
+              className="mt-1 underline"
+              style={{ color: retro.accent }}
+              onClick={() => onToggleNoAsset(false)}
+            >
+              Link to a deposit account
+            </button>
+          </div>
+          <AssetCombobox
+            label="Deposit to"
+            placeholder="Select cash account..."
+            value={form.toAssetId}
+            assets={cashAssets}
+            onChange={(id) => updateForm('toAssetId', id)}
+            error={formErrors.toAsset}
+            showBalance={true}
+          />
+        </>
+      ) : isNewAsset ? (
         <NewAssetForm
           name={newAsset.name}
           setName={(v) => updateNewAsset('name', v)}
@@ -119,21 +153,31 @@ export function InterestFlowForm({
           suggestedTypes={selectedPreset.from.assetFilter}
         />
       ) : (
-        <AssetCombobox
-          label={labels.from}
-          placeholder={labels.fromPlaceholder}
-          value={form.fromAssetId}
-          assets={filteredFromAssets}
-          onChange={(id) => updateForm('fromAssetId', id)}
-          error={formErrors.fromAsset}
-          showBalance={true}
-          allowCreate={true}
-          onCreateNew={() => updateNewAsset('show', 'from')}
-        />
+        <div>
+          <AssetCombobox
+            label={labels.from}
+            placeholder={labels.fromPlaceholder}
+            value={form.fromAssetId}
+            assets={filteredFromAssets}
+            onChange={(id) => updateForm('fromAssetId', id)}
+            error={formErrors.fromAsset}
+            showBalance={true}
+            allowCreate={true}
+            onCreateNew={() => updateNewAsset('show', 'from')}
+          />
+          <button
+            type="button"
+            className="mt-1 text-xs underline"
+            style={{ color: retro.muted }}
+            onClick={() => onToggleNoAsset(true)}
+          >
+            No specific account? Record as income
+          </button>
+        </div>
       )}
 
       {/* Balance input - only show when creating new asset */}
-      {isNewAsset && (
+      {!noAsset && isNewAsset && (
         <Input
           label="Current Balance"
           type="number"
@@ -145,7 +189,7 @@ export function InterestFlowForm({
       )}
 
       {/* Show current balance if existing asset selected */}
-      {!isNewAsset && selectedAsset && (
+      {!noAsset && !isNewAsset && selectedAsset && (
         <div className="text-xs" style={{ color: retro.muted }}>
           Current balance: {selectedAsset.balance.toLocaleString()} {selectedAsset.currency}
         </div>
@@ -176,8 +220,8 @@ export function InterestFlowForm({
         onChange={(value) => updateForm('currency', value)}
       />
 
-      {/* Interest Rate Calculation Display */}
-      {rateInfo && (
+      {/* Interest Rate Calculation Display - only with asset */}
+      {hasAsset && rateInfo && (
         <div
           className="p-3 rounded-sm space-y-2 text-xs"
           style={{ backgroundColor: retro.surfaceLight }}
@@ -207,93 +251,95 @@ export function InterestFlowForm({
         </div>
       )}
 
-      {/* Deposit Maturity Confirmation - Required Choice */}
-      <div
-        className="p-3 rounded-sm space-y-3"
-        style={{
-          backgroundColor: retro.surfaceLight,
-          border: `1px solid ${form.depositMatured === null && formErrors.depositMatured ? '#c53030' : retro.border}`,
-        }}
-      >
-        <Label variant="muted" className="block text-xs uppercase tracking-wide">
-          What happens to this deposit?
-        </Label>
-
-        <div className="flex items-start gap-3">
-          <button
-            type="button"
-            onClick={() => updateForm('depositMatured', false)}
-            className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
-            style={{
-              backgroundColor: form.depositMatured === false ? retro.accent : 'transparent',
-              border: `2px solid ${form.depositMatured === false ? retro.accent : retro.border}`,
-            }}
-          >
-            {form.depositMatured === false && (
-              <span className="w-2 h-2 rounded-full bg-white" />
-            )}
-          </button>
-          <div
-            className="flex-1 cursor-pointer"
-            onClick={() => updateForm('depositMatured', false)}
-          >
-            <p className="text-sm font-medium" style={{ color: retro.text }}>
-              Keep in deposit account
-            </p>
-            <p className="text-xs" style={{ color: retro.muted }}>
-              Interest adds to balance, deposit continues
-            </p>
-          </div>
-        </div>
-
+      {/* Deposit Maturity Confirmation - only with asset */}
+      {hasAsset && (
         <div
-          className="flex items-start gap-3"
-          style={{ borderTop: `1px solid ${retro.border}`, paddingTop: '12px' }}
+          className="p-3 rounded-sm space-y-3"
+          style={{
+            backgroundColor: retro.surfaceLight,
+            border: `1px solid ${form.depositMatured === null && formErrors.depositMatured ? '#c53030' : retro.border}`,
+          }}
         >
-          <button
-            type="button"
-            onClick={() => updateForm('depositMatured', true)}
-            className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
-            style={{
-              backgroundColor: form.depositMatured === true ? retro.accent : 'transparent',
-              border: `2px solid ${form.depositMatured === true ? retro.accent : retro.border}`,
-            }}
-          >
-            {form.depositMatured === true && (
-              <span className="w-2 h-2 rounded-full bg-white" />
-            )}
-          </button>
+          <Label variant="muted" className="block text-xs uppercase tracking-wide">
+            What happens to this deposit?
+          </Label>
+
+          <div className="flex items-start gap-3">
+            <button
+              type="button"
+              onClick={() => updateForm('depositMatured', false)}
+              className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
+              style={{
+                backgroundColor: form.depositMatured === false ? retro.accent : 'transparent',
+                border: `2px solid ${form.depositMatured === false ? retro.accent : retro.border}`,
+              }}
+            >
+              {form.depositMatured === false && (
+                <span className="w-2 h-2 rounded-full bg-white" />
+              )}
+            </button>
+            <div
+              className="flex-1 cursor-pointer"
+              onClick={() => updateForm('depositMatured', false)}
+            >
+              <p className="text-sm font-medium" style={{ color: retro.text }}>
+                Keep in deposit account
+              </p>
+              <p className="text-xs" style={{ color: retro.muted }}>
+                Interest adds to balance, deposit continues
+              </p>
+            </div>
+          </div>
+
           <div
-            className="flex-1 cursor-pointer"
-            onClick={() => updateForm('depositMatured', true)}
+            className="flex items-start gap-3"
+            style={{ borderTop: `1px solid ${retro.border}`, paddingTop: '12px' }}
           >
-            <p className="text-sm font-medium" style={{ color: retro.text }}>
-              Withdraw to cash account
-            </p>
-            <p className="text-xs" style={{ color: retro.muted }}>
-              Deposit matured, move principal + interest to cash
-            </p>
+            <button
+              type="button"
+              onClick={() => updateForm('depositMatured', true)}
+              className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
+              style={{
+                backgroundColor: form.depositMatured === true ? retro.accent : 'transparent',
+                border: `2px solid ${form.depositMatured === true ? retro.accent : retro.border}`,
+              }}
+            >
+              {form.depositMatured === true && (
+                <span className="w-2 h-2 rounded-full bg-white" />
+              )}
+            </button>
+            <div
+              className="flex-1 cursor-pointer"
+              onClick={() => updateForm('depositMatured', true)}
+            >
+              <p className="text-sm font-medium" style={{ color: retro.text }}>
+                Withdraw to cash account
+              </p>
+              <p className="text-xs" style={{ color: retro.muted }}>
+                Deposit matured, move principal + interest to cash
+              </p>
+            </div>
           </div>
+
+          {/* Cash account selector - only show when withdrawing */}
+          {form.depositMatured === true && (
+            <div className="pt-2">
+              <AssetCombobox
+                label="Withdraw to"
+                placeholder="Select cash account..."
+                value={form.withdrawToCashAssetId}
+                assets={cashAssets}
+                onChange={(id) => updateForm('withdrawToCashAssetId', id)}
+                error={formErrors.toAsset}
+                showBalance={true}
+              />
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Cash account selector - only show when withdrawing */}
-        {form.depositMatured === true && (
-          <div className="pt-2">
-            <AssetCombobox
-              label="Withdraw to"
-              placeholder="Select cash account..."
-              value={form.withdrawToCashAssetId}
-              assets={cashAssets}
-              onChange={(id) => updateForm('withdrawToCashAssetId', id)}
-              error={formErrors.toAsset}
-              showBalance={true}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Destination info - only show when user has made a selection */}
-      {form.depositMatured !== null && (
+      {/* Destination info - only with asset and when user has made a selection */}
+      {hasAsset && form.depositMatured !== null && (
         <>
           {/* Flow Arrow */}
           <div className="flex justify-center py-1">
