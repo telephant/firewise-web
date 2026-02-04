@@ -1,9 +1,8 @@
 'use client';
 
 import {
-  retro,
+  colors,
   Card,
-  retroStyles,
   Loader,
   SimpleProgressBar,
 } from '@/components/fire/ui';
@@ -34,11 +33,11 @@ export function ExpenseCard({ className }: ExpenseCardProps) {
   const getTrendColor = (direction: 'up' | 'down' | 'same') => {
     switch (direction) {
       case 'up':
-        return retro.negative;
+        return colors.negative;
       case 'down':
-        return retro.positive;
+        return colors.positive;
       default:
-        return retro.muted;
+        return colors.muted;
     }
   };
 
@@ -59,7 +58,7 @@ export function ExpenseCard({ className }: ExpenseCardProps) {
       <Card title="Monthly Expenses" className={className} contentHeight={CARD_HEIGHT}>
         <div
           className="h-full flex items-center justify-center text-sm"
-          style={{ color: retro.muted }}
+          style={{ color: colors.muted }}
         >
           Unable to load expense data
         </div>
@@ -76,7 +75,7 @@ export function ExpenseCard({ className }: ExpenseCardProps) {
       <div className="mb-3">
         <p
           className="text-2xl font-bold tabular-nums"
-          style={{ color: retro.text }}
+          style={{ color: colors.text }}
         >
           {formatCurrency(current_month.total)}
         </p>
@@ -89,7 +88,7 @@ export function ExpenseCard({ className }: ExpenseCardProps) {
           >
             {getTrendIcon(trend.direction)} {formatCurrency(Math.abs(trend.amount_change))} ({trend.percentage_change > 0 ? '+' : ''}{trend.percentage_change}%)
           </span>
-          <span className="text-xs" style={{ color: retro.muted }}>
+          <span className="text-xs" style={{ color: colors.muted }}>
             vs last month
           </span>
         </div>
@@ -97,36 +96,36 @@ export function ExpenseCard({ className }: ExpenseCardProps) {
 
       {/* Quick Stats Row */}
       <div
-        className="flex gap-3 mb-3 py-2 px-2 rounded-sm"
+        className="flex gap-3 mb-3 py-2 px-2 rounded-md"
         style={{
-          backgroundColor: retro.surfaceLight,
-          border: `1px solid ${retro.bevelMid}`,
+          backgroundColor: colors.surfaceLight,
+          border: `1px solid ${colors.surfaceLight}`,
         }}
       >
         <div className="flex-1">
-          <p className="text-[10px] uppercase" style={{ color: retro.muted }}>
+          <p className="text-[10px] uppercase" style={{ color: colors.muted }}>
             Month Avg
           </p>
-          <p className="text-xs font-bold tabular-nums" style={{ color: retro.text }}>
+          <p className="text-xs font-bold tabular-nums" style={{ color: colors.text }}>
             {formatCurrency(current_month.monthly_average)}
           </p>
         </div>
         <div
           className="w-px"
-          style={{ backgroundColor: retro.bevelMid }}
+          style={{ backgroundColor: colors.surfaceLight }}
         />
         <div className="flex-1">
-          <p className="text-[10px] uppercase" style={{ color: retro.muted }}>
+          <p className="text-[10px] uppercase" style={{ color: colors.muted }}>
             Exp/Income
           </p>
           <p
             className="text-xs font-bold tabular-nums"
             style={{
               color: expense_to_income_ratio !== null && expense_to_income_ratio > 100
-                ? retro.negative
+                ? colors.negative
                 : expense_to_income_ratio !== null && expense_to_income_ratio < 50
-                ? retro.positive
-                : retro.text,
+                ? colors.positive
+                : colors.text,
             }}
           >
             {expense_to_income_ratio !== null ? `${expense_to_income_ratio}%` : '—'}
@@ -144,7 +143,7 @@ export function ExpenseCard({ className }: ExpenseCardProps) {
       ) : (
         <p
           className="text-xs py-2 text-center"
-          style={{ color: retro.muted }}
+          style={{ color: colors.muted }}
         >
           No expenses this month
         </p>
@@ -153,9 +152,9 @@ export function ExpenseCard({ className }: ExpenseCardProps) {
       {/* Source Indicator */}
       <div
         className="mt-3 pt-2 text-center"
-        style={{ borderTop: `1px solid ${retro.bevelMid}` }}
+        style={{ borderTop: `1px solid ${colors.surfaceLight}` }}
       >
-        <p className="text-[10px]" style={{ color: retro.muted }}>
+        <p className="text-[10px]" style={{ color: colors.muted }}>
           {current_month.source_count.manual_flows > 0 && (
             <span>{current_month.source_count.manual_flows} manual</span>
           )}
@@ -181,17 +180,17 @@ function CategoryBar({ category }: { category: ExpenseCategoryBreakdown }) {
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
           <span className="text-sm emoji-sepia">{category.category_icon}</span>
-          <span className="text-xs font-medium" style={{ color: retro.text }}>
+          <span className="text-xs font-medium" style={{ color: colors.text }}>
             {category.category_name}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold tabular-nums" style={{ color: retro.text }}>
+          <span className="text-xs font-bold tabular-nums" style={{ color: colors.text }}>
             {formatCurrency(category.amount)}
           </span>
           <span
             className="text-[10px] tabular-nums w-8 text-right"
-            style={{ color: retro.muted }}
+            style={{ color: colors.muted }}
           >
             {Math.round(category.percentage)}%
           </span>
@@ -201,7 +200,7 @@ function CategoryBar({ category }: { category: ExpenseCategoryBreakdown }) {
       <SimpleProgressBar
         value={Math.min(100, category.percentage)}
         size="sm"
-        color={retro.accent}
+        color={colors.accent}
       />
     </div>
   );

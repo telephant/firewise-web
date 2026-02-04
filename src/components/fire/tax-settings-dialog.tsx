@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 import {
-  retro,
+  colors,
   Button,
   Input,
   Label,
@@ -131,7 +131,7 @@ export function TaxSettingsDialog({ open, onOpenChange }: TaxSettingsDialogProps
           ) : error ? (
             <div
               className="h-32 flex items-center justify-center text-sm"
-              style={{ color: retro.negative }}
+              style={{ color: colors.negative }}
             >
               Failed to load settings
             </div>
@@ -151,9 +151,9 @@ export function TaxSettingsDialog({ open, onOpenChange }: TaxSettingsDialogProps
                     placeholder="30"
                     className="w-24"
                   />
-                  <span className="text-sm font-medium" style={{ color: retro.text }}>%</span>
+                  <span className="text-sm font-medium" style={{ color: colors.text }}>%</span>
                 </div>
-                <p className="text-xs" style={{ color: retro.muted }}>
+                <p className="text-xs" style={{ color: colors.muted }}>
                   Default 30%, or 15% with tax treaty (UK, Japan, Germany).
                 </p>
               </div>
@@ -172,9 +172,9 @@ export function TaxSettingsDialog({ open, onOpenChange }: TaxSettingsDialogProps
                     placeholder="0"
                     className="w-24"
                   />
-                  <span className="text-sm font-medium" style={{ color: retro.text }}>%</span>
+                  <span className="text-sm font-medium" style={{ color: colors.text }}>%</span>
                 </div>
-                <p className="text-xs" style={{ color: retro.muted }}>
+                <p className="text-xs" style={{ color: colors.muted }}>
                   Often 0% for non-US residents under tax treaties.
                 </p>
               </div>

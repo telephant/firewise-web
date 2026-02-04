@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import {
-  retro,
+  colors,
   Button,
   SidebarTrigger,
   IconPlus,
@@ -121,12 +121,12 @@ export default function DebtsPage() {
         className="flex items-center justify-between px-3 py-2"
         style={{
           backgroundColor: 'transparent',
-          borderBottom: `2px solid ${retro.border}`,
+          borderBottom: `1px solid ${colors.border}`,
         }}
       >
         <div className="flex items-center gap-3">
           <SidebarTrigger />
-          <h1 className="text-sm font-bold" style={{ color: retro.text }}>
+          <h1 className="text-sm font-bold" style={{ color: colors.text }}>
             Debts
           </h1>
         </div>

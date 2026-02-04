@@ -1,6 +1,6 @@
 'use client';
 
-import { retro, Card, Loader, SimpleProgressBar, Tag } from '@/components/fire/ui';
+import { colors, Card, Loader, SimpleProgressBar, Tag } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 
 interface MoneySource {
@@ -64,24 +64,24 @@ export function MoneyMovement({
         <div className="flex-1">
           <p
             className="text-xs uppercase tracking-wide font-medium mb-3"
-            style={{ color: retro.muted }}
+            style={{ color: colors.muted }}
           >
             Where It Came From
           </p>
           <div className="space-y-2">
             {sources.length === 0 ? (
-              <p className="text-xs" style={{ color: retro.muted }}>
+              <p className="text-xs" style={{ color: colors.muted }}>
                 No income this month
               </p>
             ) : (
               sources.map((source, i) => (
                 <div key={i} className="flex items-center justify-between">
-                  <span className="text-sm" style={{ color: retro.text }}>
+                  <span className="text-sm" style={{ color: colors.text }}>
                     {source.name}
                   </span>
                   <span
                     className="text-sm font-medium tabular-nums"
-                    style={{ color: retro.positive }}
+                    style={{ color: colors.positive }}
                   >
                     {formatCurrency(source.amount, { currency })}
                   </span>
@@ -95,7 +95,7 @@ export function MoneyMovement({
         <div className="flex flex-col items-center justify-center px-4">
           <div
             className="text-2xl"
-            style={{ color: retro.muted }}
+            style={{ color: colors.muted }}
           >
             →
           </div>
@@ -105,23 +105,23 @@ export function MoneyMovement({
         <div className="flex-1">
           <p
             className="text-xs uppercase tracking-wide font-medium mb-3"
-            style={{ color: retro.muted }}
+            style={{ color: colors.muted }}
           >
             How You Allocated It
           </p>
           <div className="space-y-2">
             {destinations.length === 0 ? (
-              <p className="text-xs" style={{ color: retro.muted }}>
+              <p className="text-xs" style={{ color: colors.muted }}>
                 No outflows this month
               </p>
             ) : (
               destinations.map((dest, i) => (
                 <div key={i} className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm" style={{ color: retro.text }}>
+                    <span className="text-sm" style={{ color: colors.text }}>
                       {dest.name}
                     </span>
-                    <span className="text-xs" style={{ color: retro.muted }}>
+                    <span className="text-xs" style={{ color: colors.muted }}>
                       {dest.percentage}%
                     </span>
                   </div>
@@ -132,20 +132,20 @@ export function MoneyMovement({
                         size="sm"
                         color={
                           dest.name === 'Investments'
-                            ? retro.info
+                            ? colors.info
                             : dest.name === 'Savings'
-                            ? retro.positive
+                            ? colors.positive
                             : dest.name === 'Debt Payoff'
-                            ? retro.warning
+                            ? colors.warning
                             : dest.name === 'Spent'
-                            ? retro.negative
-                            : retro.muted
+                            ? colors.negative
+                            : colors.muted
                         }
                       />
                     </div>
                     <span
                       className="text-xs font-medium tabular-nums min-w-[70px] text-right"
-                      style={{ color: retro.text }}
+                      style={{ color: colors.text }}
                     >
                       {formatCurrency(dest.amount, { currency })}
                     </span>
@@ -160,50 +160,50 @@ export function MoneyMovement({
       {/* Summary Line */}
       <div
         className="mt-4 pt-3 flex items-center justify-between flex-wrap gap-y-2"
-        style={{ borderTop: `1px solid ${retro.border}` }}
+        style={{ borderTop: `1px solid ${colors.border}` }}
       >
         <div className="flex items-center gap-4">
           <div>
-            <span className="text-xs" style={{ color: retro.muted }}>
+            <span className="text-xs" style={{ color: colors.muted }}>
               In:{' '}
             </span>
             <span
               className="text-sm font-bold tabular-nums"
-              style={{ color: retro.positive }}
+              style={{ color: colors.positive }}
             >
               {formatCurrency(totalIn, { currency })}
             </span>
           </div>
           <div>
-            <span className="text-xs" style={{ color: retro.muted }}>
+            <span className="text-xs" style={{ color: colors.muted }}>
               Allocated:{' '}
             </span>
             <span
               className="text-sm font-bold tabular-nums"
-              style={{ color: retro.info }}
+              style={{ color: colors.info }}
             >
               {formatCurrency(totalAllocated, { currency })}
             </span>
           </div>
           <div>
-            <span className="text-xs" style={{ color: retro.muted }}>
+            <span className="text-xs" style={{ color: colors.muted }}>
               Spent:{' '}
             </span>
             <span
               className="text-sm font-bold tabular-nums"
-              style={{ color: retro.negative }}
+              style={{ color: colors.negative }}
             >
               {formatCurrency(totalSpent, { currency })}
             </span>
           </div>
         </div>
         <div>
-          <span className="text-xs" style={{ color: retro.muted }}>
+          <span className="text-xs" style={{ color: colors.muted }}>
             Net Saved:{' '}
           </span>
           <span
             className="text-sm font-bold tabular-nums"
-            style={{ color: netSaved >= 0 ? retro.positive : retro.negative }}
+            style={{ color: netSaved >= 0 ? colors.positive : colors.negative }}
           >
             {netSaved >= 0 ? '+' : ''}
             {formatCurrency(netSaved, { currency })}

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import {
-  retro,
+  colors,
   Card,
   Loader,
   IconTriangleUp,
@@ -29,7 +29,7 @@ export function NetWorthCard({ currency: _currency }: NetWorthCardProps) {
   }, [stats]);
 
   const changeDirection = monthlyChange ? (monthlyChange >= 0 ? 'up' : 'down') : null;
-  const changeColor = changeDirection === 'up' ? retro.positive : retro.negative;
+  const changeColor = changeDirection === 'up' ? colors.positive : colors.negative;
   const ChangeIcon = changeDirection === 'up' ? IconTriangleUp : IconTriangleDown;
   const CARD_HEIGHT = '160px';
 
@@ -49,7 +49,7 @@ export function NetWorthCard({ currency: _currency }: NetWorthCardProps) {
         {/* Main Value */}
         <p
           className="text-4xl font-bold tabular-nums"
-          style={{ color: retro.text }}
+          style={{ color: colors.text }}
         >
           {formatCurrency(netWorth, { currency })}
         </p>
@@ -68,18 +68,18 @@ export function NetWorthCard({ currency: _currency }: NetWorthCardProps) {
         {/* Assets / Debts Breakdown */}
         <div
           className="flex items-center justify-center gap-3 mt-3 pt-3 text-xs"
-          style={{ borderTop: `1px solid ${retro.bevelMid}` }}
+          style={{ borderTop: `1px solid ${colors.surfaceLight}` }}
         >
-          <span style={{ color: retro.muted }}>
+          <span style={{ color: colors.muted }}>
             Assets:{' '}
-            <span className="font-bold" style={{ color: retro.text }}>
+            <span className="font-bold" style={{ color: colors.text }}>
               {formatCurrency(totalAssets, { currency, compact: true })}
             </span>
           </span>
-          <span style={{ color: retro.bevelMid }}>|</span>
-          <span style={{ color: retro.muted }}>
+          <span style={{ color: colors.surfaceLight }}>|</span>
+          <span style={{ color: colors.muted }}>
             Debts:{' '}
-            <span className="font-bold" style={{ color: retro.negative }}>
+            <span className="font-bold" style={{ color: colors.negative }}>
               {formatCurrency(totalDebts, { currency, compact: true })}
             </span>
           </span>

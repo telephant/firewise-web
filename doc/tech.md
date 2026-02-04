@@ -9,7 +9,7 @@
 ## Styling
 
 - **Tailwind CSS** - Utility-first CSS framework
-- **Retro Theme** - Custom Windows 95/98 inspired design system (`src/components/fire/ui/theme.ts`)
+- **Dark Mode Theme** - Linear-inspired dark design system (`src/components/fire/ui/theme.ts`)
 
 ## Data Fetching
 
@@ -23,50 +23,37 @@
 
 **Location:** `src/components/fire/ui/charts/`
 
-Recharts is used for data visualization throughout the FIRE application. We provide reusable retro-styled chart components that match the Windows 95/98 aesthetic.
+Recharts is used for data visualization throughout the FIRE application. We provide reusable chart components that match the dark mode design.
 
 ### Reusable Chart Components
 
-#### RetroBarShape
+#### BarShape
 
-A custom SVG bar shape with Windows 95 segmented block style.
+A custom SVG bar shape for use with Recharts `<Bar>` component.
 
-**Location:** `src/components/fire/ui/charts/retro-bar-shape.tsx`
-
-**Features:**
-- Segmented blocks (8px wide) with 2px gaps
-- Sunken track background
-- 3D beveled blocks with highlights and shadows
+**Location:** `src/components/fire/ui/charts/bar-shape.tsx`
 
 ```tsx
-import { RetroBarShape } from '@/components/fire/ui';
+import { BarShape } from '@/components/fire/ui';
 
 // Use with Recharts Bar component
-<Bar dataKey="value" shape={<RetroBarShape />} />
-
-// Customizable props
-<RetroBarShape
-  blockWidth={8}      // Width of each segment
-  gapWidth={2}        // Gap between segments
-  innerPadding={2}    // Padding inside track
-  trackColor={retro.bevelMid}
-/>
+<Bar dataKey="value" shape={<BarShape />} />
 ```
 
-#### RetroBarChart
+#### BarChart
 
-A complete horizontal bar chart wrapper with retro styling built-in.
+A complete horizontal bar chart wrapper with dark styling built-in.
 
-**Location:** `src/components/fire/ui/charts/retro-bar-chart.tsx`
+**Location:** `src/components/fire/ui/charts/bar-chart.tsx`
 
 ```tsx
-import { RetroBarChart, retro } from '@/components/fire/ui';
+import { BarChart, colors } from '@/components/fire/ui';
 
-<RetroBarChart
+<BarChart
   data={[
-    { name: 'Salary', value: 5000, fill: retro.positive },
-    { name: 'Freelance', value: 3000, fill: retro.info },
-    { name: 'Dividends', value: 1200, fill: retro.accent },
+    { name: 'Salary', value: 5000, fill: colors.positive },
+    { name: 'Freelance', value: 3000, fill: colors.info },
+    { name: 'Dividends', value: 1200, fill: colors.accent },
   ]}
   valueFormatter={(v) => formatCurrency(v, { compact: true })}
   rowHeight={36}        // Height per bar
@@ -78,11 +65,11 @@ import { RetroBarChart, retro } from '@/components/fire/ui';
 />
 ```
 
-#### RetroStackedBarChart
+#### StackedBarChart
 
 Horizontal stacked bar chart with brush navigation. Groups items by name and shows category breakdown as stacked segments with hover tooltips.
 
-**Location:** `src/components/fire/ui/charts/retro-stacked-bar-chart.tsx`
+**Location:** `src/components/fire/ui/charts/stacked-bar-chart.tsx`
 
 **Features:**
 - Stacked segments within each bar (e.g., individual stocks within "Dividends")
@@ -91,7 +78,7 @@ Horizontal stacked bar chart with brush navigation. Groups items by name and sho
 - Auto-coloring by category
 
 ```tsx
-import { RetroStackedBarChart } from '@/components/fire/ui';
+import { StackedBarChart } from '@/components/fire/ui';
 import type { StackedBarItem } from '@/components/fire/ui';
 
 const data: StackedBarItem[] = [
@@ -103,7 +90,7 @@ const data: StackedBarItem[] = [
   { name: 'Salary', amount: 5000, category: 'salary' },
 ];
 
-<RetroStackedBarChart
+<StackedBarChart
   data={data}
   height={200}
   valueFormatter={(v) => formatCurrency(v)}
@@ -114,21 +101,39 @@ const data: StackedBarItem[] = [
 
 **Result:** Each row shows a stacked bar where segments represent individual items (stocks, properties, etc.) with different colors. Hover reveals the breakdown.
 
-### Retro Chart Styling Guidelines
+#### PieChart
 
-1. **Segmented Blocks** - Windows 95 progress bar style with individual raised blocks
-2. **Sunken Track** - Background has inverted bevel (dark top-left, light bottom-right)
-3. **3D Beveled Blocks** - Each block has highlight on top/left, shadow on bottom/right
-4. **Retro Colors** - Use colors from `retro` theme (`retro.info`, `retro.positive`, etc.)
-5. **Monospace Values** - Use monospace font for numerical values
-6. **Sunken Containers** - Wrap charts in panels with `inset` box-shadows
+Donut/pie chart with dark styling and label support.
+
+**Location:** `src/components/fire/ui/charts/pie-chart.tsx`
+
+```tsx
+import { PieChart, colors } from '@/components/fire/ui';
+import type { PieSegment } from '@/components/fire/ui';
+
+const segments: PieSegment[] = [
+  { name: 'Stocks', value: 50000, color: colors.accent },
+  { name: 'Bonds', value: 20000, color: colors.info },
+  { name: 'Cash', value: 10000, color: colors.positive },
+];
+
+<PieChart data={segments} />
+```
+
+### Chart Styling Guidelines
+
+1. **Dark Theme** - Charts use `colors.surface` backgrounds with `colors.border` borders
+2. **Smooth bars** - Simple rounded rectangles (`rx={3}`)
+3. **Theme colors** - Use tokens from `colors` (`colors.info`, `colors.positive`, etc.)
+4. **Monospace values** - Use `tabular-nums` class for numerical values
+5. **Dark tooltips** - Tooltips use `colors.surface` background with subtle border
 
 ### Components Using Charts
 
 | Component | Chart Type | Location |
 |-----------|------------|----------|
-| TopIncomeSources | RetroStackedBarChart | `src/components/fire/flows/top-income-sources.tsx` |
-| MostActiveAssets | RetroBarChart (dual bars) | `src/components/fire/flows/most-active-assets.tsx` |
+| TopIncomeSources | StackedBarChart | `src/components/fire/flows/top-income-sources.tsx` |
+| MostActiveAssets | BarChart (dual bars) | `src/components/fire/flows/most-active-assets.tsx` |
 
 ## Authentication
 
@@ -144,7 +149,7 @@ const data: StackedBarItem[] = [
 
 ## UI Components
 
-Custom retro-styled component library at `src/components/fire/ui/`:
+Custom dark-mode component library at `src/components/fire/ui/`:
 
 **Core Components:**
 - Button, Input, Select, Label
@@ -154,8 +159,10 @@ Custom retro-styled component library at `src/components/fire/ui/`:
 - Form components with validation
 
 **Charts** (`src/components/fire/ui/charts/`):
-- RetroBarShape - Windows 95 segmented bar shape
-- RetroBarChart - Complete horizontal bar chart
+- BarShape - Custom bar shape for Recharts
+- BarChart - Horizontal bar chart
+- StackedBarChart - Stacked horizontal bar chart with brush
+- PieChart - Donut/pie chart
 
 **Progress Indicators:**
 - ProgressBar - Full-featured progress with label

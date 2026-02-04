@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -219,20 +219,20 @@ export function EditFlowDialog({
             <div className="space-y-4">
               {/* Flow Info (Read-only) */}
               <div
-                className="text-xs p-2 rounded-sm space-y-1"
-                style={{ backgroundColor: retro.surfaceLight }}
+                className="text-xs p-2 rounded-md space-y-1"
+                style={{ backgroundColor: colors.surfaceLight }}
               >
                 <div className="flex justify-between">
-                  <span style={{ color: retro.muted }}>From:</span>
-                  <span style={{ color: retro.text }}>{from}</span>
+                  <span style={{ color: colors.muted }}>From:</span>
+                  <span style={{ color: colors.text }}>{from}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: retro.muted }}>To:</span>
-                  <span style={{ color: retro.text }}>{to}</span>
+                  <span style={{ color: colors.muted }}>To:</span>
+                  <span style={{ color: colors.text }}>{to}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: retro.muted }}>Currency:</span>
-                  <span style={{ color: retro.text }}>{flow.currency}</span>
+                  <span style={{ color: colors.muted }}>Currency:</span>
+                  <span style={{ color: colors.text }}>{flow.currency}</span>
                 </div>
               </div>
 
@@ -240,7 +240,7 @@ export function EditFlowDialog({
               <div>
                 <div className="flex items-center justify-between">
                   <Label>Amount</Label>
-                  <span className="text-xs" style={{ color: retro.muted }}>
+                  <span className="text-xs" style={{ color: colors.muted }}>
                     was {formatCurrency(flow.amount, { currency: flow.currency })}
                   </span>
                 </div>
@@ -262,12 +262,12 @@ export function EditFlowDialog({
                         checked={adjustBalances}
                         onChange={(e) => setAdjustBalances(e.target.checked)}
                         className="mt-0.5"
-                        style={{ accentColor: retro.accent }}
+                        style={{ accentColor: colors.accent }}
                       />
                       <div className="flex-1">
                         <span
                           className="text-xs"
-                          style={{ color: retro.text }}
+                          style={{ color: colors.text }}
                         >
                           Also adjust asset balances
                         </span>
@@ -278,18 +278,18 @@ export function EditFlowDialog({
                                 key={i}
                                 className="text-xs flex gap-1"
                               >
-                                <span style={{ color: retro.muted }}>
+                                <span style={{ color: colors.muted }}>
                                   {adj.asset}:
                                 </span>
                                 <span
                                   style={{
-                                    color: adj.delta >= 0 ? retro.positive : retro.negative,
+                                    color: adj.delta >= 0 ? colors.positive : colors.negative,
                                   }}
                                 >
                                   {adj.delta >= 0 ? '+' : ''}
                                   {formatCurrency(adj.delta, { currency: flow.currency })}
                                   {adj.needsConversion && (
-                                    <span style={{ color: retro.muted }}>
+                                    <span style={{ color: colors.muted }}>
                                       {' '}→ {adj.assetCurrency}
                                     </span>
                                   )}
@@ -299,7 +299,7 @@ export function EditFlowDialog({
                             {balanceAdjustment.hasConversion && (
                               <div
                                 className="text-[10px] mt-1"
-                                style={{ color: retro.muted }}
+                                style={{ color: colors.muted }}
                               >
                                 * Will be converted at current exchange rate
                               </div>

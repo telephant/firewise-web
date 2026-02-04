@@ -3,8 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
-  retro,
-  retroStyles,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -269,32 +268,32 @@ export function ImportAssetsDialog({
           {/* Upload Step */}
           {step === 'upload' && (
             <div className="space-y-4">
-              <p className="text-xs" style={{ color: retro.muted }}>
+              <p className="text-xs" style={{ color: colors.muted }}>
                 Upload a brokerage statement (PDF, CSV, or Excel) to automatically extract your holdings.
               </p>
 
               <div
                 className={`
-                  border-2 border-dashed rounded-sm p-8
+                  border-2 border-dashed rounded-md p-8
                   flex flex-col items-center justify-center gap-3
                   cursor-pointer transition-colors
                 `}
                 style={{
-                  borderColor: dragActive ? retro.accent : retro.border,
-                  backgroundColor: dragActive ? retro.surfaceLight : 'transparent',
+                  borderColor: dragActive ? colors.accent : colors.border,
+                  backgroundColor: dragActive ? colors.surfaceLight : 'transparent',
                 }}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onClick={() => fileInputRef.current?.click()}
               >
-                <span style={{ color: retro.muted }}>
+                <span style={{ color: colors.muted }}>
                   <IconUpload size={32} />
                 </span>
-                <p className="text-sm" style={{ color: retro.text }}>
+                <p className="text-sm" style={{ color: colors.text }}>
                   Drop file here or click to browse
                 </p>
-                <p className="text-xs" style={{ color: retro.muted }}>
+                <p className="text-xs" style={{ color: colors.muted }}>
                   Supports: PDF, CSV, Excel (max 10MB)
                 </p>
               </div>
@@ -313,10 +312,10 @@ export function ImportAssetsDialog({
           {step === 'analyzing' && (
             <div className="flex flex-col items-center justify-center py-8 gap-4">
               <Loader size="lg" variant="bar" />
-              <p className="text-sm" style={{ color: retro.text }}>
+              <p className="text-sm" style={{ color: colors.text }}>
                 Analyzing your statement...
               </p>
-              <p className="text-xs" style={{ color: retro.muted }}>
+              <p className="text-xs" style={{ color: colors.muted }}>
                 This may take a moment
               </p>
             </div>
@@ -328,8 +327,8 @@ export function ImportAssetsDialog({
               {/* Source Info */}
               {sourceInfo && (sourceInfo.broker || sourceInfo.statement_date) && (
                 <div
-                  className="text-xs px-3 py-2 rounded-sm"
-                  style={{ backgroundColor: retro.surfaceLight, color: retro.muted }}
+                  className="text-xs px-3 py-2 rounded-md"
+                  style={{ backgroundColor: colors.surfaceLight, color: colors.muted }}
                 >
                   {sourceInfo.broker && <span>Broker: {sourceInfo.broker}</span>}
                   {sourceInfo.broker && sourceInfo.statement_date && <span> • </span>}
@@ -340,8 +339,8 @@ export function ImportAssetsDialog({
               {/* Warnings */}
               {warnings.length > 0 && (
                 <div
-                  className="text-xs px-3 py-2 rounded-sm flex items-start gap-2"
-                  style={{ backgroundColor: `${retro.warning}20`, color: retro.warning }}
+                  className="text-xs px-3 py-2 rounded-md flex items-start gap-2"
+                  style={{ backgroundColor: `${colors.warning}20`, color: colors.warning }}
                 >
                   <IconWarning size={14} className="flex-shrink-0 mt-0.5" />
                   <div>
@@ -354,15 +353,15 @@ export function ImportAssetsDialog({
 
               {/* Confidence indicator */}
               <div className="flex items-center gap-2 text-xs">
-                <span style={{ color: retro.muted }}>Extraction confidence:</span>
+                <span style={{ color: colors.muted }}>Extraction confidence:</span>
                 <span
                   style={{
                     color:
                       confidence >= 0.8
-                        ? retro.positive
+                        ? colors.positive
                         : confidence >= 0.5
-                          ? retro.warning
-                          : retro.negative,
+                          ? colors.warning
+                          : colors.negative,
                   }}
                 >
                   {Math.round(confidence * 100)}%
@@ -371,16 +370,16 @@ export function ImportAssetsDialog({
 
               {/* Assets Table */}
               <div
-                className="rounded-sm overflow-hidden"
-                style={{ border: `2px solid ${retro.border}` }}
+                className="rounded-md overflow-hidden"
+                style={{ border: `1px solid ${colors.border}` }}
               >
                 {/* Table Header */}
                 <div
                   className="grid grid-cols-[32px_1fr_70px_80px_70px_100px] gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-wide"
                   style={{
-                    backgroundColor: retro.bevelMid,
-                    color: retro.text,
-                    borderBottom: `2px solid ${retro.border}`,
+                    backgroundColor: colors.surfaceLight,
+                    color: colors.text,
+                    borderBottom: `1px solid ${colors.border}`,
                   }}
                 >
                   <div></div>
@@ -394,7 +393,7 @@ export function ImportAssetsDialog({
                 {/* Table Body */}
                 <div
                   className="max-h-[300px] overflow-y-auto"
-                  style={{ backgroundColor: retro.surfaceLight }}
+                  style={{ backgroundColor: colors.surfaceLight }}
                 >
                   {previewAssets.map((asset, index) => (
                     <div
@@ -403,7 +402,7 @@ export function ImportAssetsDialog({
                       style={{
                         borderBottom:
                           index < previewAssets.length - 1
-                            ? `1px solid ${retro.bevelMid}`
+                            ? `1px solid ${colors.surfaceLight}`
                             : 'none',
                         opacity: asset.selected ? 1 : 0.5,
                       }}
@@ -412,11 +411,11 @@ export function ImportAssetsDialog({
                       <div>
                         <button
                           onClick={() => toggleAssetSelection(index)}
-                          className="w-5 h-5 rounded-sm flex items-center justify-center"
+                          className="w-5 h-5 rounded-md flex items-center justify-center transition-colors duration-150 hover:border-white/[0.2] cursor-pointer"
                           style={{
-                            ...retroStyles.sunken,
-                            backgroundColor: asset.selected ? retro.accent : retro.surface,
-                            color: retro.text,
+                            backgroundColor: asset.selected ? colors.accent : colors.surface,
+                            border: `1px solid ${colors.border}`, borderRadius: '6px',
+                            color: colors.text,
                           }}
                         >
                           {asset.selected && <IconCheck size={12} />}
@@ -427,29 +426,29 @@ export function ImportAssetsDialog({
                       <div className="min-w-0">
                         <p
                           className="text-xs font-medium truncate"
-                          style={{ color: retro.text }}
+                          style={{ color: colors.text }}
                         >
                           {asset.name}
                         </p>
                         {asset.ticker && (
-                          <p className="text-[10px]" style={{ color: retro.muted }}>
+                          <p className="text-[10px]" style={{ color: colors.muted }}>
                             {asset.ticker}
                           </p>
                         )}
                       </div>
 
                       {/* Type */}
-                      <div style={{ color: retro.muted }}>
+                      <div style={{ color: colors.muted }}>
                         {ASSET_TYPE_LABELS[asset.type]}
                       </div>
 
                       {/* Shares */}
-                      <div className="text-right tabular-nums" style={{ color: retro.text }}>
+                      <div className="text-right tabular-nums" style={{ color: colors.text }}>
                         {asset.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                       </div>
 
                       {/* Currency */}
-                      <div style={{ color: retro.muted }}>{asset.currency}</div>
+                      <div style={{ color: colors.muted }}>{asset.currency}</div>
 
                       {/* Status / Duplicate Action */}
                       <div>
@@ -459,10 +458,10 @@ export function ImportAssetsDialog({
                             onChange={(e) =>
                               setDuplicateAction(index, e.target.value as DuplicateAction)
                             }
-                            className="text-[10px] px-1 py-0.5 rounded-sm w-full"
+                            className="text-[10px] px-1 py-0.5 rounded-md w-full"
                             style={{
-                              ...retroStyles.sunken,
-                              color: retro.text,
+                              backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+                              color: colors.text,
                             }}
                           >
                             <option value="update">Update</option>
@@ -471,10 +470,10 @@ export function ImportAssetsDialog({
                           </select>
                         ) : (
                           <span
-                            className="text-[10px] px-2 py-0.5 rounded-sm"
+                            className="text-[10px] px-2 py-0.5 rounded-md"
                             style={{
-                              backgroundColor: retro.positive + '30',
-                              color: retro.positive,
+                              backgroundColor: colors.positive + '30',
+                              color: colors.positive,
                             }}
                           >
                             New
@@ -487,7 +486,7 @@ export function ImportAssetsDialog({
               </div>
 
               {/* Selection Summary */}
-              <p className="text-xs" style={{ color: retro.muted }}>
+              <p className="text-xs" style={{ color: colors.muted }}>
                 {selectedCount} of {previewAssets.length} assets selected
               </p>
             </div>
@@ -497,7 +496,7 @@ export function ImportAssetsDialog({
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-8 gap-4">
               <Loader size="lg" variant="bar" />
-              <p className="text-sm" style={{ color: retro.text }}>
+              <p className="text-sm" style={{ color: colors.text }}>
                 Importing assets...
               </p>
             </div>

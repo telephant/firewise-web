@@ -9,7 +9,7 @@ import {
   LabelList,
   Legend,
 } from 'recharts';
-import { retro, Card, Loader, RetroBarShape } from '@/components/fire/ui';
+import { colors, Card, Loader, BarShape } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 
 interface AssetActivity {
@@ -68,17 +68,16 @@ export function MostActiveAssets({
 
   return (
     <Card title="Most Active Assets">
-      {/* Retro Sunken Container */}
+      
       <div
-        className="rounded-sm p-3"
+        className="rounded-md p-3"
         style={{
-          backgroundColor: retro.surfaceLight,
-          border: `2px solid ${retro.border}`,
-          boxShadow: `inset 2px 2px 0 ${retro.bevelMid}, inset -1px -1px 0 #fff`,
+          backgroundColor: colors.surfaceLight,
+          border: `1px solid ${colors.border}`,
         }}
       >
         {assets.length === 0 ? (
-          <p className="text-xs text-center py-4" style={{ color: retro.muted }}>
+          <p className="text-xs text-center py-4" style={{ color: colors.muted }}>
             No asset activity this month
           </p>
         ) : (
@@ -96,7 +95,7 @@ export function MostActiveAssets({
                 axisLine={false}
                 tickLine={false}
                 tick={{
-                  fill: retro.text,
+                  fill: colors.text,
                   fontSize: 11,
                   fontFamily: 'inherit',
                 }}
@@ -108,14 +107,14 @@ export function MostActiveAssets({
                 iconType="square"
                 iconSize={10}
                 formatter={(value) => (
-                  <span style={{ color: retro.text, fontSize: 10 }}>{value}</span>
+                  <span style={{ color: colors.text, fontSize: 10 }}>{value}</span>
                 )}
               />
               <Bar
                 dataKey="in"
                 name="In"
-                shape={<RetroBarShape />}
-                fill={retro.positive}
+                shape={<BarShape />}
+                fill={colors.positive}
                 barSize={14}
               >
                 <LabelList
@@ -128,7 +127,7 @@ export function MostActiveAssets({
                       : ''
                   }
                   style={{
-                    fill: retro.positive,
+                    fill: colors.positive,
                     fontSize: 9,
                     fontWeight: 'bold',
                     fontFamily: 'monospace',
@@ -138,8 +137,8 @@ export function MostActiveAssets({
               <Bar
                 dataKey="out"
                 name="Out"
-                shape={<RetroBarShape />}
-                fill={retro.negative}
+                shape={<BarShape />}
+                fill={colors.negative}
                 barSize={14}
               >
                 <LabelList
@@ -152,7 +151,7 @@ export function MostActiveAssets({
                       : ''
                   }
                   style={{
-                    fill: retro.negative,
+                    fill: colors.negative,
                     fontSize: 9,
                     fontWeight: 'bold',
                     fontFamily: 'monospace',
@@ -168,24 +167,24 @@ export function MostActiveAssets({
       {assets.length > 0 && (
         <div
           className="mt-3 pt-2 space-y-1"
-          style={{ borderTop: `1px solid ${retro.border}` }}
+          style={{ borderTop: `1px solid ${colors.border}` }}
         >
           {netReceiver.name && netReceiver.net > 0 && (
             <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: retro.muted }}>
+              <span className="text-xs" style={{ color: colors.muted }}>
                 Net Receiver:
               </span>
-              <span className="text-xs font-medium" style={{ color: retro.positive }}>
+              <span className="text-xs font-medium" style={{ color: colors.positive }}>
                 {netReceiver.name} +{formatCurrency(netReceiver.net, { currency })}
               </span>
             </div>
           )}
           {netSender.name && netSender.net < 0 && (
             <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: retro.muted }}>
+              <span className="text-xs" style={{ color: colors.muted }}>
                 Net Sender:
               </span>
-              <span className="text-xs font-medium" style={{ color: retro.negative }}>
+              <span className="text-xs font-medium" style={{ color: colors.negative }}>
                 {netSender.name} {formatCurrency(netSender.net, { currency })}
               </span>
             </div>

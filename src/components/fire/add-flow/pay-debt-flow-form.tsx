@@ -5,7 +5,7 @@ import type { FlowCategoryPreset, Debt, AssetWithBalance, DebtType } from '@/typ
 import { DEBT_TYPE_LABELS } from '@/types/fire';
 import { useDebts } from '@/hooks/fire/use-fire-data';
 import {
-  retro,
+  colors,
   Input,
   CurrencyCombobox,
   IconArrow,
@@ -103,30 +103,30 @@ export function PayDebtFlowForm({
       {/* Show debt details if selected */}
       {selectedDebt && (
         <div
-          className="p-3 rounded-sm space-y-2"
-          style={{ backgroundColor: retro.surfaceLight }}
+          className="p-3 rounded-md space-y-2"
+          style={{ backgroundColor: colors.surfaceLight }}
         >
           <div className="flex items-center gap-2">
-            <span style={{ color: retro.negative }}>
+            <span style={{ color: colors.negative }}>
               <DebtIcon size={16} />
             </span>
-            <span className="text-sm font-medium" style={{ color: retro.text }}>
+            <span className="text-sm font-medium" style={{ color: colors.text }}>
               {selectedDebt.name}
             </span>
-            <span className="text-xs" style={{ color: retro.muted }}>
+            <span className="text-xs" style={{ color: colors.muted }}>
               {DEBT_TYPE_LABELS[selectedDebt.debt_type]}
             </span>
           </div>
           <div className="flex justify-between text-xs">
-            <span style={{ color: retro.muted }}>Remaining Balance</span>
-            <span className="font-bold" style={{ color: retro.negative }}>
+            <span style={{ color: colors.muted }}>Remaining Balance</span>
+            <span className="font-bold" style={{ color: colors.negative }}>
               {formatCurrency(-remainingBalance, { currency: selectedDebt.currency })}
             </span>
           </div>
           {selectedDebt.interest_rate && (
             <div className="flex justify-between text-xs">
-              <span style={{ color: retro.muted }}>Interest Rate</span>
-              <span style={{ color: retro.text }}>
+              <span style={{ color: colors.muted }}>Interest Rate</span>
+              <span style={{ color: colors.text }}>
                 {(selectedDebt.interest_rate * 100).toFixed(2)}% APR
               </span>
             </div>
@@ -148,7 +148,7 @@ export function PayDebtFlowForm({
 
       {/* Flow Arrow */}
       <div className="flex justify-center py-1">
-        <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+        <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
           <IconArrow size={18} />
         </span>
       </div>
@@ -173,16 +173,16 @@ export function PayDebtFlowForm({
       {/* Pay off indicator */}
       {willPayOff && selectedDebt && (
         <div
-          className="p-3 rounded-sm text-center"
+          className="p-3 rounded-md text-center"
           style={{
-            backgroundColor: retro.positive + '20',
-            border: `2px solid ${retro.positive}`,
+            backgroundColor: colors.positive + '20',
+            border: `1px solid ${colors.positive}`,
           }}
         >
-          <p className="text-sm font-bold" style={{ color: retro.positive }}>
+          <p className="text-sm font-bold" style={{ color: colors.positive }}>
             This will pay off your debt completely!
           </p>
-          <p className="text-xs mt-1" style={{ color: retro.text }}>
+          <p className="text-xs mt-1" style={{ color: colors.text }}>
             Remaining after payment: {formatCurrency(0)}
           </p>
         </div>
@@ -190,9 +190,9 @@ export function PayDebtFlowForm({
 
       {/* Remaining after payment (if not paying off) */}
       {!willPayOff && selectedDebt && paymentAmount > 0 && (
-        <div className="text-xs text-center" style={{ color: retro.muted }}>
+        <div className="text-xs text-center" style={{ color: colors.muted }}>
           Remaining after payment:{' '}
-          <span style={{ color: retro.negative, fontWeight: 500 }}>
+          <span style={{ color: colors.negative, fontWeight: 500 }}>
             {formatCurrency(-(remainingBalance - paymentAmount), { currency: selectedDebt.currency })}
           </span>
         </div>

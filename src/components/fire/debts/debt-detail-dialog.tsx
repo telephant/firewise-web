@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -69,7 +69,7 @@ export function DebtDetailDialog({
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span style={{ color: retro.negative }}>
+            <span style={{ color: colors.negative }}>
               <IconComponent size={18} />
             </span>
             {debt.name}
@@ -82,16 +82,16 @@ export function DebtDetailDialog({
             <div className="text-center py-4">
               <div
                 className="text-3xl font-bold tabular-nums"
-                style={{ color: retro.negative }}
+                style={{ color: colors.negative }}
               >
                 {formatCurrency(displayValue, { currency: displayCurrency })}
               </div>
               {hasConvertedCurrency && (
-                <div className="text-sm mt-1" style={{ color: retro.muted }}>
+                <div className="text-sm mt-1" style={{ color: colors.muted }}>
                   ({formatCurrency(debt.current_balance, { currency: debt.currency })})
                 </div>
               )}
-              <div className="text-xs mt-2" style={{ color: retro.muted }}>
+              <div className="text-xs mt-2" style={{ color: colors.muted }}>
                 Current Balance
               </div>
             </div>
@@ -99,15 +99,15 @@ export function DebtDetailDialog({
             {/* Progress Bar */}
             <div className="px-2">
               <div className="flex justify-between text-xs mb-1">
-                <span style={{ color: retro.muted }}>Paid Off</span>
-                <span style={{ color: retro.text }}>{Math.round(progress)}%</span>
+                <span style={{ color: colors.muted }}>Paid Off</span>
+                <span style={{ color: colors.text }}>{Math.round(progress)}%</span>
               </div>
               <SimpleProgressBar
                 value={progress}
                 size="sm"
-                color={progress >= 100 ? retro.positive : retro.accent}
+                color={progress >= 100 ? colors.positive : colors.accent}
               />
-              <div className="flex justify-between text-[10px] mt-1" style={{ color: retro.muted }}>
+              <div className="flex justify-between text-[10px] mt-1" style={{ color: colors.muted }}>
                 <span>{formatCurrency(debt.principal - debt.current_balance, { currency: debt.currency })} paid</span>
                 <span>{formatCurrency(debt.principal, { currency: debt.currency })} total</span>
               </div>
@@ -115,8 +115,8 @@ export function DebtDetailDialog({
 
             {/* Details Grid */}
             <div
-              className="grid grid-cols-2 gap-3 p-3 rounded-sm"
-              style={{ backgroundColor: retro.surfaceLight }}
+              className="grid grid-cols-2 gap-3 p-3 rounded-md"
+              style={{ backgroundColor: colors.surfaceLight }}
             >
               <DetailItem
                 label="Type"
@@ -160,7 +160,7 @@ export function DebtDetailDialog({
                 value={
                   <span
                     style={{
-                      color: debt.status === 'paid_off' ? retro.positive : retro.text,
+                      color: debt.status === 'paid_off' ? colors.positive : colors.text,
                     }}
                   >
                     {debt.status === 'paid_off' ? 'Paid Off' : 'Active'}
@@ -171,7 +171,7 @@ export function DebtDetailDialog({
 
             {/* Last Updated */}
             {debt.balance_updated_at && (
-              <div className="text-[10px] text-center" style={{ color: retro.muted }}>
+              <div className="text-[10px] text-center" style={{ color: colors.muted }}>
                 Balance updated {formatDate(debt.balance_updated_at)}
               </div>
             )}
@@ -224,10 +224,10 @@ export function DebtDetailDialog({
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wide mb-0.5" style={{ color: retro.muted }}>
+      <div className="text-[10px] uppercase tracking-wide mb-0.5" style={{ color: colors.muted }}>
         {label}
       </div>
-      <div className="text-xs font-medium" style={{ color: retro.text }}>
+      <div className="text-xs font-medium" style={{ color: colors.text }}>
         {value}
       </div>
     </div>

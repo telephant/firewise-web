@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { retro, retroStyles, Loader, SimpleProgressBar } from '@/components/fire/ui';
+import { colors, Loader, SimpleProgressBar } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 import { useFlowFreedom } from '@/hooks/fire/use-fire-data';
 
@@ -26,10 +26,9 @@ function Tooltip({ children, content }: TooltipProps) {
       {children}
       {show && (
         <div
-          className="absolute z-50 bottom-full left-0 mb-1 p-2 rounded-sm text-[10px] whitespace-nowrap"
+          className="absolute z-50 bottom-full left-0 mb-1 p-2 rounded-md text-[10px] whitespace-nowrap"
           style={{
-            ...retroStyles.raised,
-            backgroundColor: retro.surface,
+            backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
             minWidth: '120px',
           }}
         >
@@ -52,7 +51,7 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
 
   if (isLoading) {
     return (
-      <div className="p-4 rounded-sm" style={retroStyles.raised}>
+      <div className="p-4 rounded-md" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
         <div className="py-6 flex items-center justify-center">
           <Loader size="sm" variant="bar" />
         </div>
@@ -62,9 +61,9 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
 
   if (error || !data) {
     return (
-      <div className="p-4 rounded-sm" style={retroStyles.raised}>
+      <div className="p-4 rounded-md" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
         <div className="py-4 text-center">
-          <p className="text-sm" style={{ color: retro.muted }}>
+          <p className="text-sm" style={{ color: colors.muted }}>
             Track income & expenses to see monthly snapshot
           </p>
         </div>
@@ -86,10 +85,10 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
   const debtWidth = maxValue > 0 ? (debtPayments / maxValue) * 100 : 0;
 
   return (
-    <div className="p-4 rounded-sm" style={retroStyles.raised}>
+    <div className="p-4 rounded-md" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
       <h3
         className="text-xs font-bold uppercase tracking-wider mb-4"
-        style={{ color: retro.text }}
+        style={{ color: colors.text }}
       >
         Monthly Snapshot
       </h3>
@@ -98,56 +97,56 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
         {/* Passive Income Bar */}
         <div>
           <div className="flex justify-between text-xs mb-1">
-            <span style={{ color: retro.muted }}>Passive Income</span>
-            <span className="font-bold tabular-nums" style={{ color: retro.positive }}>
+            <span style={{ color: colors.muted }}>Passive Income</span>
+            <span className="font-bold tabular-nums" style={{ color: colors.positive }}>
               {formatCurrency(income, { currency: dataCurrency, compact: true })}
             </span>
           </div>
           <Tooltip
             content={
               <div className="space-y-1">
-                <div className="font-bold mb-1" style={{ color: retro.text }}>Passive Income Breakdown</div>
+                <div className="font-bold mb-1" style={{ color: colors.text }}>Passive Income Breakdown</div>
                 {data.passiveIncome.breakdown.dividends > 0 && (
                   <div className="flex justify-between gap-3">
-                    <span style={{ color: retro.muted }}>Dividends</span>
-                    <span className="tabular-nums" style={{ color: retro.positive }}>
+                    <span style={{ color: colors.muted }}>Dividends</span>
+                    <span className="tabular-nums" style={{ color: colors.positive }}>
                       {formatCurrency(data.passiveIncome.breakdown.dividends, { currency: dataCurrency, compact: true })}
                     </span>
                   </div>
                 )}
                 {data.passiveIncome.breakdown.rental > 0 && (
                   <div className="flex justify-between gap-3">
-                    <span style={{ color: retro.muted }}>Rental</span>
-                    <span className="tabular-nums" style={{ color: retro.positive }}>
+                    <span style={{ color: colors.muted }}>Rental</span>
+                    <span className="tabular-nums" style={{ color: colors.positive }}>
                       {formatCurrency(data.passiveIncome.breakdown.rental, { currency: dataCurrency, compact: true })}
                     </span>
                   </div>
                 )}
                 {data.passiveIncome.breakdown.interest > 0 && (
                   <div className="flex justify-between gap-3">
-                    <span style={{ color: retro.muted }}>Interest</span>
-                    <span className="tabular-nums" style={{ color: retro.positive }}>
+                    <span style={{ color: colors.muted }}>Interest</span>
+                    <span className="tabular-nums" style={{ color: colors.positive }}>
                       {formatCurrency(data.passiveIncome.breakdown.interest, { currency: dataCurrency, compact: true })}
                     </span>
                   </div>
                 )}
                 {data.passiveIncome.breakdown.other > 0 && (
                   <div className="flex justify-between gap-3">
-                    <span style={{ color: retro.muted }}>Other</span>
-                    <span className="tabular-nums" style={{ color: retro.positive }}>
+                    <span style={{ color: colors.muted }}>Other</span>
+                    <span className="tabular-nums" style={{ color: colors.positive }}>
                       {formatCurrency(data.passiveIncome.breakdown.other, { currency: dataCurrency, compact: true })}
                     </span>
                   </div>
                 )}
                 {income === 0 && (
-                  <div style={{ color: retro.muted }}>No passive income recorded</div>
+                  <div style={{ color: colors.muted }}>No passive income recorded</div>
                 )}
               </div>
             }
           >
             <SimpleProgressBar
               value={incomeWidth}
-              color={retro.positive}
+              color={colors.positive}
               size="lg"
               className="cursor-pointer"
             />
@@ -157,33 +156,33 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
         {/* Expenses Bar (stacked: living + debt) */}
         <div>
           <div className="flex justify-between text-xs mb-1">
-            <span style={{ color: retro.muted }}>Total Expenses</span>
-            <span className="font-bold tabular-nums" style={{ color: retro.negative }}>
+            <span style={{ color: colors.muted }}>Total Expenses</span>
+            <span className="font-bold tabular-nums" style={{ color: colors.negative }}>
               {formatCurrency(totalExpenses, { currency: dataCurrency, compact: true })}
             </span>
           </div>
           <Tooltip
             content={
               <div className="space-y-1">
-                <div className="font-bold mb-1" style={{ color: retro.text }}>Expense Breakdown</div>
+                <div className="font-bold mb-1" style={{ color: colors.text }}>Expense Breakdown</div>
                 <div className="flex justify-between gap-3">
-                  <span style={{ color: retro.muted }}>
-                    <span style={{ color: retro.negative }}>■</span> Living
+                  <span style={{ color: colors.muted }}>
+                    <span style={{ color: colors.negative }}>■</span> Living
                   </span>
-                  <span className="tabular-nums" style={{ color: retro.negative }}>
+                  <span className="tabular-nums" style={{ color: colors.negative }}>
                     {formatCurrency(livingExpenses, { currency: dataCurrency, compact: true })}
                   </span>
                 </div>
                 {debtPayments > 0 && (
                   <>
-                    <div className="border-t my-1" style={{ borderColor: retro.border }} />
-                    <div className="font-bold" style={{ color: retro.text }}>
-                      <span style={{ color: retro.warning }}>■</span> Debt Payments
+                    <div className="border-t my-1" style={{ borderColor: colors.border }} />
+                    <div className="font-bold" style={{ color: colors.text }}>
+                      <span style={{ color: colors.warning }}>■</span> Debt Payments
                     </div>
                     {data.expenses.debtBreakdown.map((debt, idx) => (
                       <div key={idx} className="flex justify-between gap-3 pl-2">
-                        <span style={{ color: retro.muted }}>{debt.name}</span>
-                        <span className="tabular-nums" style={{ color: retro.warning }}>
+                        <span style={{ color: colors.muted }}>{debt.name}</span>
+                        <span className="tabular-nums" style={{ color: colors.warning }}>
                           {formatCurrency(debt.monthlyPayment, { currency: dataCurrency, compact: true })}
                         </span>
                       </div>
@@ -195,8 +194,8 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
           >
             <SimpleProgressBar
               segments={[
-                { value: livingWidth, color: retro.negative },
-                ...(debtPayments > 0 ? [{ value: debtWidth, color: retro.warning }] : []),
+                { value: livingWidth, color: colors.negative },
+                ...(debtPayments > 0 ? [{ value: debtWidth, color: colors.warning }] : []),
               ]}
               size="lg"
               className="cursor-pointer"
@@ -204,32 +203,32 @@ export function MonthlySnapshotCard({ currency = 'USD' }: MonthlySnapshotCardPro
           </Tooltip>
           {/* Expense breakdown labels */}
           <div className="flex justify-between text-[10px] mt-1">
-            <span style={{ color: retro.muted }}>
-              <span style={{ color: retro.negative }}>■</span> Living: {formatCurrency(livingExpenses, { currency: dataCurrency, compact: true })}
+            <span style={{ color: colors.muted }}>
+              <span style={{ color: colors.negative }}>■</span> Living: {formatCurrency(livingExpenses, { currency: dataCurrency, compact: true })}
             </span>
             {debtPayments > 0 && (
-              <span style={{ color: retro.muted }}>
-                <span style={{ color: retro.warning }}>■</span> Debt: {formatCurrency(debtPayments, { currency: dataCurrency, compact: true })}
+              <span style={{ color: colors.muted }}>
+                <span style={{ color: colors.warning }}>■</span> Debt: {formatCurrency(debtPayments, { currency: dataCurrency, compact: true })}
               </span>
             )}
           </div>
         </div>
 
         {/* Divider */}
-        <div className="border-t pt-3" style={{ borderColor: retro.border }}>
+        <div className="border-t pt-3" style={{ borderColor: colors.border }}>
           {/* Gap/Surplus */}
           <div className="flex justify-between items-center">
-            <span className="text-xs font-medium" style={{ color: retro.text }}>
+            <span className="text-xs font-medium" style={{ color: colors.text }}>
               {gap > 0 ? 'Monthly Gap' : 'Monthly Surplus'}
             </span>
             <span
               className="text-lg font-bold tabular-nums"
-              style={{ color: gap > 0 ? retro.negative : retro.positive }}
+              style={{ color: gap > 0 ? colors.negative : colors.positive }}
             >
               {gap > 0 ? '-' : '+'}{formatCurrency(Math.abs(gap), { currency: dataCurrency, compact: true })}
             </span>
           </div>
-          <p className="text-[10px] mt-1" style={{ color: retro.muted }}>
+          <p className="text-[10px] mt-1" style={{ color: colors.muted }}>
             {gap > 0
               ? 'Amount withdrawn from savings each month'
               : 'Amount added to savings each month'

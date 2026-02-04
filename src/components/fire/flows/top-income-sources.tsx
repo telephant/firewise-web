@@ -1,6 +1,6 @@
 'use client';
 
-import { retro, Card, Loader, RetroStackedBarChart } from '@/components/fire/ui';
+import { colors, Card, Loader, StackedBarChart } from '@/components/fire/ui';
 import type { StackedBarItem } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 
@@ -76,21 +76,20 @@ export function TopIncomeSources({
 
   return (
     <Card title="Top Income Sources">
-      {/* Retro Sunken Container */}
+      
       <div
-        className="rounded-sm p-3"
+        className="rounded-md p-3"
         style={{
-          backgroundColor: retro.surfaceLight,
-          border: `2px solid ${retro.border}`,
-          boxShadow: `inset 2px 2px 0 ${retro.bevelMid}, inset -1px -1px 0 #fff`,
+          backgroundColor: colors.surfaceLight,
+          border: `1px solid ${colors.border}`,
         }}
       >
         {sources.length === 0 ? (
-          <p className="text-xs text-center py-4" style={{ color: retro.muted }}>
+          <p className="text-xs text-center py-4" style={{ color: colors.muted }}>
             No income this month
           </p>
         ) : (
-          <RetroStackedBarChart
+          <StackedBarChart
             data={chartData}
             height={200}
             valueFormatter={(v) => formatCurrency(v, { currency, compact: true })}
@@ -103,14 +102,14 @@ export function TopIncomeSources({
       {total > 0 && (
         <div
           className="mt-3 pt-2 flex items-center justify-between text-xs"
-          style={{ borderTop: `1px solid ${retro.border}` }}
+          style={{ borderTop: `1px solid ${colors.border}` }}
         >
           <div className="flex items-center gap-3">
-            <span style={{ color: retro.info }}>
+            <span style={{ color: colors.info }}>
               <span className="font-bold">Passive:</span>{' '}
               {formatCurrency(passiveTotal, { currency })} ({passivePercentage}%)
             </span>
-            <span style={{ color: retro.positive }}>
+            <span style={{ color: colors.positive }}>
               <span className="font-bold">Active:</span>{' '}
               {formatCurrency(activeTotal, { currency })} ({activePercentage}%)
             </span>

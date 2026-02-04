@@ -3,7 +3,7 @@
 import type { Ledger } from '@/types';
 import type { LinkedLedger } from '@/types/fire';
 import {
-  retro,
+  colors,
   Label,
   Loader,
 } from '@/components/fire/ui';
@@ -35,11 +35,10 @@ export function LedgerSelector({ value, onChange }: LedgerSelectorProps) {
   if (loading) {
     return (
       <div
-        className="py-6 flex justify-center rounded-sm"
+        className="py-6 flex justify-center rounded-md"
         style={{
-          backgroundColor: retro.surface,
-          border: `2px solid ${retro.border}`,
-          boxShadow: `inset 2px 2px 0 ${retro.bevelMid}, inset -2px -2px 0 #fff`,
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
         }}
       >
         <Loader size="sm" variant="dots" />
@@ -50,12 +49,11 @@ export function LedgerSelector({ value, onChange }: LedgerSelectorProps) {
   if (ledgers.length === 0) {
     return (
       <div
-        className="py-4 text-sm text-center rounded-sm"
+        className="py-4 text-sm text-center rounded-md"
         style={{
-          color: retro.muted,
-          backgroundColor: retro.surface,
-          border: `2px solid ${retro.border}`,
-          boxShadow: `inset 2px 2px 0 ${retro.bevelMid}, inset -2px -2px 0 #fff`,
+          color: colors.muted,
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
         }}
       >
         No ledgers found. Create a ledger first to link expenses.
@@ -69,11 +67,10 @@ export function LedgerSelector({ value, onChange }: LedgerSelectorProps) {
 
       {/* Ledger List - Sunken container */}
       <div
-        className="rounded-sm overflow-hidden"
+        className="rounded-md overflow-hidden"
         style={{
-          backgroundColor: retro.surfaceLight,
-          border: `2px solid ${retro.border}`,
-          boxShadow: `inset 2px 2px 0 ${retro.bevelMid}, inset -2px -2px 0 #fff`,
+          backgroundColor: colors.surfaceLight,
+          border: `1px solid ${colors.border}`,
         }}
       >
         {ledgers.map((ledger, index) => {
@@ -84,29 +81,26 @@ export function LedgerSelector({ value, onChange }: LedgerSelectorProps) {
               key={ledger.id}
               type="button"
               onClick={() => handleSelectLedger(ledger)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all active:translate-y-[1px]"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all active:translate-y-[1px] hover:bg-white/[0.04]"
               style={{
-                backgroundColor: isSelected ? retro.accent : 'transparent',
-                color: isSelected ? '#ffffff' : retro.text,
-                borderBottom: isLast ? 'none' : `2px solid ${retro.bevelMid}`,
+                backgroundColor: isSelected ? colors.accent : 'transparent',
+                color: isSelected ? '#ffffff' : colors.text,
+                borderBottom: isLast ? 'none' : `1px solid ${colors.border}`,
               }}
             >
-              {/* Retro Checkbox */}
+              {/* Checkbox */}
               <span
-                className="w-5 h-5 rounded-sm flex items-center justify-center flex-shrink-0"
+                className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
                 style={{
-                  backgroundColor: isSelected ? '#ffffff' : retro.surfaceLight,
-                  border: `2px solid ${retro.border}`,
-                  boxShadow: isSelected
-                    ? 'none'
-                    : `inset 1px 1px 0 ${retro.bevelMid}, inset -1px -1px 0 #fff`,
+                  backgroundColor: isSelected ? '#ffffff' : colors.surfaceLight,
+                  border: `1px solid ${colors.border}`,
                 }}
               >
                 {isSelected && (
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                     <path
                       d="M2 6L5 9L10 3"
-                      stroke={retro.accent}
+                      stroke={colors.accent}
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -121,20 +115,20 @@ export function LedgerSelector({ value, onChange }: LedgerSelectorProps) {
                 {ledger.description && (
                   <div
                     className="text-xs truncate"
-                    style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : retro.muted }}
+                    style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : colors.muted }}
                   >
                     {ledger.description}
                   </div>
                 )}
               </div>
 
-              {/* Role Badge - Retro style */}
+              {/* Role Badge */}
               <span
-                className="text-[10px] uppercase font-medium px-2 py-1 rounded-sm"
+                className="text-[10px] uppercase font-medium px-2 py-1 rounded-md"
                 style={{
-                  backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : retro.surface,
-                  color: isSelected ? '#ffffff' : retro.muted,
-                  border: isSelected ? 'none' : `1px solid ${retro.bevelMid}`,
+                  backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : colors.surface,
+                  color: isSelected ? '#ffffff' : colors.muted,
+                  border: isSelected ? 'none' : `1px solid ${colors.surfaceLight}`,
                 }}
               >
                 {ledger.role || 'member'}
@@ -144,20 +138,19 @@ export function LedgerSelector({ value, onChange }: LedgerSelectorProps) {
         })}
       </div>
 
-      {/* Selected Info - Retro raised style */}
+      {/* Selected Info */}
       {value.length > 0 && (
         <div
-          className="mt-3 px-3 py-2 rounded-sm text-xs"
+          className="mt-3 px-3 py-2 rounded-md text-xs"
           style={{
-            backgroundColor: retro.surface,
-            border: `2px solid ${retro.border}`,
-            boxShadow: `2px 2px 0 ${retro.bevelDark}`,
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
           }}
         >
-          <span style={{ color: retro.muted }}>
+          <span style={{ color: colors.muted }}>
             {value.length === 1 ? 'Tracking expenses from: ' : `Tracking from ${value.length} ledgers: `}
           </span>
-          <span style={{ color: retro.text, fontWeight: 500 }}>
+          <span style={{ color: colors.text, fontWeight: 500 }}>
             {value.map(v => v.ledger_name).join(', ')}
           </span>
         </div>

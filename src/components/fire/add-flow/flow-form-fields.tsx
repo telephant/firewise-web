@@ -2,7 +2,7 @@
 
 import type { FlowCategoryPreset, AssetWithBalance, AssetType, RecurringFrequency } from '@/types/fire';
 import {
-  retro,
+  colors,
   Button,
   Input,
   Select,
@@ -146,7 +146,7 @@ export function FlowFormFields({
             />
           </div>
           {computedPricePerShare && (
-            <p className="text-xs -mt-2" style={{ color: retro.muted }}>
+            <p className="text-xs -mt-2" style={{ color: colors.muted }}>
               @ ${computedPricePerShare} per share
             </p>
           )}
@@ -194,7 +194,7 @@ export function FlowFormFields({
 
           {/* Flow Arrow Indicator */}
           <div className="flex justify-center py-1">
-            <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+            <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
               <IconArrow size={18} />
             </span>
           </div>
@@ -249,7 +249,7 @@ export function FlowFormFields({
       {selectedPreset.id === 'invest' && showToField && !isUsStockInvestment && (
         <>
           <div className="flex justify-center py-1">
-            <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+            <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
               <IconArrow size={18} />
             </span>
           </div>

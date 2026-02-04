@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { AddFlowDialog } from '@/components/fire/add-flow';
 import {
-  retro,
+  colors,
   Button,
   SidebarTrigger,
   IconDollar,
@@ -67,17 +67,17 @@ export default function FireDashboardPage() {
         className="flex items-center justify-between px-3 py-2"
         style={{
           backgroundColor: 'transparent',
-          borderBottom: `2px solid ${retro.border}`,
+          borderBottom: `1px solid ${colors.border}`,
         }}
       >
         <div className="flex items-center gap-3">
           <SidebarTrigger />
-          <h1 className="text-sm font-bold" style={{ color: retro.text }}>
+          <h1 className="text-sm font-bold" style={{ color: colors.text }}>
             FIRE Dashboard
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: retro.muted }}>
+          <span className="text-xs" style={{ color: colors.muted }}>
             {currentDate}
           </span>
           <Button size="sm" variant="primary" onClick={() => openWithCategory()} className="gap-1.5">
@@ -94,7 +94,7 @@ export default function FireDashboardPage() {
         className="px-4 py-2.5"
         style={{
           backgroundColor: 'transparent',
-          borderBottom: `2px solid ${retro.border}`,
+          borderBottom: `1px solid ${colors.border}`,
         }}
       >
         <div className="max-w-5xl mx-auto flex items-center gap-2 flex-wrap">

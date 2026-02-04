@@ -7,7 +7,7 @@ import { mutateAssets } from '@/hooks/fire/use-fire-data';
 import type { AssetWithBalance, AssetType, RealEstateMetadata } from '@/types/fire';
 import { ASSET_TYPE_LABELS } from '@/types/fire';
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -380,27 +380,27 @@ export function EditAssetDialog({
             <div className="space-y-4">
               {/* Asset info (read-only) */}
               <div
-                className="p-3 rounded-sm"
+                className="p-3 rounded-md"
                 style={{
-                  backgroundColor: retro.surfaceLight,
-                  border: `1px solid ${retro.bevelMid}`,
+                  backgroundColor: colors.surfaceLight,
+                  border: `1px solid ${colors.surfaceLight}`,
                 }}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium" style={{ color: retro.text }}>
+                  <span className="text-sm font-medium" style={{ color: colors.text }}>
                     {asset.name}
                   </span>
                   <span
-                    className="text-xs px-1.5 py-0.5 rounded-sm"
+                    className="text-xs px-1.5 py-0.5 rounded-md"
                     style={{
-                      backgroundColor: retro.bevelMid,
-                      color: retro.text,
+                      backgroundColor: colors.surfaceLight,
+                      color: colors.text,
                     }}
                   >
                     {asset.ticker}
                   </span>
                 </div>
-                <div className="text-xs" style={{ color: retro.muted }}>
+                <div className="text-xs" style={{ color: colors.muted }}>
                   {ASSET_TYPE_LABELS[asset.type]} {asset.market && `· ${asset.market}`}
                 </div>
               </div>
@@ -417,11 +417,11 @@ export function EditAssetDialog({
               />
 
               <div
-                className="p-3 rounded-sm text-xs"
+                className="p-3 rounded-md text-xs"
                 style={{
-                  backgroundColor: retro.surfaceLight,
-                  border: `1px solid ${retro.bevelMid}`,
-                  color: retro.muted,
+                  backgroundColor: colors.surfaceLight,
+                  border: `1px solid ${colors.surfaceLight}`,
+                  color: colors.muted,
                 }}
               >
                 Investment details (ticker, market) cannot be changed. To track a different investment, create a new asset.
@@ -535,11 +535,11 @@ export function EditAssetDialog({
 
             {/* Info about balance */}
             <div
-              className="p-3 rounded-sm text-xs"
+              className="p-3 rounded-md text-xs"
               style={{
-                backgroundColor: retro.surfaceLight,
-                border: `1px solid ${retro.bevelMid}`,
-                color: retro.muted,
+                backgroundColor: colors.surfaceLight,
+                border: `1px solid ${colors.surfaceLight}`,
+                color: colors.muted,
               }}
             >
               To adjust the balance, use the &quot;Adjust Balance&quot; option from the asset menu.

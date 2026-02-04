@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import {
-  retro,
+  colors,
   SidebarTrigger,
   Card,
   Loader,
@@ -61,11 +61,11 @@ function formatDate(dateStr: string): string {
 function getFlowColor(type: string): string {
   switch (type) {
     case 'income':
-      return retro.positive;
+      return colors.positive;
     case 'expense':
-      return retro.negative;
+      return colors.negative;
     default:
-      return retro.text;
+      return colors.text;
   }
 }
 
@@ -207,8 +207,8 @@ export default function RecurringPage() {
         key={schedule.id}
         className="flex items-center justify-between px-3 py-2"
         style={{
-          backgroundColor: schedule.is_active ? retro.surfaceLight : retro.surface,
-          borderBottom: index < total - 1 ? `1px solid ${retro.bevelMid}` : 'none',
+          backgroundColor: schedule.is_active ? colors.surfaceLight : colors.surface,
+          borderBottom: index < total - 1 ? `1px solid ${colors.surfaceLight}` : 'none',
           opacity: schedule.is_active ? 1 : 0.6,
         }}
       >
@@ -218,20 +218,20 @@ export default function RecurringPage() {
             <div className="flex items-center gap-2">
               <span
                 className="text-sm font-medium capitalize truncate"
-                style={{ color: retro.text }}
+                style={{ color: colors.text }}
               >
                 {template.category || template.type}
               </span>
               {!schedule.is_active && (
                 <span
                   className="text-[10px] px-1 rounded"
-                  style={{ backgroundColor: retro.muted, color: retro.surface }}
+                  style={{ backgroundColor: colors.muted, color: colors.surface }}
                 >
                   Paused
                 </span>
               )}
             </div>
-            <div className="text-xs truncate" style={{ color: retro.muted }}>
+            <div className="text-xs truncate" style={{ color: colors.muted }}>
               {getFromTo(schedule)}
               {template.description && ` · ${template.description}`}
             </div>
@@ -241,10 +241,10 @@ export default function RecurringPage() {
         <div className="flex items-center gap-4">
           {/* Next occurrence */}
           <div className="text-right">
-            <div className="text-xs" style={{ color: retro.muted }}>
+            <div className="text-xs" style={{ color: colors.muted }}>
               Next
             </div>
-            <div className="text-xs font-medium" style={{ color: retro.text }}>
+            <div className="text-xs font-medium" style={{ color: colors.text }}>
               {formatDate(schedule.next_run_date)}
             </div>
           </div>
@@ -267,8 +267,8 @@ export default function RecurringPage() {
               disabled={isToggling}
               className="p-1 rounded-sm hover:bg-[var(--hover)] disabled:opacity-50"
               style={{
-                color: schedule.is_active ? retro.muted : retro.positive,
-                '--hover': retro.bevelMid,
+                color: schedule.is_active ? colors.muted : colors.positive,
+                '--hover': colors.surfaceLight,
               } as React.CSSProperties}
               title={schedule.is_active ? 'Pause' : 'Resume'}
             >
@@ -279,8 +279,8 @@ export default function RecurringPage() {
               disabled={isDeleting}
               className="p-1 rounded-sm hover:bg-[var(--hover)] disabled:opacity-50"
               style={{
-                color: retro.negative,
-                '--hover': retro.bevelMid,
+                color: colors.negative,
+                '--hover': colors.surfaceLight,
               } as React.CSSProperties}
               title="Delete"
             >
@@ -299,12 +299,12 @@ export default function RecurringPage() {
         className="flex items-center justify-between px-3 py-2"
         style={{
           backgroundColor: 'transparent',
-          borderBottom: `2px solid ${retro.border}`,
+          borderBottom: `1px solid ${colors.border}`,
         }}
       >
         <div className="flex items-center gap-3">
           <SidebarTrigger />
-          <h1 className="text-sm font-bold" style={{ color: retro.text }}>
+          <h1 className="text-sm font-bold" style={{ color: colors.text }}>
             Recurring Flows
           </h1>
         </div>
@@ -326,32 +326,32 @@ export default function RecurringPage() {
           <div className="grid grid-cols-3 gap-3">
             <Card>
               <div className="text-center">
-                <p className="text-xs uppercase tracking-wide mb-1" style={{ color: retro.muted }}>
+                <p className="text-xs uppercase tracking-wide mb-1" style={{ color: colors.muted }}>
                   Monthly Income
                 </p>
-                <p className="text-lg font-bold tabular-nums" style={{ color: retro.positive }}>
+                <p className="text-lg font-bold tabular-nums" style={{ color: colors.positive }}>
                   {formatCurrency(totals.monthlyIncome, { currency: displayCurrency })}
                 </p>
               </div>
             </Card>
             <Card>
               <div className="text-center">
-                <p className="text-xs uppercase tracking-wide mb-1" style={{ color: retro.muted }}>
+                <p className="text-xs uppercase tracking-wide mb-1" style={{ color: colors.muted }}>
                   Monthly Expenses
                 </p>
-                <p className="text-lg font-bold tabular-nums" style={{ color: retro.negative }}>
+                <p className="text-lg font-bold tabular-nums" style={{ color: colors.negative }}>
                   {formatCurrency(totals.monthlyExpense, { currency: displayCurrency })}
                 </p>
               </div>
             </Card>
             <Card>
               <div className="text-center">
-                <p className="text-xs uppercase tracking-wide mb-1" style={{ color: retro.muted }}>
+                <p className="text-xs uppercase tracking-wide mb-1" style={{ color: colors.muted }}>
                   Net Monthly
                 </p>
                 <p
                   className="text-lg font-bold tabular-nums"
-                  style={{ color: totals.netMonthly >= 0 ? retro.positive : retro.negative }}
+                  style={{ color: totals.netMonthly >= 0 ? colors.positive : colors.negative }}
                 >
                   {totals.netMonthly >= 0 ? '+' : ''}
                   {formatCurrency(totals.netMonthly, { currency: displayCurrency })}
@@ -369,7 +369,7 @@ export default function RecurringPage() {
             ) : activeSchedules.length === 0 ? (
               <div
                 className="h-[200px] flex flex-col items-center justify-center text-sm gap-2"
-                style={{ color: retro.muted }}
+                style={{ color: colors.muted }}
               >
                 <span>No recurring flows set up yet</span>
                 <span className="text-xs">
@@ -386,13 +386,13 @@ export default function RecurringPage() {
                     <div key={freq}>
                       <div
                         className="text-xs font-medium uppercase tracking-wide px-2 py-1 mb-1"
-                        style={{ color: retro.muted }}
+                        style={{ color: colors.muted }}
                       >
                         {FREQUENCY_LABELS[freq]} ({schedulesInGroup.length})
                       </div>
                       <div
                         className="rounded-sm overflow-hidden"
-                        style={{ border: `1px solid ${retro.bevelMid}` }}
+                        style={{ border: `1px solid ${colors.surfaceLight}` }}
                       >
                         {schedulesInGroup.map((schedule, index) =>
                           renderScheduleRow(schedule, index, schedulesInGroup.length)
@@ -410,7 +410,7 @@ export default function RecurringPage() {
             <Card title={`Paused (${inactiveSchedules.length})`}>
               <div
                 className="rounded-sm overflow-hidden"
-                style={{ border: `1px solid ${retro.bevelMid}` }}
+                style={{ border: `1px solid ${colors.surfaceLight}` }}
               >
                 {inactiveSchedules.map((schedule, index) =>
                   renderScheduleRow(schedule, index, inactiveSchedules.length)
@@ -423,9 +423,9 @@ export default function RecurringPage() {
           <div
             className="text-xs text-center p-3 rounded-sm"
             style={{
-              backgroundColor: retro.surfaceLight,
-              color: retro.muted,
-              border: `1px solid ${retro.bevelMid}`,
+              backgroundColor: colors.surfaceLight,
+              color: colors.muted,
+              border: `1px solid ${colors.surfaceLight}`,
             }}
           >
             Recurring flows are automatically created based on your schedules.

@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useFlowData } from '@/contexts/fire/flow-data-context';
 import {
-  retro,
+  colors,
   Button,
   Input,
   Loader,
@@ -87,11 +87,10 @@ export function ExpenseCategorySelector({ value, onChange }: ExpenseCategorySele
       <div className="mt-2">
         {showCreate ? (
           <div
-            className="flex flex-col gap-2 p-2 rounded-sm"
+            className="flex flex-col gap-2 p-2 rounded-md"
             style={{
-              backgroundColor: retro.surface,
-              border: `2px solid ${retro.border}`,
-              boxShadow: `inset 2px 2px 0 ${retro.bevelMid}, inset -2px -2px 0 #fff`,
+              backgroundColor: colors.surface,
+              border: `1px solid ${colors.border}`,
             }}
           >
             <div className="flex gap-2">
@@ -132,12 +131,11 @@ export function ExpenseCategorySelector({ value, onChange }: ExpenseCategorySele
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="w-full py-2 text-xs font-medium transition-all rounded-sm active:translate-y-[1px]"
+            className="w-full py-2 text-xs font-medium transition-all rounded-md active:translate-y-[1px] hover:bg-white/[0.06]"
             style={{
-              color: retro.muted,
-              backgroundColor: retro.surface,
-              border: `2px solid ${retro.border}`,
-              boxShadow: `inset -1px -1px 0 ${retro.bevelDark}, inset 1px 1px 0 ${retro.bevelLight}, 2px 2px 0 ${retro.bevelDark}`,
+              color: colors.muted,
+              backgroundColor: colors.surface,
+              border: `1px solid ${colors.border}`,
             }}
           >
             + Add Category

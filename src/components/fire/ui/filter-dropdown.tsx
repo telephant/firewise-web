@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, ReactNode } from 'react';
-import { retro, retroStyles } from './theme';
+import { colors } from './theme';
+import { cn } from '@/lib/utils';
+import { ChevronDown, Check } from 'lucide-react';
 
 export interface FilterOption {
   id: string;
@@ -121,23 +123,27 @@ export function FilterDropdown({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="px-3 py-1.5 text-xs rounded-sm flex items-center gap-2"
-        style={{
-          ...retroStyles.raised,
-          color: retro.text,
-          minWidth,
-        }}
+        className={cn(
+          'px-3 py-1.5 text-xs rounded-md flex items-center gap-2',
+          'transition-all duration-150 outline-none',
+          'bg-[#141415] border border-white/[0.08] text-[#EDEDEF]',
+          'hover:bg-[#1C1C1E] hover:border-white/[0.12]',
+          'focus-visible:ring-2 focus-visible:ring-[#5E6AD2]/50',
+          'active:scale-[0.97]',
+        )}
+        style={{ minWidth }}
       >
         <span className="flex-1 text-left">{getDisplayLabel()}</span>
-        <span style={{ color: retro.muted }}>▼</span>
+        <ChevronDown size={12} strokeWidth={1.5} style={{ color: colors.muted }} />
       </button>
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-1 z-50 rounded-sm overflow-hidden"
+          className="absolute top-full left-0 mt-1 z-50 rounded-lg overflow-hidden"
           style={{
-            ...retroStyles.raised,
-            backgroundColor: retro.surface,
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
             minWidth: '200px',
             maxHeight: '300px',
             overflowY: 'auto',
@@ -147,12 +153,11 @@ export function FilterDropdown({
           {multiple && selectedValues.length > 0 && (
             <button
               onClick={handleClear}
-              className="w-full px-3 py-2 text-xs text-left hover:bg-[var(--hover)]"
+              className="w-full px-3 py-2 text-xs text-left transition-colors hover:bg-white/[0.06]"
               style={{
-                color: retro.info,
-                borderBottom: `1px solid ${retro.border}`,
-                '--hover': retro.surfaceLight,
-              } as React.CSSProperties}
+                color: colors.info,
+                borderBottom: `1px solid ${colors.border}`,
+              }}
             >
               Clear all
             </button>
@@ -162,16 +167,15 @@ export function FilterDropdown({
           {!multiple && (
             <button
               onClick={handleAllClick}
-              className="w-full px-3 py-2 text-xs text-left flex items-center gap-2 hover:bg-[var(--hover)]"
+              className="w-full px-3 py-2 text-xs text-left flex items-center gap-2 transition-colors hover:bg-white/[0.06]"
               style={{
-                color: retro.text,
-                backgroundColor: value === allValue ? retro.surfaceLight : 'transparent',
-                '--hover': retro.surfaceLight,
-                borderBottom: `1px solid ${retro.border}`,
-              } as React.CSSProperties}
+                color: colors.text,
+                backgroundColor: value === allValue ? 'rgba(255,255,255,0.06)' : 'transparent',
+                borderBottom: `1px solid ${colors.border}`,
+              }}
             >
               <span className="w-4 h-4 flex items-center justify-center">
-                {value === allValue ? '✓' : ''}
+                {value === allValue && <Check size={12} strokeWidth={2} style={{ color: colors.accent }} />}
               </span>
               <span>{allLabel}</span>
             </button>
@@ -184,8 +188,8 @@ export function FilterDropdown({
                   <div
                     className="px-3 py-1.5 text-[10px] uppercase tracking-wide font-bold"
                     style={{
-                      backgroundColor: retro.bevelMid,
-                      color: retro.muted,
+                      backgroundColor: colors.surfaceLight,
+                      color: colors.muted,
                     }}
                   >
                     {group.label}
@@ -194,17 +198,16 @@ export function FilterDropdown({
                     <button
                       key={opt.id}
                       onClick={() => handleOptionClick(opt.id)}
-                      className="w-full px-3 py-2 text-xs text-left flex items-center gap-2 hover:bg-[var(--hover)]"
+                      className="w-full px-3 py-2 text-xs text-left flex items-center gap-2 transition-colors hover:bg-white/[0.06]"
                       style={{
-                        color: retro.text,
+                        color: colors.text,
                         backgroundColor: selectedValues.includes(opt.id)
-                          ? retro.surfaceLight
+                          ? 'rgba(255,255,255,0.06)'
                           : 'transparent',
-                        '--hover': retro.surfaceLight,
-                      } as React.CSSProperties}
+                      }}
                     >
                       <span className="w-4 h-4 flex items-center justify-center">
-                        {selectedValues.includes(opt.id) ? '✓' : ''}
+                        {selectedValues.includes(opt.id) && <Check size={12} strokeWidth={2} style={{ color: colors.accent }} />}
                       </span>
                       {opt.icon}
                       <span>{opt.label}</span>
@@ -217,17 +220,16 @@ export function FilterDropdown({
                 <button
                   key={opt.id}
                   onClick={() => handleOptionClick(opt.id)}
-                  className="w-full px-3 py-2 text-xs text-left flex items-center gap-2 hover:bg-[var(--hover)]"
+                  className="w-full px-3 py-2 text-xs text-left flex items-center gap-2 transition-colors duration-100 hover:bg-white/[0.06]"
                   style={{
-                    color: retro.text,
+                    color: colors.text,
                     backgroundColor: selectedValues.includes(opt.id)
-                      ? retro.surfaceLight
+                      ? 'rgba(255,255,255,0.06)'
                       : 'transparent',
-                    '--hover': retro.surfaceLight,
-                  } as React.CSSProperties}
+                  }}
                 >
                   <span className="w-4 h-4 flex items-center justify-center">
-                    {selectedValues.includes(opt.id) ? '✓' : ''}
+                    {selectedValues.includes(opt.id) && <Check size={12} strokeWidth={2} style={{ color: colors.accent }} />}
                   </span>
                   {opt.icon}
                   <span>{opt.label}</span>

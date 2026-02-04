@@ -3,7 +3,8 @@
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { cn } from '@/lib/utils';
-import { retro, retroStyles } from './theme';
+import { colors } from './theme';
+import { X } from 'lucide-react';
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root modal={true} {...props} />;
@@ -28,7 +29,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       className={cn(
-        'fixed inset-0 z-50 bg-black/40',
+        'fixed inset-0 z-50 bg-black/60 backdrop-blur-sm',
         'data-[state=open]:animate-in data-[state=closed]:animate-out',
         'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         className
@@ -50,18 +51,19 @@ function DialogContent({
         className={cn(
           'fixed top-[50%] left-[50%] z-50 w-full max-w-md',
           'translate-x-[-50%] translate-y-[-50%]',
-          'rounded-sm',
+          'rounded-lg',
           'max-h-[90vh] flex flex-col',
           'data-[state=open]:animate-in data-[state=closed]:animate-out',
           'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
           'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-          'duration-200 outline-none',
+          'duration-200 outline-none shadow-2xl',
           className
         )}
-        style={retroStyles.raised}
-        // Prevent dialog from closing when clicking on portalled Select dropdowns
+        style={{
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
+        }}
         onPointerDownOutside={(e) => {
-          // Check if the click target is inside a Select dropdown (portalled to body)
           const target = e.target as HTMLElement;
           if (target.closest('[data-select-dropdown]')) {
             e.preventDefault();
@@ -75,14 +77,12 @@ function DialogContent({
         }}
         {...props}
       >
-        {/* Content wrapper with padding - header is outside this */}
         {children}
       </DialogPrimitive.Content>
     </DialogPortal>
   );
 }
 
-// Content body wrapper with padding (use after DialogHeader)
 function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -96,38 +96,20 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'flex items-center justify-between px-4 py-2 rounded-t-sm',
+        'flex items-center justify-between px-4 py-3',
         className
       )}
-      style={retroStyles.titleBar}
-      {...props}
+      style={{ borderBottom: `1px solid ${colors.border}` }}
     >
       {props.children}
-      {/* Window buttons - matching Card style */}
-      <div className="flex gap-1">
-        {/* Decorative buttons (disabled) */}
-        <div
-          className="w-4 h-4 flex items-center justify-center text-[10px] pointer-events-none select-none opacity-50"
-          style={retroStyles.windowButton}
+      <DialogPrimitive.Close asChild>
+        <button
+          className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 hover:bg-white/[0.08] active:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5E6AD2]/50"
+          style={{ color: colors.muted }}
         >
-          &#95;
-        </div>
-        <div
-          className="w-4 h-4 flex items-center justify-center text-[10px] pointer-events-none select-none opacity-50"
-          style={retroStyles.windowButton}
-        >
-          &#9633;
-        </div>
-        {/* Close button - functional */}
-        <DialogPrimitive.Close asChild>
-          <button
-            className="w-4 h-4 flex items-center justify-center text-xs leading-none hover:opacity-70 transition-opacity"
-            style={retroStyles.windowButton}
-          >
-            &#215;
-          </button>
-        </DialogPrimitive.Close>
-      </div>
+          <X size={14} strokeWidth={1.5} />
+        </button>
+      </DialogPrimitive.Close>
     </div>
   );
 }
@@ -148,7 +130,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       className={cn('text-sm font-medium flex-1', className)}
-      style={{ color: retro.text }}
+      style={{ color: colors.text }}
       {...props}
     />
   );
@@ -161,7 +143,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       className={cn('text-sm', className)}
-      style={{ color: retro.muted }}
+      style={{ color: colors.muted }}
       {...props}
     />
   );

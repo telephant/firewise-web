@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -108,7 +108,7 @@ export function AssetDetailDialog({
         <DialogHeader>
           <DialogTitle>
             <div className="flex items-center gap-2">
-              <span style={{ color: retro.muted }}>
+              <span style={{ color: colors.muted }}>
                 <IconComponent size={18} />
               </span>
               <span>{asset.name}</span>
@@ -120,12 +120,12 @@ export function AssetDetailDialog({
           <div className="space-y-4">
             {/* Value Display */}
             <div
-              className="text-center py-4 rounded-sm"
-              style={{ backgroundColor: retro.surfaceLight }}
+              className="text-center py-4 rounded-md"
+              style={{ backgroundColor: colors.surfaceLight }}
             >
               <p
                 className="text-2xl font-bold tabular-nums"
-                style={{ color: retro.text }}
+                style={{ color: colors.text }}
               >
                 {formatCurrency(displayValue, { currency: displayCurrency })}
               </p>
@@ -134,7 +134,7 @@ export function AssetDetailDialog({
               {asset.converted_balance !== undefined &&
                 asset.converted_currency &&
                 displayCurrency !== originalCurrency && (
-                  <p className="text-xs mt-1" style={{ color: retro.muted }}>
+                  <p className="text-xs mt-1" style={{ color: colors.muted }}>
                     ({formatCurrency(originalValue, { currency: originalCurrency })})
                   </p>
                 )}
@@ -144,14 +144,14 @@ export function AssetDetailDialog({
                 <div className="mt-2 space-y-1">
                   {stockPrice ? (
                     <>
-                      <p className="text-xs" style={{ color: retro.muted }}>
+                      <p className="text-xs" style={{ color: colors.muted }}>
                         {formatShares(asset.balance)} shares × {formatCurrency(stockPrice.price, { currency: stockPrice.currency })}
                       </p>
                       {stockPrice.changePercent != null && (
                         <p
                           className="text-xs"
                           style={{
-                            color: stockPrice.changePercent >= 0 ? retro.positive : retro.negative,
+                            color: stockPrice.changePercent >= 0 ? colors.positive : colors.negative,
                           }}
                         >
                           {stockPrice.changePercent >= 0 ? '+' : ''}
@@ -160,7 +160,7 @@ export function AssetDetailDialog({
                       )}
                     </>
                   ) : (
-                    <p className="text-xs" style={{ color: retro.muted }}>
+                    <p className="text-xs" style={{ color: colors.muted }}>
                       {formatShares(asset.balance)} shares
                     </p>
                   )}
@@ -169,11 +169,11 @@ export function AssetDetailDialog({
 
               {/* Type badge */}
               <p
-                className="text-xs mt-3 px-2 py-0.5 rounded-sm inline-block"
+                className="text-xs mt-3 px-2 py-0.5 rounded-md inline-block"
                 style={{
-                  backgroundColor: retro.surface,
-                  color: retro.text,
-                  border: `1px solid ${retro.bevelMid}`,
+                  backgroundColor: colors.surface,
+                  color: colors.text,
+                  border: `1px solid ${colors.surfaceLight}`,
                 }}
               >
                 {ASSET_TYPE_LABELS[asset.type]}
@@ -200,7 +200,7 @@ export function AssetDetailDialog({
                 <DetailRow
                   label="Realized P/L"
                   value={formatCurrency(asset.total_realized_pl, { currency: asset.currency })}
-                  valueColor={asset.total_realized_pl >= 0 ? retro.positive : retro.negative}
+                  valueColor={asset.total_realized_pl >= 0 ? colors.positive : colors.negative}
                 />
               )}
 
@@ -256,7 +256,7 @@ export function AssetDetailDialog({
                     onDelete(asset);
                     onOpenChange(false);
                   }}
-                  style={{ color: retro.negative }}
+                  style={{ color: colors.negative }}
                 >
                   Delete
                 </Button>
@@ -310,12 +310,12 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="text-xs shrink-0" style={{ color: retro.muted }}>
+      <span className="text-xs shrink-0" style={{ color: colors.muted }}>
         {label}
       </span>
       <span
         className="text-sm text-right"
-        style={{ color: valueColor || retro.text }}
+        style={{ color: valueColor || colors.text }}
       >
         {value}
       </span>

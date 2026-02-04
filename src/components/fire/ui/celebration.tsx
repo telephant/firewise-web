@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { retro } from './theme';
+import { colors } from './theme';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from './dialog';
 
 interface CelebrationEvent extends CustomEvent {
@@ -112,31 +112,25 @@ export function Celebration() {
       <DialogContent className="max-w-sm text-center">
         <DialogHeader>
           <DialogTitle className="text-center">
-            <span className="text-2xl">🎉</span>
+            <span className="text-2xl">&#127881;</span>
           </DialogTitle>
         </DialogHeader>
         <DialogBody className="space-y-4 py-4">
           <h2
             className="text-xl font-bold"
-            style={{ color: retro.positive }}
+            style={{ color: colors.positive }}
           >
             {celebrationData.title}
           </h2>
           <p
             className="text-sm leading-relaxed"
-            style={{ color: retro.text }}
+            style={{ color: colors.text }}
           >
             {celebrationData.message}
           </p>
           <button
             onClick={handleClose}
-            className="px-6 py-2 text-sm font-medium rounded-sm transition-colors"
-            style={{
-              backgroundColor: retro.accent,
-              color: 'white',
-              border: `2px solid ${retro.border}`,
-              boxShadow: `2px 2px 0 ${retro.bevelDark}`,
-            }}
+            className="px-6 py-2 text-sm font-medium rounded-lg transition-all duration-150 bg-[#5E6AD2] text-white hover:bg-[#6B76DB] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5E6AD2]/50"
           >
             Continue
           </button>

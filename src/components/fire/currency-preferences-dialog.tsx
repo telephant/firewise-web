@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
-  retro,
+  colors,
   Button,
   Label,
   Loader,
@@ -75,7 +75,7 @@ export function CurrencyPreferencesDialog({ open, onOpenChange }: CurrencyPrefer
             <div className="space-y-5">
               {/* Preferred Currency */}
               <div className="space-y-2">
-                <p className="text-xs" style={{ color: retro.muted }}>
+                <p className="text-xs" style={{ color: colors.muted }}>
                   All stats and summaries will be shown in this currency.
                 </p>
                 <CurrencyCombobox
@@ -90,31 +90,31 @@ export function CurrencyPreferencesDialog({ open, onOpenChange }: CurrencyPrefer
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Convert All to Preferred Currency</Label>
-                    <p className="text-xs mt-1" style={{ color: retro.muted }}>
+                    <p className="text-xs mt-1" style={{ color: colors.muted }}>
                       Show all flows and assets in your preferred currency.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setConvertAll(!convertAll)}
-                    className="relative w-12 h-6 transition-colors"
+                    className="relative w-12 h-6 transition-colors cursor-pointer hover:opacity-90"
                     style={{
-                      backgroundColor: convertAll ? retro.positive : retro.bevelMid,
-                      border: `2px solid ${retro.border}`,
+                      backgroundColor: convertAll ? colors.positive : colors.surfaceLight,
+                      border: `1px solid ${colors.border}`,
                     }}
                   >
                     <span
                       className="absolute top-0.5 w-4 h-4 transition-transform"
                       style={{
-                        backgroundColor: retro.surface,
-                        border: `1px solid ${retro.border}`,
+                        backgroundColor: colors.surface,
+                        border: `1px solid ${colors.border}`,
                         left: convertAll ? 'calc(100% - 18px)' : '2px',
                       }}
                     />
                   </button>
                 </div>
                 {convertAll && (
-                  <p className="text-xs p-2 rounded" style={{ backgroundColor: retro.surfaceLight, color: retro.info }}>
+                  <p className="text-xs p-2 rounded" style={{ backgroundColor: colors.surfaceLight, color: colors.info }}>
                     When enabled, amounts will show both original and converted values.
                   </p>
                 )}

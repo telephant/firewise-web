@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { retro } from '../theme';
+import { colors } from '../theme';
 import { cn } from '@/lib/utils';
 
 export interface CardTitleProps extends React.HTMLAttributes<HTMLParagraphElement> {}
@@ -11,7 +11,7 @@ export const CardTitle = React.forwardRef<HTMLParagraphElement, CardTitleProps>(
     return (
       <p
         className={cn('font-bold', className)}
-        style={{ color: retro.text }}
+        style={{ color: colors.text }}
         ref={ref}
         {...props}
       >

@@ -13,8 +13,7 @@ import {
   Button,
   Input,
   Label,
-  retro,
-  retroStyles,
+  colors,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -108,7 +107,7 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
           <form onSubmit={handleCreateFamily}>
             <DialogBody>
               <div className="space-y-4">
-                <p className="text-sm" style={{ color: retro.muted }}>
+                <p className="text-sm" style={{ color: colors.muted }}>
                   Create a family to share your financial data with your partner or family members.
                   Everyone in the family can view and edit shared data.
                 </p>
@@ -128,8 +127,8 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                 </div>
 
                 <div
-                  className="flex items-start gap-3 p-3 rounded-sm"
-                  style={retroStyles.sunken}
+                  className="flex items-start gap-3 p-3 rounded-md"
+                  style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
                 >
                   <input
                     type="checkbox"
@@ -140,10 +139,10 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                     className="mt-1"
                   />
                   <div>
-                    <label htmlFor="migrate-data" className="cursor-pointer text-xs uppercase tracking-wide font-medium" style={{ color: retro.text }}>
+                    <label htmlFor="migrate-data" className="cursor-pointer text-xs uppercase tracking-wide font-medium" style={{ color: colors.text }}>
                       Share my existing data with the family
                     </label>
-                    <p className="text-xs mt-1" style={{ color: retro.muted }}>
+                    <p className="text-xs mt-1" style={{ color: colors.muted }}>
                       Your current assets, flows, and debts will be moved to the family.
                       You can still create personal items later.
                     </p>
@@ -154,8 +153,8 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                   <div
                     className="text-sm p-2 rounded"
                     style={{
-                      backgroundColor: `${retro.negative}20`,
-                      color: retro.negative,
+                      backgroundColor: `${colors.negative}20`,
+                      color: colors.negative,
                     }}
                   >
                     {error}
@@ -203,7 +202,7 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
               <TabsContent value="members" className="mt-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm" style={{ color: retro.muted }}>
+                    <div className="text-sm" style={{ color: colors.muted }}>
                       Family members can view and edit all shared data.
                     </div>
                     <Button size="sm" onClick={() => setInviteDialogOpen(true)}>
@@ -217,20 +216,20 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
 
               <TabsContent value="data" className="mt-4">
                 <div className="space-y-4">
-                  <div className="text-sm" style={{ color: retro.muted }}>
+                  <div className="text-sm" style={{ color: colors.muted }}>
                     Migrate your personal data to the family, or keep it separate.
                   </div>
 
                   <div
-                    className="p-4 rounded-sm"
-                    style={retroStyles.sunken}
+                    className="p-4 rounded-md"
+                    style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium" style={{ color: retro.text }}>
+                        <div className="font-medium" style={{ color: colors.text }}>
                           Migrate Personal Data
                         </div>
-                        <div className="text-xs" style={{ color: retro.muted }}>
+                        <div className="text-xs" style={{ color: colors.muted }}>
                           Move all your personal assets, flows, and debts to the family.
                         </div>
                       </div>
@@ -251,19 +250,19 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                 <div className="space-y-4">
                   {/* Leave Family (for non-creators) */}
                   <div
-                    className="p-4 rounded-sm"
+                    className="p-4 rounded-md"
                     style={{
-                      ...retroStyles.sunken,
-                      borderColor: retro.negative,
+                      backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+                      borderColor: colors.negative,
                     }}
                   >
                     {!confirmLeave ? (
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium" style={{ color: retro.text }}>
+                          <div className="font-medium" style={{ color: colors.text }}>
                             Leave Family
                           </div>
-                          <div className="text-xs" style={{ color: retro.muted }}>
+                          <div className="text-xs" style={{ color: colors.muted }}>
                             You&apos;ll lose access to shared family data.
                           </div>
                         </div>
@@ -271,14 +270,14 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                           size="sm"
                           variant="ghost"
                           onClick={() => setConfirmLeave(true)}
-                          style={{ color: retro.negative }}
+                          style={{ color: colors.negative }}
                         >
                           Leave
                         </Button>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <div className="text-sm" style={{ color: retro.negative }}>
+                        <div className="text-sm" style={{ color: colors.negative }}>
                           Are you sure you want to leave this family?
                         </div>
                         <div className="flex gap-2">
@@ -295,8 +294,8 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                             onClick={handleLeaveFamily}
                             disabled={isLeaving}
                             style={{
-                              backgroundColor: retro.negative,
-                              borderColor: retro.negative,
+                              backgroundColor: colors.negative,
+                              borderColor: colors.negative,
                             }}
                           >
                             {isLeaving ? 'Leaving...' : 'Confirm Leave'}
@@ -308,19 +307,19 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
 
                   {/* Delete Family (for creators only) */}
                   <div
-                    className="p-4 rounded-sm"
+                    className="p-4 rounded-md"
                     style={{
-                      ...retroStyles.sunken,
-                      borderColor: retro.negative,
+                      backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+                      borderColor: colors.negative,
                     }}
                   >
                     {!confirmDelete ? (
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium" style={{ color: retro.text }}>
+                          <div className="font-medium" style={{ color: colors.text }}>
                             Delete Family
                           </div>
-                          <div className="text-xs" style={{ color: retro.muted }}>
+                          <div className="text-xs" style={{ color: colors.muted }}>
                             This will permanently delete the family and all shared data.
                           </div>
                         </div>
@@ -328,14 +327,14 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                           size="sm"
                           variant="ghost"
                           onClick={() => setConfirmDelete(true)}
-                          style={{ color: retro.negative }}
+                          style={{ color: colors.negative }}
                         >
                           Delete
                         </Button>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <div className="text-sm" style={{ color: retro.negative }}>
+                        <div className="text-sm" style={{ color: colors.negative }}>
                           This action cannot be undone. All shared data will be deleted.
                         </div>
                         <div className="flex gap-2">
@@ -352,8 +351,8 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                             onClick={handleDeleteFamily}
                             disabled={isDeleting}
                             style={{
-                              backgroundColor: retro.negative,
-                              borderColor: retro.negative,
+                              backgroundColor: colors.negative,
+                              borderColor: colors.negative,
                             }}
                           >
                             {isDeleting ? 'Deleting...' : 'Confirm Delete'}

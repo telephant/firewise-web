@@ -142,53 +142,6 @@
   }
 }
 
-/* Fun spinner animations */
-@keyframes fire-flicker {
-  0% {
-    transform: scale(1) rotate(-5deg);
-    opacity: 0.9;
-  }
-  100% {
-    transform: scale(1.1) rotate(5deg);
-    opacity: 1;
-  }
-}
-
-@keyframes coin-flip {
-  0% {
-    transform: rotateY(0deg);
-  }
-  100% {
-    transform: rotateY(360deg);
-  }
-}
-
-.animate-fire-flicker {
-  animation: fire-flicker 0.3s ease-in-out infinite alternate;
-}
-
-.animate-coin-flip {
-  animation: coin-flip 1s linear infinite;
-}
-
-/* Global sepia filter for emojis - vintage/retro aesthetic */
-.emoji-sepia {
-  filter: sepia(0.6) saturate(0.8);
-}
-
-/* Auto-apply sepia to emoji font faces */
-@font-face {
-  font-family: 'Emoji';
-  src: local('Apple Color Emoji'), local('Segoe UI Emoji'), local('Noto Color Emoji');
-}
-
-/* Target common emoji containers and apply sepia effect */
-[data-emoji],
-.emoji,
-span:has(> img[alt*="emoji"]) {
-  filter: sepia(0.6) saturate(0.8);
-}
-
 /* Shake animation for error states */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -199,3 +152,4 @@ span:has(> img[alt*="emoji"]) {
 .animate-shake {
   animation: shake 0.5s ease-in-out;
 }
+

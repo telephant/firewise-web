@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { retro } from '../theme';
+import { colors } from '../theme';
 import { cn } from '@/lib/utils';
 
 export interface CardValueProps extends React.HTMLAttributes<HTMLParagraphElement> {
@@ -20,7 +20,7 @@ export const CardValue = React.forwardRef<HTMLParagraphElement, CardValueProps>(
     return (
       <p
         className={cn(sizeClasses[size], className)}
-        style={{ color: retro.text }}
+        style={{ color: colors.text }}
         ref={ref}
         {...props}
       >

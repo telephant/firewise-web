@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { retro, retroStyles, Loader, IconDollar, IconChart, IconCoin, IconArrow } from '@/components/fire/ui';
+import { colors, Loader, IconDollar, IconChart, IconCoin, IconArrow } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 import { useFlows, useExpenseStats } from '@/hooks/fire/use-fire-data';
 import type { FlowWithDetails } from '@/types/fire';
@@ -158,7 +158,7 @@ export function InsightCard({ currency = 'USD' }: InsightCardProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-sm p-4" style={retroStyles.raised}>
+      <div className="rounded-md p-4" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
         <div className="py-4 flex items-center justify-center">
           <Loader size="sm" variant="bar" />
         </div>
@@ -167,7 +167,7 @@ export function InsightCard({ currency = 'USD' }: InsightCardProps) {
   }
 
   return (
-    <div className="rounded-sm p-4" style={retroStyles.raised}>
+    <div className="rounded-md p-4" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         {/* Salary */}
@@ -175,7 +175,7 @@ export function InsightCard({ currency = 'USD' }: InsightCardProps) {
           icon={<IconDollar size={16} />}
           label="Salary"
           value={formatCurrency(metrics.salary, { currency, compact: true })}
-          color={retro.positive}
+          color={colors.positive}
         />
 
         {/* Passive Income */}
@@ -183,7 +183,7 @@ export function InsightCard({ currency = 'USD' }: InsightCardProps) {
           icon={<IconChart size={16} />}
           label="Passive"
           value={formatCurrency(metrics.passiveIncome, { currency, compact: true })}
-          color={retro.info}
+          color={colors.info}
         />
 
         {/* Invested */}
@@ -191,7 +191,7 @@ export function InsightCard({ currency = 'USD' }: InsightCardProps) {
           icon={<IconCoin size={16} />}
           label="Invested"
           value={formatCurrency(metrics.invested, { currency, compact: true })}
-          color={retro.warning}
+          color={colors.warning}
         />
 
         {/* Avg Spending */}
@@ -200,17 +200,17 @@ export function InsightCard({ currency = 'USD' }: InsightCardProps) {
           label="Avg Spend"
           value={formatCurrency(metrics.avgMonthlySpending, { currency, compact: true })}
           sublabel={metrics.hasHistoricalData ? '/mo' : 'this mo'}
-          color={retro.negative}
+          color={colors.negative}
         />
       </div>
 
       {/* Human-readable Summary */}
       <div
-        className="p-3 rounded-sm text-xs leading-relaxed"
+        className="p-3 rounded-md text-xs leading-relaxed"
         style={{
-          ...retroStyles.sunken,
-          color: summary.tone === 'positive' ? retro.positive :
-                 summary.tone === 'good' ? retro.text : retro.muted,
+          backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+          color: summary.tone === 'positive' ? colors.positive :
+                 summary.tone === 'good' ? colors.text : colors.muted,
         }}
       >
         {summary.text}
@@ -234,19 +234,19 @@ function StatBox({
   color: string;
 }) {
   return (
-    <div className="p-2 rounded-sm" style={retroStyles.sunken}>
+    <div className="p-2 rounded-md" style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}>
       <div className="flex items-center gap-1.5 mb-1">
         <span style={{ color }}>{icon}</span>
-        <span className="text-[10px] uppercase tracking-wide" style={{ color: retro.muted }}>
+        <span className="text-[10px] uppercase tracking-wide" style={{ color: colors.muted }}>
           {label}
         </span>
       </div>
       <div className="flex items-baseline gap-1">
-        <span className="text-sm font-bold tabular-nums" style={{ color: retro.text }}>
+        <span className="text-sm font-bold tabular-nums" style={{ color: colors.text }}>
           {value}
         </span>
         {sublabel && (
-          <span className="text-[10px]" style={{ color: retro.muted }}>
+          <span className="text-[10px]" style={{ color: colors.muted }}>
             {sublabel}
           </span>
         )}

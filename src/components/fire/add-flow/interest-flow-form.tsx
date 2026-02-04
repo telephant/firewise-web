@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { FlowCategoryPreset, AssetWithBalance } from '@/types/fire';
-import { retro, Input, Select, CurrencyCombobox, AssetCombobox, Label, IconArrow } from '@/components/fire/ui';
+import { colors, Input, Select, CurrencyCombobox, AssetCombobox, Label, IconArrow } from '@/components/fire/ui';
 import { NewAssetForm } from './new-asset-form';
 import { FormActions } from './form-actions';
 import { ASSET_TYPE_OPTIONS, PAYMENT_PERIOD_OPTIONS, getFieldLabels } from './constants';
@@ -115,16 +115,16 @@ export function InterestFlowForm({
       {noAsset ? (
         <>
           <div
-            className="p-3 rounded-sm text-xs"
-            style={{ backgroundColor: retro.surfaceLight }}
+            className="p-3 rounded-md text-xs"
+            style={{ backgroundColor: colors.surfaceLight }}
           >
-            <p className="text-sm" style={{ color: retro.text }}>
+            <p className="text-sm" style={{ color: colors.text }}>
               Recording interest as income
             </p>
             <button
               type="button"
-              className="mt-1 underline"
-              style={{ color: retro.accent }}
+              className="mt-1 underline transition-opacity duration-150 hover:opacity-80"
+              style={{ color: colors.accent }}
               onClick={() => onToggleNoAsset(false)}
             >
               Link to a deposit account
@@ -167,8 +167,8 @@ export function InterestFlowForm({
           />
           <button
             type="button"
-            className="mt-1 text-xs underline"
-            style={{ color: retro.muted }}
+            className="mt-1 text-xs underline transition-colors duration-150 hover:text-[#EDEDEF]"
+            style={{ color: colors.muted }}
             onClick={() => onToggleNoAsset(true)}
           >
             No specific account? Record as income
@@ -190,7 +190,7 @@ export function InterestFlowForm({
 
       {/* Show current balance if existing asset selected */}
       {!noAsset && !isNewAsset && selectedAsset && (
-        <div className="text-xs" style={{ color: retro.muted }}>
+        <div className="text-xs" style={{ color: colors.muted }}>
           Current balance: {selectedAsset.balance.toLocaleString()} {selectedAsset.currency}
         </div>
       )}
@@ -223,29 +223,29 @@ export function InterestFlowForm({
       {/* Interest Rate Calculation Display - only with asset */}
       {hasAsset && rateInfo && (
         <div
-          className="p-3 rounded-sm space-y-2 text-xs"
-          style={{ backgroundColor: retro.surfaceLight }}
+          className="p-3 rounded-md space-y-2 text-xs"
+          style={{ backgroundColor: colors.surfaceLight }}
         >
           <div className="flex justify-between">
-            <span style={{ color: retro.muted }}>
+            <span style={{ color: colors.muted }}>
               {PAYMENT_PERIOD_OPTIONS.find(p => p.value === form.interestPaymentPeriod)?.label} Rate
             </span>
-            <span style={{ color: retro.text }}>{formatPercent(rateInfo.periodRate * 100)}</span>
+            <span style={{ color: colors.text }}>{formatPercent(rateInfo.periodRate * 100)}</span>
           </div>
           <div
             className="flex justify-between pt-2"
-            style={{ borderTop: `1px solid ${retro.border}` }}
+            style={{ borderTop: `1px solid ${colors.border}` }}
           >
-            <span className="font-medium" style={{ color: retro.text }}>Annualized Rate (APY)</span>
-            <span className="font-bold" style={{ color: retro.positive }}>{formatPercent(rateInfo.annualizedRate * 100)}</span>
+            <span className="font-medium" style={{ color: colors.text }}>Annualized Rate (APY)</span>
+            <span className="font-bold" style={{ color: colors.positive }}>{formatPercent(rateInfo.annualizedRate * 100)}</span>
           </div>
           {existingSettings && !isNewAsset && (
             <div
               className="flex justify-between pt-2 text-[10px]"
-              style={{ borderTop: `1px solid ${retro.border}` }}
+              style={{ borderTop: `1px solid ${colors.border}` }}
             >
-              <span style={{ color: retro.muted }}>Previously Saved Rate</span>
-              <span style={{ color: retro.muted }}>{formatPercent(existingSettings.interest_rate * 100)} APY</span>
+              <span style={{ color: colors.muted }}>Previously Saved Rate</span>
+              <span style={{ color: colors.muted }}>{formatPercent(existingSettings.interest_rate * 100)} APY</span>
             </div>
           )}
         </div>
@@ -254,68 +254,66 @@ export function InterestFlowForm({
       {/* Deposit Maturity Confirmation - only with asset */}
       {hasAsset && (
         <div
-          className="p-3 rounded-sm space-y-3"
+          className="p-3 rounded-md space-y-3"
           style={{
-            backgroundColor: retro.surfaceLight,
-            border: `1px solid ${form.depositMatured === null && formErrors.depositMatured ? '#c53030' : retro.border}`,
+            backgroundColor: colors.surfaceLight,
+            border: `1px solid ${form.depositMatured === null && formErrors.depositMatured ? colors.negative : colors.border}`,
           }}
         >
           <Label variant="muted" className="block text-xs uppercase tracking-wide">
             What happens to this deposit?
           </Label>
 
-          <div className="flex items-start gap-3">
+          <div
+            className="flex items-start gap-3 rounded-md p-2 -m-2 cursor-pointer transition-colors duration-150 hover:bg-white/[0.03]"
+            onClick={() => updateForm('depositMatured', false)}
+          >
             <button
               type="button"
-              onClick={() => updateForm('depositMatured', false)}
-              className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
+              onClick={(e) => { e.stopPropagation(); updateForm('depositMatured', false); }}
+              className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5 transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#5E6AD2]/50"
               style={{
-                backgroundColor: form.depositMatured === false ? retro.accent : 'transparent',
-                border: `2px solid ${form.depositMatured === false ? retro.accent : retro.border}`,
+                backgroundColor: form.depositMatured === false ? colors.accent : 'transparent',
+                border: `2px solid ${form.depositMatured === false ? colors.accent : 'rgba(255,255,255,0.15)'}`,
               }}
             >
               {form.depositMatured === false && (
                 <span className="w-2 h-2 rounded-full bg-white" />
               )}
             </button>
-            <div
-              className="flex-1 cursor-pointer"
-              onClick={() => updateForm('depositMatured', false)}
-            >
-              <p className="text-sm font-medium" style={{ color: retro.text }}>
+            <div className="flex-1">
+              <p className="text-sm font-medium" style={{ color: colors.text }}>
                 Keep in deposit account
               </p>
-              <p className="text-xs" style={{ color: retro.muted }}>
+              <p className="text-xs" style={{ color: colors.muted }}>
                 Interest adds to balance, deposit continues
               </p>
             </div>
           </div>
 
           <div
-            className="flex items-start gap-3"
-            style={{ borderTop: `1px solid ${retro.border}`, paddingTop: '12px' }}
+            className="flex items-start gap-3 rounded-md p-2 -m-2 cursor-pointer transition-colors duration-150 hover:bg-white/[0.03]"
+            style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '12px', marginTop: '0' }}
+            onClick={() => updateForm('depositMatured', true)}
           >
             <button
               type="button"
-              onClick={() => updateForm('depositMatured', true)}
-              className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
+              onClick={(e) => { e.stopPropagation(); updateForm('depositMatured', true); }}
+              className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5 transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#5E6AD2]/50"
               style={{
-                backgroundColor: form.depositMatured === true ? retro.accent : 'transparent',
-                border: `2px solid ${form.depositMatured === true ? retro.accent : retro.border}`,
+                backgroundColor: form.depositMatured === true ? colors.accent : 'transparent',
+                border: `2px solid ${form.depositMatured === true ? colors.accent : 'rgba(255,255,255,0.15)'}`,
               }}
             >
               {form.depositMatured === true && (
                 <span className="w-2 h-2 rounded-full bg-white" />
               )}
             </button>
-            <div
-              className="flex-1 cursor-pointer"
-              onClick={() => updateForm('depositMatured', true)}
-            >
-              <p className="text-sm font-medium" style={{ color: retro.text }}>
+            <div className="flex-1">
+              <p className="text-sm font-medium" style={{ color: colors.text }}>
                 Withdraw to cash account
               </p>
-              <p className="text-xs" style={{ color: retro.muted }}>
+              <p className="text-xs" style={{ color: colors.muted }}>
                 Deposit matured, move principal + interest to cash
               </p>
             </div>
@@ -343,26 +341,26 @@ export function InterestFlowForm({
         <>
           {/* Flow Arrow */}
           <div className="flex justify-center py-1">
-            <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+            <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
               <IconArrow size={18} />
             </span>
           </div>
 
           <div
-            className="p-2 rounded-sm text-xs"
-            style={{ backgroundColor: retro.surfaceLight, color: retro.muted }}
+            className="p-2 rounded-md text-xs"
+            style={{ backgroundColor: colors.surfaceLight, color: colors.muted }}
           >
             {form.depositMatured === true ? (
               <>
                 Principal + Interest will move to:{' '}
-                <span style={{ color: retro.text, fontWeight: 500 }}>
+                <span style={{ color: colors.text, fontWeight: 500 }}>
                   {cashAssets.find(a => a.id === form.withdrawToCashAssetId)?.name || 'Select account'}
                 </span>
               </>
             ) : (
               <>
                 Interest will be added to:{' '}
-                <span style={{ color: retro.text, fontWeight: 500 }}>{accountName}</span>
+                <span style={{ color: colors.text, fontWeight: 500 }}>{accountName}</span>
               </>
             )}
           </div>

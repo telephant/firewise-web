@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import {
-  retro,
+  colors,
   Button,
   Input,
   LoadingText,
@@ -129,10 +129,10 @@ export function AdjustBalanceDialog({
         <DialogBody>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <p className="text-xs font-medium mb-1" style={{ color: retro.text }}>
+              <p className="text-xs font-medium mb-1" style={{ color: colors.text }}>
                 {asset.name}
               </p>
-              <p className="text-[10px]" style={{ color: retro.muted }}>
+              <p className="text-[10px]" style={{ color: colors.muted }}>
                 Current balance: {formatAmount(currentBalance)}
               </p>
             </div>
@@ -150,8 +150,8 @@ export function AdjustBalanceDialog({
               <div
                 className="p-2 rounded text-xs"
                 style={{
-                  backgroundColor: retro.surfaceLight,
-                  color: difference > 0 ? retro.positive : retro.negative,
+                  backgroundColor: colors.surfaceLight,
+                  color: difference > 0 ? colors.positive : colors.negative,
                 }}
               >
                 {difference > 0 ? '+ ' : ''}

@@ -1,6 +1,6 @@
 'use client';
 
-import { retro, retroStyles, FilterDropdown } from '@/components/fire/ui';
+import { colors, FilterDropdown, Input } from '@/components/fire/ui';
 import { getCategoryIcon } from '@/components/fire/ui/category-icons';
 import type { FilterOption, FilterGroup } from '@/components/fire/ui';
 
@@ -74,41 +74,29 @@ export function FlowsFilterBar({
 
       {/* Date Range */}
       <div className="flex items-center gap-2">
-        <input
+        <Input
           type="date"
           value={startDate}
           onChange={(e) => onDateRangeChange(e.target.value, endDate)}
-          className="px-2 py-1.5 text-xs rounded-sm"
-          style={{
-            ...retroStyles.sunken,
-            color: retro.text,
-          }}
+          className="px-2 py-1.5 text-xs"
         />
-        <span style={{ color: retro.muted }}>to</span>
-        <input
+        <span style={{ color: colors.muted }}>to</span>
+        <Input
           type="date"
           value={endDate}
           onChange={(e) => onDateRangeChange(startDate, e.target.value)}
-          className="px-2 py-1.5 text-xs rounded-sm"
-          style={{
-            ...retroStyles.sunken,
-            color: retro.text,
-          }}
+          className="px-2 py-1.5 text-xs"
         />
       </div>
 
       {/* Search */}
       <div className="flex-1 min-w-[150px] max-w-[250px]">
-        <input
+        <Input
           type="text"
           placeholder="Search flows..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full px-3 py-1.5 text-xs rounded-sm"
-          style={{
-            ...retroStyles.sunken,
-            color: retro.text,
-          }}
+          className="py-1.5 text-xs"
         />
       </div>
 
@@ -119,8 +107,8 @@ export function FlowsFilterBar({
             onCategoriesChange([]);
             onSearchChange('');
           }}
-          className="px-2 py-1 text-xs rounded-sm"
-          style={{ color: retro.info }}
+          className="px-2 py-1 text-xs rounded-md transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
+          style={{ color: colors.info }}
         >
           Clear filters
         </button>

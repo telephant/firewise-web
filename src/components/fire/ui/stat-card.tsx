@@ -1,6 +1,6 @@
 'use client';
 
-import { retro, retroStyles } from './theme';
+import { colors } from './theme';
 import { cn } from '@/lib/utils';
 import { IconTriangleUp, IconTriangleDown } from './icons';
 import { Loader } from './loader';
@@ -25,16 +25,16 @@ export function StatCard({
   className,
   isLoading = false,
 }: StatCardProps) {
-  const colors = {
-    default: retro.text,
-    positive: retro.positive,
-    negative: retro.negative,
+  const valueColors = {
+    default: colors.text,
+    positive: colors.positive,
+    negative: colors.negative,
   };
 
   const trendColors = {
-    up: retro.positive,
-    down: retro.negative,
-    neutral: retro.muted,
+    up: colors.positive,
+    down: colors.negative,
+    neutral: colors.muted,
   };
 
   const TrendIcon = trend?.direction === 'up'
@@ -46,13 +46,16 @@ export function StatCard({
   if (isLoading) {
     return (
       <div
-        className={cn('rounded-sm overflow-hidden', className)}
-        style={retroStyles.raised}
+        className={cn('rounded-lg overflow-hidden', className)}
+        style={{
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
+        }}
       >
         <div className="px-3 py-3 text-center">
           <p
             className="text-[10px] uppercase tracking-wider font-medium mb-1"
-            style={{ color: retro.muted }}
+            style={{ color: colors.muted }}
           >
             {label}
           </p>
@@ -66,14 +69,17 @@ export function StatCard({
 
   return (
     <div
-      className={cn('rounded-sm overflow-hidden', className)}
-      style={retroStyles.raised}
+      className={cn('rounded-lg overflow-hidden', className)}
+      style={{
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.border}`,
+      }}
     >
       <div className="px-3 py-3 text-center">
         {/* Label */}
         <p
           className="text-[10px] uppercase tracking-wider font-medium mb-1"
-          style={{ color: retro.muted }}
+          style={{ color: colors.muted }}
         >
           {label}
         </p>
@@ -81,7 +87,7 @@ export function StatCard({
         {/* Value */}
         <p
           className="text-xl font-bold"
-          style={{ color: colors[valueColor] }}
+          style={{ color: valueColors[valueColor] }}
         >
           {value}
         </p>

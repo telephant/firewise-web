@@ -11,8 +11,7 @@ import {
   CardTitle,
   Button,
   Loader,
-  retro,
-  retroStyles,
+  colors,
 } from '@/components/fire/ui';
 import type { Family } from '@/types/family';
 
@@ -82,7 +81,7 @@ export default function AcceptInvitationPage() {
           </CardHeader>
           <div className="p-6 text-center">
             <div className="text-4xl mb-4">:(</div>
-            <p style={{ color: retro.muted }}>
+            <p style={{ color: colors.muted }}>
               This invitation link is invalid or has expired.
             </p>
             <Button
@@ -107,7 +106,7 @@ export default function AcceptInvitationPage() {
           </CardHeader>
           <div className="p-6 text-center">
             <div className="text-4xl mb-4">:)</div>
-            <p style={{ color: retro.muted }}>
+            <p style={{ color: colors.muted }}>
               This invitation has already been accepted.
             </p>
             <Button
@@ -133,7 +132,7 @@ export default function AcceptInvitationPage() {
           </CardHeader>
           <div className="p-6 text-center">
             <div className="text-4xl mb-4">:(</div>
-            <p style={{ color: retro.muted }}>
+            <p style={{ color: colors.muted }}>
               This invitation has expired. Please ask for a new invitation.
             </p>
             <Button
@@ -158,20 +157,20 @@ export default function AcceptInvitationPage() {
           </CardHeader>
           <div className="p-6 space-y-6">
             <div className="text-center">
-              <div className="text-xl font-bold mb-2" style={{ color: retro.text }}>
+              <div className="text-xl font-bold mb-2" style={{ color: colors.text }}>
                 You&apos;ve been invited to join
               </div>
               <div
                 className="text-2xl font-bold py-4 px-6 rounded-sm"
                 style={{
-                  ...retroStyles.sunken,
-                  color: retro.accent,
+                  backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+                  color: colors.accent,
                 }}
               >
                 {invitation.family?.name || 'A Family'}
               </div>
               {invitation.inviter?.full_name && (
-                <p className="mt-3 text-sm" style={{ color: retro.muted }}>
+                <p className="mt-3 text-sm" style={{ color: colors.muted }}>
                   Invited by {invitation.inviter.full_name}
                 </p>
               )}
@@ -179,9 +178,9 @@ export default function AcceptInvitationPage() {
 
             <div
               className="p-4 rounded-sm text-center"
-              style={retroStyles.sunken}
+              style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
             >
-              <p style={{ color: retro.muted }}>
+              <p style={{ color: colors.muted }}>
                 Please log in or create an account to accept this invitation.
               </p>
             </div>
@@ -224,7 +223,7 @@ export default function AcceptInvitationPage() {
             <div className="text-4xl mb-4">
               {isSameFamily ? ':)' : ':/'}
             </div>
-            <p style={{ color: retro.muted }}>
+            <p style={{ color: colors.muted }}>
               {isSameFamily
                 ? `You're already a member of ${userFamily.name}.`
                 : `You're already a member of "${userFamily.name}". You need to leave your current family before joining another one.`}
@@ -249,13 +248,13 @@ export default function AcceptInvitationPage() {
             <CardTitle>Welcome to the Family!</CardTitle>
           </CardHeader>
           <div className="p-6 text-center">
-            <div className="text-4xl mb-4" style={{ color: retro.positive }}>
+            <div className="text-4xl mb-4" style={{ color: colors.positive }}>
               :D
             </div>
-            <p style={{ color: retro.muted }}>
+            <p style={{ color: colors.muted }}>
               You&apos;ve successfully joined {invitation.family?.name || 'the family'}.
             </p>
-            <p className="text-sm mt-2" style={{ color: retro.muted }}>
+            <p className="text-sm mt-2" style={{ color: colors.muted }}>
               Redirecting to dashboard...
             </p>
           </div>
@@ -272,20 +271,20 @@ export default function AcceptInvitationPage() {
         </CardHeader>
         <div className="p-6 space-y-6">
           <div className="text-center">
-            <div className="text-xl font-bold mb-2" style={{ color: retro.text }}>
+            <div className="text-xl font-bold mb-2" style={{ color: colors.text }}>
               You&apos;ve been invited to join
             </div>
             <div
               className="text-2xl font-bold py-4 px-6 rounded-sm"
               style={{
-                ...retroStyles.sunken,
-                color: retro.accent,
+                backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+                color: colors.accent,
               }}
             >
               {invitation.family?.name || 'A Family'}
             </div>
             {invitation.inviter?.full_name && (
-              <p className="mt-3 text-sm" style={{ color: retro.muted }}>
+              <p className="mt-3 text-sm" style={{ color: colors.muted }}>
                 Invited by {invitation.inviter.full_name}
               </p>
             )}
@@ -293,7 +292,7 @@ export default function AcceptInvitationPage() {
 
           <div
             className="flex items-start gap-3 p-3 rounded-sm"
-            style={retroStyles.sunken}
+            style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
           >
             <input
               type="checkbox"
@@ -304,10 +303,10 @@ export default function AcceptInvitationPage() {
               className="mt-1"
             />
             <div>
-              <label htmlFor="migrate-data" className="cursor-pointer text-xs uppercase tracking-wide font-medium" style={{ color: retro.text }}>
+              <label htmlFor="migrate-data" className="cursor-pointer text-xs uppercase tracking-wide font-medium" style={{ color: colors.text }}>
                 Share my existing data with the family
               </label>
-              <p className="text-xs mt-1" style={{ color: retro.muted }}>
+              <p className="text-xs mt-1" style={{ color: colors.muted }}>
                 Your current assets, flows, and debts will be moved to the family.
               </p>
             </div>
@@ -317,8 +316,8 @@ export default function AcceptInvitationPage() {
             <div
               className="text-sm p-2 rounded"
               style={{
-                backgroundColor: `${retro.negative}20`,
-                color: retro.negative,
+                backgroundColor: `${colors.negative}20`,
+                color: colors.negative,
               }}
             >
               {acceptError}

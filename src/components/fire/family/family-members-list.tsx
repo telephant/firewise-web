@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useViewMode } from '@/contexts/fire/view-mode-context';
 import { useFamilyMembers } from '@/hooks/fire/use-family';
 import { familyApi } from '@/lib/fire/family-api';
-import { retro, retroStyles, Button, Loader } from '@/components/fire/ui';
+import { colors, Button, Loader } from '@/components/fire/ui';
 import type { FamilyMember, FamilyInvitation } from '@/types/family';
 
 interface FamilyMembersListProps {
@@ -91,7 +91,7 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
 
   if (error) {
     return (
-      <div className="text-center py-4" style={{ color: retro.negative }}>
+      <div className="text-center py-4" style={{ color: colors.negative }}>
         Failed to load members
       </div>
     );
@@ -119,35 +119,35 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
         {members.map((member) => (
           <div
             key={member.id}
-            className="flex items-center justify-between p-3 rounded-sm"
-            style={retroStyles.sunken}
+            className="flex items-center justify-between p-3 rounded-md"
+            style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
           >
             <div className="flex items-center gap-3">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
                 style={{
-                  backgroundColor: retro.info,
+                  backgroundColor: colors.info,
                   color: '#ffffff',
                 }}
               >
                 {(member.profile?.full_name || member.profile?.email || '?')[0].toUpperCase()}
               </div>
               <div>
-                <div className="text-sm font-medium" style={{ color: retro.text }}>
+                <div className="text-sm font-medium" style={{ color: colors.text }}>
                   {member.profile?.full_name || 'Unknown'}
                   {isCreator(member) && (
                     <span
                       className="ml-2 text-[10px] px-1.5 py-0.5 rounded"
                       style={{
-                        backgroundColor: retro.warning,
-                        color: retro.text,
+                        backgroundColor: colors.warning,
+                        color: colors.text,
                       }}
                     >
                       Owner
                     </span>
                   )}
                 </div>
-                <div className="text-xs" style={{ color: retro.muted }}>
+                <div className="text-xs" style={{ color: colors.muted }}>
                   {member.profile?.email || 'No email'}
                 </div>
               </div>
@@ -160,7 +160,7 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
                 size="sm"
                 onClick={() => handleRemove(member)}
                 disabled={removingId === member.user_id}
-                style={{ color: retro.negative }}
+                style={{ color: colors.negative }}
               >
                 {removingId === member.user_id ? 'Removing...' : 'Remove'}
               </Button>
@@ -172,7 +172,7 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
       {/* Pending Invitations */}
       {(pendingInvitations.length > 0 || loadingInvitations) && (
         <div className="space-y-2">
-          <div className="text-xs font-medium uppercase tracking-wide" style={{ color: retro.muted }}>
+          <div className="text-xs font-medium uppercase tracking-wide" style={{ color: colors.muted }}>
             Pending Invitations
           </div>
 
@@ -184,9 +184,9 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
             pendingInvitations.map((invitation) => (
               <div
                 key={invitation.id}
-                className="flex items-center justify-between p-3 rounded-sm"
+                className="flex items-center justify-between p-3 rounded-md"
                 style={{
-                  ...retroStyles.sunken,
+                  backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
                   opacity: isExpired(invitation) ? 0.6 : 1,
                 }}
               >
@@ -194,26 +194,26 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
                     style={{
-                      backgroundColor: retro.muted,
+                      backgroundColor: colors.muted,
                       color: '#ffffff',
                     }}
                   >
                     {invitation.email[0].toUpperCase()}
                   </div>
                   <div>
-                    <div className="text-sm font-medium" style={{ color: retro.text }}>
+                    <div className="text-sm font-medium" style={{ color: colors.text }}>
                       {invitation.email}
                       <span
                         className="ml-2 text-[10px] px-1.5 py-0.5 rounded"
                         style={{
-                          backgroundColor: isExpired(invitation) ? retro.negative : retro.info,
+                          backgroundColor: isExpired(invitation) ? colors.negative : colors.info,
                           color: '#ffffff',
                         }}
                       >
                         {isExpired(invitation) ? 'Expired' : 'Pending'}
                       </span>
                     </div>
-                    <div className="text-xs" style={{ color: retro.muted }}>
+                    <div className="text-xs" style={{ color: colors.muted }}>
                       Invited {new Date(invitation.created_at).toLocaleDateString()}
                       {!isExpired(invitation) && (
                         <> · Expires {new Date(invitation.expires_at).toLocaleDateString()}</>
@@ -228,7 +228,7 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
                     size="sm"
                     onClick={() => handleResend(invitation)}
                     disabled={resendingId === invitation.id || cancelingId === invitation.id}
-                    style={{ color: retro.info }}
+                    style={{ color: colors.info }}
                   >
                     {resendingId === invitation.id ? 'Sending...' : 'Resend'}
                   </Button>
@@ -237,7 +237,7 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
                     size="sm"
                     onClick={() => handleCancel(invitation)}
                     disabled={resendingId === invitation.id || cancelingId === invitation.id}
-                    style={{ color: retro.negative }}
+                    style={{ color: colors.negative }}
                   >
                     {cancelingId === invitation.id ? '...' : 'Cancel'}
                   </Button>
@@ -249,7 +249,7 @@ export function FamilyMembersList({ onRemoveMember }: FamilyMembersListProps) {
       )}
 
       {members.length === 0 && pendingInvitations.length === 0 && (
-        <div className="text-center py-4" style={{ color: retro.muted }}>
+        <div className="text-center py-4" style={{ color: colors.muted }}>
           No members yet
         </div>
       )}

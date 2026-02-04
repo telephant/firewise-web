@@ -8,7 +8,7 @@ import { mutateDebts } from '@/hooks/fire/use-fire-data';
 import type { Asset, AssetType, RealEstateMetadata, Debt } from '@/types/fire';
 import { ASSET_TYPE_LABELS } from '@/types/fire';
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -675,20 +675,19 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                     key={option.value}
                     type="button"
                     onClick={() => handleTypeSelect(option.value as AssetType)}
-                    className="p-3 rounded-sm text-left transition-all hover:translate-y-[-1px] active:translate-y-[1px]"
+                    className="p-3 rounded-md text-left transition-all hover:translate-y-[-1px] active:translate-y-[1px] hover:bg-white/[0.04]"
                     style={{
-                      backgroundColor: retro.surface,
-                      border: `2px solid ${retro.border}`,
-                      boxShadow: `2px 2px 0 ${retro.bevelDark}`,
+                      backgroundColor: colors.surface,
+                      border: `1px solid ${colors.border}`,
                     }}
                   >
-                    <span className="text-sm font-medium" style={{ color: retro.text }}>
+                    <span className="text-sm font-medium" style={{ color: colors.text }}>
                       {option.label}
                     </span>
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] mt-3" style={{ color: retro.muted }}>
+              <p className="text-[10px] mt-3" style={{ color: colors.muted }}>
                 For stocks/ETFs, use &quot;Record &gt; Invest&quot; to buy shares.
               </p>
             </div>
@@ -797,10 +796,10 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                           </div>
                         ) : propertyMortgages.length === 0 ? (
                           <div
-                            className="p-4 rounded-sm text-center"
-                            style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+                            className="p-4 rounded-md text-center"
+                            style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
                           >
-                            <p className="text-sm" style={{ color: retro.muted }}>
+                            <p className="text-sm" style={{ color: colors.muted }}>
                               No mortgages on this property
                             </p>
                           </div>
@@ -808,18 +807,18 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                           propertyMortgages.map((mortgage) => (
                             <div
                               key={mortgage.id}
-                              className="p-3 rounded-sm"
-                              style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+                              className="p-3 rounded-md"
+                              style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
                             >
                               <div className="flex items-start justify-between mb-2">
                                 <div>
-                                  <p className="text-sm font-medium" style={{ color: retro.text }}>
+                                  <p className="text-sm font-medium" style={{ color: colors.text }}>
                                     {mortgage.name}
                                   </p>
                                   <span
-                                    className="text-[10px] px-1.5 py-0.5 rounded-sm"
+                                    className="text-[10px] px-1.5 py-0.5 rounded-md"
                                     style={{
-                                      backgroundColor: mortgage.current_balance <= 0 ? retro.positive : retro.accent,
+                                      backgroundColor: mortgage.current_balance <= 0 ? colors.positive : colors.accent,
                                       color: '#fff',
                                     }}
                                   >
@@ -839,32 +838,32 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                               </div>
                               <div className="grid grid-cols-2 gap-2 text-xs">
                                 <div>
-                                  <span style={{ color: retro.muted }}>Balance: </span>
-                                  <span style={{ color: retro.text }}>
+                                  <span style={{ color: colors.muted }}>Balance: </span>
+                                  <span style={{ color: colors.text }}>
                                     {formatMoney(mortgage.current_balance, mortgage.currency)}
                                   </span>
                                 </div>
                                 <div>
-                                  <span style={{ color: retro.muted }}>Rate: </span>
-                                  <span style={{ color: retro.text }}>
+                                  <span style={{ color: colors.muted }}>Rate: </span>
+                                  <span style={{ color: colors.text }}>
                                     {mortgage.interest_rate ? `${(mortgage.interest_rate * 100).toFixed(2)}%` : 'N/A'}
                                   </span>
                                 </div>
                                 <div>
-                                  <span style={{ color: retro.muted }}>Payment: </span>
-                                  <span style={{ color: retro.text }}>
+                                  <span style={{ color: colors.muted }}>Payment: </span>
+                                  <span style={{ color: colors.text }}>
                                     {mortgage.monthly_payment ? formatMoney(mortgage.monthly_payment, mortgage.currency) : 'N/A'}
                                   </span>
                                 </div>
                                 <div>
-                                  <span style={{ color: retro.muted }}>Remaining: </span>
-                                  <span style={{ color: retro.text }}>
+                                  <span style={{ color: colors.muted }}>Remaining: </span>
+                                  <span style={{ color: colors.text }}>
                                     {calculateRemainingTerm(mortgage)}
                                   </span>
                                 </div>
                               </div>
                               {mortgage.current_balance > 0 && (
-                                <div className="mt-2 pt-2 flex gap-2" style={{ borderTop: `1px solid ${retro.bevelMid}` }}>
+                                <div className="mt-2 pt-2 flex gap-2" style={{ borderTop: `1px solid ${colors.surfaceLight}` }}>
                                   <Button
                                     variant="primary"
                                     size="sm"
@@ -900,22 +899,22 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                       /* Make Payment Form */
                       <div className="space-y-4">
                         <div
-                          className="p-3 rounded-sm"
-                          style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+                          className="p-3 rounded-md"
+                          style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
                         >
-                          <p className="text-sm font-medium" style={{ color: retro.text }}>
+                          <p className="text-sm font-medium" style={{ color: colors.text }}>
                             {payingMortgage.name}
                           </p>
                           <div className="flex justify-between text-xs mt-2">
-                            <span style={{ color: retro.muted }}>Current Balance</span>
-                            <span className="font-bold" style={{ color: retro.negative }}>
+                            <span style={{ color: colors.muted }}>Current Balance</span>
+                            <span className="font-bold" style={{ color: colors.negative }}>
                               {formatMoney(payingMortgage.current_balance, payingMortgage.currency)}
                             </span>
                           </div>
                           {payingMortgage.monthly_payment && (
                             <div className="flex justify-between text-xs mt-1">
-                              <span style={{ color: retro.muted }}>Monthly Payment</span>
-                              <span style={{ color: retro.text }}>
+                              <span style={{ color: colors.muted }}>Monthly Payment</span>
+                              <span style={{ color: colors.text }}>
                                 {formatMoney(payingMortgage.monthly_payment, payingMortgage.currency)}
                               </span>
                             </div>
@@ -944,22 +943,22 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
 
                         {parseFloat(paymentAmount) >= payingMortgage.current_balance && parseFloat(paymentAmount) > 0 && (
                           <div
-                            className="p-3 rounded-sm text-center"
+                            className="p-3 rounded-md text-center"
                             style={{
-                              backgroundColor: retro.positive + '20',
-                              border: `2px solid ${retro.positive}`,
+                              backgroundColor: colors.positive + '20',
+                              border: `1px solid ${colors.positive}`,
                             }}
                           >
-                            <p className="text-sm font-bold" style={{ color: retro.positive }}>
+                            <p className="text-sm font-bold" style={{ color: colors.positive }}>
                               This will pay off the mortgage!
                             </p>
                           </div>
                         )}
 
                         {parseFloat(paymentAmount) > 0 && parseFloat(paymentAmount) < payingMortgage.current_balance && (
-                          <div className="text-xs text-center" style={{ color: retro.muted }}>
+                          <div className="text-xs text-center" style={{ color: colors.muted }}>
                             Balance after payment:{' '}
-                            <span style={{ color: retro.negative, fontWeight: 500 }}>
+                            <span style={{ color: colors.negative, fontWeight: 500 }}>
                               {formatMoney(payingMortgage.current_balance - parseFloat(paymentAmount), payingMortgage.currency)}
                             </span>
                           </div>
@@ -1054,11 +1053,11 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
 
                         {mortgageMonthlyPayment > 0 && (
                           <div
-                            className="p-3 rounded-sm text-center"
-                            style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+                            className="p-3 rounded-md text-center"
+                            style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
                           >
                             <Label variant="muted" className="block mb-1">Estimated Monthly Payment</Label>
-                            <p className="text-lg font-bold" style={{ color: retro.negative }}>
+                            <p className="text-lg font-bold" style={{ color: colors.negative }}>
                               {formatMoney(mortgageMonthlyPayment, mortgageCurrency)}
                             </p>
                           </div>
@@ -1201,13 +1200,13 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                 // Ask about mortgage
                 <div className="space-y-4">
                   <div
-                    className="p-4 rounded-sm text-center"
-                    style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+                    className="p-4 rounded-md text-center"
+                    style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
                   >
-                    <p className="text-sm font-medium mb-1" style={{ color: retro.text }}>
+                    <p className="text-sm font-medium mb-1" style={{ color: colors.text }}>
                       Do you have a mortgage on this property?
                     </p>
-                    <p className="text-xs" style={{ color: retro.muted }}>
+                    <p className="text-xs" style={{ color: colors.muted }}>
                       We can track it alongside your property
                     </p>
                   </div>
@@ -1292,11 +1291,11 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
 
                   {mortgageMonthlyPayment > 0 && (
                     <div
-                      className="p-3 rounded-sm text-center"
-                      style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+                      className="p-3 rounded-md text-center"
+                      style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
                     >
                       <Label variant="muted" className="block mb-1">Estimated Monthly Payment</Label>
-                      <p className="text-lg font-bold" style={{ color: retro.negative }}>
+                      <p className="text-lg font-bold" style={{ color: colors.negative }}>
                         {formatMoney(mortgageMonthlyPayment, mortgageCurrency)}
                       </p>
                     </div>
@@ -1320,12 +1319,12 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                 // No mortgage - just submit
                 <div className="space-y-4">
                   <div
-                    className="p-4 rounded-sm text-center"
-                    style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+                    className="p-4 rounded-md text-center"
+                    style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
                   >
-                    <p className="text-sm" style={{ color: retro.muted }}>
-                      Ready to add <strong style={{ color: retro.text }}>{assetName}</strong> with value{' '}
-                      <strong style={{ color: retro.positive }}>{formatMoney(parseFloat(assetValue) || 0)}</strong>
+                    <p className="text-sm" style={{ color: colors.muted }}>
+                      Ready to add <strong style={{ color: colors.text }}>{assetName}</strong> with value{' '}
+                      <strong style={{ color: colors.positive }}>{formatMoney(parseFloat(assetValue) || 0)}</strong>
                     </p>
                   </div>
 

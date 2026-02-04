@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import type { FlowCategoryPreset, AssetWithBalance } from '@/types/fire';
-import { retro, Input, CurrencyCombobox, IconArrow } from '@/components/fire/ui';
+import { colors, Input, CurrencyCombobox, IconArrow } from '@/components/fire/ui';
 import { AssetFieldSelector } from './asset-field-selector';
 import { FormActions } from './form-actions';
 import { TaxSettingsDialog } from '@/components/fire/tax-settings-dialog';
@@ -114,26 +114,26 @@ export function DividendFlowForm({
       {/* Tax Calculation Display */}
       {taxInfo.grossAmount > 0 ? (
         <div
-          className="p-3 rounded-sm space-y-2 text-xs"
-          style={{ backgroundColor: retro.surfaceLight }}
+          className="p-3 rounded-md space-y-2 text-xs"
+          style={{ backgroundColor: colors.surfaceLight }}
         >
           <div className="flex justify-between">
-            <span style={{ color: retro.muted }}>Tax Withheld ({(taxInfo.taxRate * 100).toFixed(0)}%)</span>
-            <span style={{ color: retro.negative }}>-{formatAmount(taxInfo.taxWithheld)}</span>
+            <span style={{ color: colors.muted }}>Tax Withheld ({(taxInfo.taxRate * 100).toFixed(0)}%)</span>
+            <span style={{ color: colors.negative }}>-{formatAmount(taxInfo.taxWithheld)}</span>
           </div>
           <div
             className="flex justify-between pt-2"
-            style={{ borderTop: `1px solid ${retro.border}` }}
+            style={{ borderTop: `1px solid ${colors.border}` }}
           >
-            <span className="font-medium" style={{ color: retro.text }}>Net Amount</span>
-            <span className="font-bold" style={{ color: retro.positive }}>{formatAmount(taxInfo.netAmount)}</span>
+            <span className="font-medium" style={{ color: colors.text }}>Net Amount</span>
+            <span className="font-bold" style={{ color: colors.positive }}>{formatAmount(taxInfo.netAmount)}</span>
           </div>
           {/* Tip to update tax rate */}
           <button
             type="button"
             onClick={() => setTaxSettingsOpen(true)}
-            className="w-full text-left pt-2 hover:underline"
-            style={{ color: retro.info, borderTop: `1px dashed ${retro.border}` }}
+            className="w-full text-left pt-2 hover:underline transition-colors duration-150 cursor-pointer"
+            style={{ color: colors.info, borderTop: `1px dashed ${colors.border}` }}
           >
             Tax rate: {(taxInfo.taxRate * 100).toFixed(0)}%. Click to update in Settings
           </button>
@@ -142,8 +142,8 @@ export function DividendFlowForm({
         <button
           type="button"
           onClick={() => setTaxSettingsOpen(true)}
-          className="text-xs hover:underline text-left"
-          style={{ color: retro.info }}
+          className="text-xs hover:underline text-left transition-colors duration-150 cursor-pointer"
+          style={{ color: colors.info }}
         >
           Current tax rate: {((taxSettings?.us_dividend_withholding_rate ?? 0.30) * 100).toFixed(0)}%. Click to update
         </button>
@@ -151,7 +151,7 @@ export function DividendFlowForm({
 
       {/* Flow Arrow */}
       <div className="flex justify-center py-1">
-        <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+        <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
           <IconArrow size={18} />
         </span>
       </div>

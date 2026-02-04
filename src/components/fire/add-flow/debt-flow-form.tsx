@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import type { FlowCategoryPreset, AssetWithBalance, DebtType } from '@/types/fire';
 import { DEBT_TYPE_LABELS } from '@/types/fire';
-import { retro, Input, Select, CurrencyCombobox, Label, IconArrow } from '@/components/fire/ui';
+import { colors, Input, Select, CurrencyCombobox, Label, IconArrow } from '@/components/fire/ui';
 import { FormActions } from './form-actions';
 import { getFieldLabels } from './constants';
 import type { FlowFormState, FlowFormErrors, NewAssetState } from './types';
@@ -152,11 +152,11 @@ export function DebtFlowForm({
       {/* Monthly Payment Preview */}
       {monthlyPayment > 0 && (
         <div
-          className="p-3 rounded-sm text-center"
-          style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+          className="p-3 rounded-md text-center"
+          style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
         >
           <Label variant="muted" className="block mb-1">Estimated Monthly Payment</Label>
-          <p className="text-lg font-bold" style={{ color: retro.negative }}>
+          <p className="text-lg font-bold" style={{ color: colors.negative }}>
             {formatMoney(monthlyPayment)}
           </p>
         </div>
@@ -172,7 +172,7 @@ export function DebtFlowForm({
 
       {/* Flow Arrow */}
       <div className="flex justify-center py-1">
-        <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+        <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
           <IconArrow size={18} />
         </span>
       </div>
@@ -191,7 +191,7 @@ export function DebtFlowForm({
             placeholder={labels.toPlaceholder}
             error={formErrors.toAsset}
           />
-          <p className="text-[10px] mt-1" style={{ color: retro.muted }}>
+          <p className="text-[10px] mt-1" style={{ color: colors.muted }}>
             Where the loan money was deposited
           </p>
         </div>

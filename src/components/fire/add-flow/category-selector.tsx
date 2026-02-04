@@ -1,6 +1,6 @@
 'use client';
 
-import { retro, retroStyles, getCategoryIcon, ButtonGroup, type ButtonGroupOption } from '@/components/fire/ui';
+import { colors, getCategoryIcon, ButtonGroup, type ButtonGroupOption } from '@/components/fire/ui';
 import { FlowCategoryPreset, FLOW_CATEGORY_PRESETS } from '@/types/fire';
 
 interface CategorySelectorProps {
@@ -75,15 +75,15 @@ export function CategorySelector({
       {/* Other option */}
       <div
         className="pt-3"
-        style={{ borderTop: `1px solid ${retro.bevelMid}` }}
+        style={{ borderTop: `1px solid ${colors.surfaceLight}` }}
       >
         <button
           type="button"
           onClick={() => onSelect(FLOW_CATEGORY_PRESETS.find((p) => p.id === 'other')!)}
-          className="flex items-center gap-2 px-3 py-2 rounded-sm transition-all active:translate-y-[1px] text-sm hover:opacity-90"
+          className="flex items-center gap-2 px-3 py-2 rounded-md transition-all active:translate-y-[1px] text-sm hover:opacity-90"
           style={{
-            ...retroStyles.raised,
-            color: retro.text,
+            backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+            color: colors.text,
           }}
         >
           <span>{getCategoryIcon('other', 16)}</span>

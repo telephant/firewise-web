@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import {
-  retro,
+  colors,
   Button,
   SidebarTrigger,
   IconPlus,
   IconUpload,
-  RetroPieChart,
+  PieChart,
   Card,
 } from '@/components/fire/ui';
 import type { PieSegment } from '@/components/fire/ui';
@@ -28,14 +28,14 @@ import type { AssetWithBalance, AssetType, AssetSortField, SortOrder } from '@/t
 const PAGE_SIZE = 20;
 
 const CATEGORY_COLORS: Record<AssetType, string> = {
-  cash: '#2a7848',       // Green (retro.positive)
-  deposit: '#385898',    // Blue (retro.info)
-  stock: '#c86428',      // Orange (retro.accent)
-  etf: '#e89050',        // Light orange (retro.accentLight)
-  bond: '#b08020',       // Gold (retro.warning)
+  cash: '#2a7848',       // Green (colors.positive)
+  deposit: '#385898',    // Blue (colors.info)
+  stock: '#c86428',      // Orange (colors.accent)
+  etf: '#e89050',        // Light orange (colors.accentLight)
+  bond: '#b08020',       // Gold (colors.warning)
   real_estate: '#8b5a2b', // Brown
   crypto: '#9b59b6',     // Purple
-  other: '#5a5a6a',      // Gray (retro.muted)
+  other: '#5a5a6a',      // Gray (colors.muted)
 };
 
 const CATEGORY_LABELS: Record<AssetType, string> = {
@@ -224,12 +224,12 @@ export default function AssetsPage() {
         className="flex items-center justify-between px-3 py-2"
         style={{
           backgroundColor: 'transparent',
-          borderBottom: `2px solid ${retro.border}`,
+          borderBottom: `1px solid ${colors.border}`,
         }}
       >
         <div className="flex items-center gap-3">
           <SidebarTrigger />
-          <h1 className="text-sm font-bold" style={{ color: retro.text }}>
+          <h1 className="text-sm font-bold" style={{ color: colors.text }}>
             Assets
           </h1>
         </div>
@@ -264,12 +264,12 @@ export default function AssetsPage() {
             <Card className="p-4">
               <h3
                 className="text-xs font-bold uppercase tracking-wider mb-2"
-                style={{ color: retro.text }}
+                style={{ color: colors.text }}
               >
                 Allocation
               </h3>
               {!isLoading && assets.length > 0 ? (
-                <RetroPieChart
+                <PieChart
                   outerData={outerPieData}
                   innerData={innerPieData}
                   size={180}
@@ -279,7 +279,7 @@ export default function AssetsPage() {
               ) : (
                 <div
                   className="flex items-center justify-center text-xs"
-                  style={{ color: retro.muted, height: 180 }}
+                  style={{ color: colors.muted, height: 180 }}
                 >
                   {isLoading ? 'Loading...' : 'No assets'}
                 </div>

@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react';
 import {
-  retro,
-  retroStyles,
+  colors,
   Card,
   Loader,
   IconCash,
@@ -120,8 +119,8 @@ export function AssetTypeStats({
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="flex-shrink-0 w-32 h-20 rounded-sm flex items-center justify-center"
-            style={{ ...retroStyles.raised, backgroundColor: retro.surface }}
+            className="flex-shrink-0 w-32 h-20 rounded-md flex items-center justify-center"
+            style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}
           >
             <Loader size="sm" variant="dots" />
           </div>
@@ -139,27 +138,26 @@ export function AssetTypeStats({
       {/* Total Card */}
       <button
         onClick={() => onTypeClick?.('all')}
-        className="flex-shrink-0 w-36 p-3 rounded-sm text-left transition-all"
+        className="flex-shrink-0 w-36 p-3 rounded-md text-left transition-all hover:bg-white/[0.04] cursor-pointer"
         style={{
-          ...(selectedType === 'all' ? retroStyles.sunken : retroStyles.raised),
-          backgroundColor: selectedType === 'all' ? retro.surfaceLight : retro.surface,
+          ...(selectedType === 'all' ? { backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' } : { backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }),
         }}
       >
         <div className="flex items-center gap-2 mb-1">
-          <span style={{ color: retro.accent }}>
+          <span style={{ color: colors.accent }}>
             <IconCash size={14} />
           </span>
-          <span className="text-xs font-bold" style={{ color: retro.text }}>
+          <span className="text-xs font-bold" style={{ color: colors.text }}>
             All Assets
           </span>
         </div>
         <div
           className="text-sm font-bold tabular-nums"
-          style={{ color: retro.text }}
+          style={{ color: colors.text }}
         >
           {formatCurrency(grandTotal, { currency })}
         </div>
-        <div className="text-[10px]" style={{ color: retro.muted }}>
+        <div className="text-[10px]" style={{ color: colors.muted }}>
           {assets.length} total
         </div>
       </button>
@@ -176,37 +174,36 @@ export function AssetTypeStats({
           <button
             key={type}
             onClick={() => onTypeClick?.(type)}
-            className="flex-shrink-0 w-36 p-3 rounded-sm text-left transition-all"
+            className="flex-shrink-0 w-36 p-3 rounded-md text-left transition-all hover:bg-white/[0.04] cursor-pointer"
             style={{
-              ...(isSelected ? retroStyles.sunken : retroStyles.raised),
-              backgroundColor: isSelected ? retro.surfaceLight : retro.surface,
+              ...(isSelected ? { backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' } : { backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }),
             }}
           >
             <div className="flex items-center gap-2 mb-1">
-              <span style={{ color: retro.muted }}>
+              <span style={{ color: colors.muted }}>
                 <IconComponent size={14} />
               </span>
-              <span className="text-xs font-bold" style={{ color: retro.text }}>
+              <span className="text-xs font-bold" style={{ color: colors.text }}>
                 {config.label}
               </span>
             </div>
             <div
               className="text-sm font-bold tabular-nums"
-              style={{ color: retro.text }}
+              style={{ color: colors.text }}
             >
               {formatCurrency(stats.totalValue, { currency })}
             </div>
             <div className="flex items-center gap-2 text-[10px]">
-              <span style={{ color: retro.muted }}>
+              <span style={{ color: colors.muted }}>
                 {stats.count} {stats.count === 1 ? config.countLabel.slice(0, -1) : config.countLabel}
               </span>
-              <span style={{ color: retro.accent }}>
+              <span style={{ color: colors.accent }}>
                 {grandTotal > 0 ? ((stats.totalValue / grandTotal) * 100).toFixed(1) : 0}%
               </span>
               {showDayChange && (
                 <span
                   style={{
-                    color: stats.dayChangePercent >= 0 ? retro.positive : retro.negative,
+                    color: stats.dayChangePercent >= 0 ? colors.positive : colors.negative,
                   }}
                 >
                   {stats.dayChangePercent >= 0 ? '+' : ''}

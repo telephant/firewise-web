@@ -7,7 +7,7 @@ import { mutateDebts } from '@/hooks/fire/use-fire-data';
 import type { Debt } from '@/types/fire';
 import { DEBT_TYPE_LABELS } from '@/types/fire';
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -64,33 +64,33 @@ export function DeleteDebtDialog({
           <div className="space-y-4">
             {/* Warning */}
             <div
-              className="p-3 rounded-sm"
-              style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.negative}20` }}
+              className="p-3 rounded-md"
+              style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.negative}20` }}
             >
-              <p className="text-sm" style={{ color: retro.text }}>
+              <p className="text-sm" style={{ color: colors.text }}>
                 Are you sure you want to delete this debt?
               </p>
-              <p className="text-xs mt-2" style={{ color: retro.muted }}>
+              <p className="text-xs mt-2" style={{ color: colors.muted }}>
                 This action cannot be undone.
               </p>
             </div>
 
             {/* Debt Summary */}
             <div
-              className="p-3 rounded-sm"
-              style={{ backgroundColor: retro.surfaceLight }}
+              className="p-3 rounded-md"
+              style={{ backgroundColor: colors.surfaceLight }}
             >
-              <div className="text-sm font-medium mb-2" style={{ color: retro.text }}>
+              <div className="text-sm font-medium mb-2" style={{ color: colors.text }}>
                 {debt.name}
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span style={{ color: retro.muted }}>Type: </span>
-                  <span style={{ color: retro.text }}>{DEBT_TYPE_LABELS[debt.debt_type]}</span>
+                  <span style={{ color: colors.muted }}>Type: </span>
+                  <span style={{ color: colors.text }}>{DEBT_TYPE_LABELS[debt.debt_type]}</span>
                 </div>
                 <div>
-                  <span style={{ color: retro.muted }}>Balance: </span>
-                  <span style={{ color: retro.negative }}>
+                  <span style={{ color: colors.muted }}>Balance: </span>
+                  <span style={{ color: colors.negative }}>
                     {formatCurrency(debt.current_balance, { currency: debt.currency })}
                   </span>
                 </div>
@@ -98,7 +98,7 @@ export function DeleteDebtDialog({
             </div>
 
             {/* Note about flows */}
-            <p className="text-[10px]" style={{ color: retro.muted }}>
+            <p className="text-[10px]" style={{ color: colors.muted }}>
               Related payment flows will not be deleted, but will no longer be linked to this debt.
             </p>
 

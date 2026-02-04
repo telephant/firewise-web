@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import {
-  retro,
+  colors,
   Card,
   Loader,
   IconArrow,
@@ -41,11 +41,11 @@ export function FlowList({
   const getFlowColor = (type: FlowWithDetails['type']) => {
     switch (type) {
       case 'income':
-        return retro.positive;
+        return colors.positive;
       case 'expense':
-        return retro.negative;
+        return colors.negative;
       default:
-        return retro.text;
+        return colors.text;
     }
   };
 
@@ -85,7 +85,7 @@ export function FlowList({
         {flows.length === 0 ? (
           <div
             className="flex-1 flex items-center justify-center text-xs"
-            style={{ color: retro.muted }}
+            style={{ color: colors.muted }}
           >
             No flows yet. Click &quot;Record&quot; to get started.
           </div>
@@ -98,8 +98,8 @@ export function FlowList({
                 return (
                   <div
                     key={flow.id}
-                    className="flex items-center justify-between py-1.5 px-2 rounded-sm"
-                    style={{ backgroundColor: retro.surfaceLight }}
+                    className="flex items-center justify-between py-1.5 px-2 rounded-md"
+                    style={{ backgroundColor: colors.surfaceLight }}
                   >
                     <div className="flex items-center gap-2">
                       <span style={{ color: getFlowColor(flow.type), transform: `rotate(${rotation}deg)`, display: 'inline-block' }}>
@@ -108,13 +108,13 @@ export function FlowList({
                       <div>
                         <p
                           className="text-xs font-medium capitalize"
-                          style={{ color: retro.text }}
+                          style={{ color: colors.text }}
                         >
                           {flow.category || flow.type}
                         </p>
                         <p
                           className="text-[10px]"
-                          style={{ color: retro.muted }}
+                          style={{ color: colors.muted }}
                         >
                           {getFlowDescription(flow)}
                         </p>
@@ -136,14 +136,14 @@ export function FlowList({
                         flow.converted_currency !== flow.currency && (
                         <p
                           className="text-[10px] tabular-nums"
-                          style={{ color: retro.muted }}
+                          style={{ color: colors.muted }}
                         >
                           ({formatCurrency(flow.amount, { currency: flow.currency })})
                         </p>
                       )}
                       <p
                         className="text-[10px]"
-                        style={{ color: retro.muted }}
+                        style={{ color: colors.muted }}
                       >
                         {formatDate(flow.date)}
                       </p>
@@ -159,7 +159,7 @@ export function FlowList({
                 <Link
                   href="/fire/flows"
                   className="text-xs font-medium transition-colors hover:underline"
-                  style={{ color: retro.info }}
+                  style={{ color: colors.info }}
                 >
                   View all flows →
                 </Link>

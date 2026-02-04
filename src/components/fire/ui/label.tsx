@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { retro } from './theme';
+import { colors } from './theme';
 import { cn } from '@/lib/utils';
 
 export interface LabelProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -14,7 +14,7 @@ export function Label({
   children,
   ...props
 }: LabelProps) {
-  const color = variant === 'muted' ? retro.muted : retro.text;
+  const color = variant === 'muted' ? colors.muted : colors.text;
 
   return (
     <span

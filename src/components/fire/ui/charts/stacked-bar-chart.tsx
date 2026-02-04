@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import {
-  BarChart,
+  BarChart as RBarChart,
   Bar,
   XAxis,
   YAxis,
@@ -11,7 +11,7 @@ import {
   Cell,
   Brush,
 } from 'recharts';
-import { retro } from '../theme';
+import { colors } from '../theme';
 
 export interface StackedBarItem {
   /** The source name (e.g., "AAPL", "Property A", "Acme Corp") */
@@ -21,7 +21,7 @@ export interface StackedBarItem {
   category: string;
 }
 
-export interface RetroStackedBarChartProps {
+export interface StackedBarChartProps {
   data: StackedBarItem[];
   /** Height of the chart */
   height?: number;
@@ -33,18 +33,18 @@ export interface RetroStackedBarChartProps {
   visibleBars?: number;
 }
 
-// Predefined colors for segments - using retro theme palette
+// Vibrant segment colors for dark backgrounds
 const SEGMENT_COLORS = [
-  retro.positive,   // Forest green
-  retro.info,       // Nintendo blue
-  retro.accent,     // Copper/burnt orange
-  retro.warning,    // Gold
-  retro.purple,     // Muted purple
-  retro.cyan,       // Muted cyan
-  retro.negative,   // Deep red
-  retro.accentLight, // Light copper
-  '#6b8e50',        // Olive green
-  '#7a6b8a',        // Dusty purple
+  '#4ADE80',  // Green
+  '#60A5FA',  // Blue
+  '#A78BFA',  // Purple
+  '#FBBF24',  // Amber
+  '#F87171',  // Red
+  '#67E8F9',  // Cyan
+  '#FB923C',  // Orange
+  '#E879F9',  // Pink
+  '#34D399',  // Emerald
+  '#818CF8',  // Indigo
 ];
 
 // Get color for segment index
@@ -74,7 +74,7 @@ interface ChartDataItem {
   items: { name: string; amount: number; color: string }[];
 }
 
-// Custom vertical bar with stacked segments
+// Flat stacked bar with rounded top
 const StackedBar = (props: {
   x?: number;
   y?: number;
@@ -83,83 +83,37 @@ const StackedBar = (props: {
   payload?: ChartDataItem;
   index?: number;
 }) => {
-  const { x = 0, y = 0, width = 0, height = 0, payload, index = 0 } = props;
+  const { x = 0, y = 0, width = 0, height = 0, payload } = props;
 
   if (width <= 0 || height <= 0 || !payload) return null;
 
   const { items, total } = payload;
-  const innerPadding = 2;
-  const segWidth = width - innerPadding * 2;
 
   // Build stacked segments from bottom to top
-  let currentY = y + height - innerPadding;
-  const availableHeight = height - innerPadding * 2;
+  let currentY = y + height;
+  const availableHeight = height;
 
   return (
     <g>
-      {/* Sunken track background */}
-      <rect x={x} y={y} width={width} height={height} fill={retro.bevelMid} />
-      {/* Inner shadow */}
-      <rect x={x} y={y} width={width} height={1} fill="rgba(0,0,0,0.3)" />
-      <rect x={x} y={y} width={1} height={height} fill="rgba(0,0,0,0.3)" />
-      <rect x={x} y={y + height - 1} width={width} height={1} fill="rgba(255,255,255,0.5)" />
-      <rect x={x + width - 1} y={y} width={1} height={height} fill="rgba(255,255,255,0.5)" />
-
-      {/* Stacked segments (bottom to top) */}
       {items.map((item, i) => {
         const segmentHeight = total > 0 ? (item.amount / total) * availableHeight : 0;
-        // Skip segments that are too small to render
-        if (segmentHeight < 2) return null;
+        if (segmentHeight < 1) return null;
 
         currentY -= segmentHeight;
         const segY = currentY;
-        const fillHeight = Math.max(1, segmentHeight - 1);
+        const isTop = i === items.length - 1 || currentY <= y + 1;
 
         return (
-          <g key={i}>
-            {/* Segment fill - solid color */}
-            <rect
-              x={x + innerPadding}
-              y={segY}
-              width={segWidth}
-              height={fillHeight}
-              fill={item.color}
-            />
-            {/* Segment highlight (left) */}
-            <rect
-              x={x + innerPadding}
-              y={segY}
-              width={1}
-              height={fillHeight}
-              fill="rgba(255,255,255,0.4)"
-            />
-            {/* Segment shadow (right) */}
-            <rect
-              x={x + innerPadding + segWidth - 1}
-              y={segY}
-              width={1}
-              height={fillHeight}
-              fill="rgba(0,0,0,0.25)"
-            />
-            {/* Segment highlight (top) */}
-            <rect
-              x={x + innerPadding}
-              y={segY}
-              width={segWidth}
-              height={1}
-              fill="rgba(255,255,255,0.3)"
-            />
-            {/* Segment shadow (bottom) - only if segment is tall enough */}
-            {fillHeight > 2 && (
-              <rect
-                x={x + innerPadding}
-                y={segY + fillHeight - 1}
-                width={segWidth}
-                height={1}
-                fill="rgba(0,0,0,0.15)"
-              />
-            )}
-          </g>
+          <rect
+            key={i}
+            x={x}
+            y={segY}
+            width={width}
+            height={segmentHeight}
+            fill={item.color}
+            rx={isTop ? 3 : 0}
+            ry={isTop ? 3 : 0}
+          />
         );
       })}
     </g>
@@ -167,7 +121,7 @@ const StackedBar = (props: {
 };
 
 // Custom tooltip
-const CustomTooltip = ({
+const ChartTooltip = ({
   active,
   payload,
   valueFormatter,
@@ -183,36 +137,38 @@ const CustomTooltip = ({
   return (
     <div
       style={{
-        backgroundColor: retro.surface,
-        border: `2px solid ${retro.border}`,
-        boxShadow: `2px 2px 0 ${retro.border}`,
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.border}`,
+        borderRadius: 6,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
         padding: '8px 12px',
         fontSize: 11,
         maxWidth: 250,
       }}
     >
-      <div style={{ fontWeight: 'bold', marginBottom: 6, color: retro.text }}>
+      <div style={{ fontWeight: 500, marginBottom: 6, color: colors.text }}>
         {getCategoryLabel(data.category)}
       </div>
-      <div style={{ color: retro.muted, marginBottom: 4 }}>
-        Total: <span style={{ color: retro.text, fontWeight: 'bold' }}>{valueFormatter(data.total)}</span>
+      <div style={{ color: colors.muted, marginBottom: 4 }}>
+        Total: <span style={{ color: colors.text, fontWeight: 500 }}>{valueFormatter(data.total)}</span>
       </div>
       {data.items.length > 0 && (
-        <div style={{ borderTop: `1px solid ${retro.border}`, paddingTop: 4, marginTop: 4 }}>
+        <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 4, marginTop: 4 }}>
           {data.items.map((item, i) => (
             <div key={i} className="flex items-center justify-between gap-4" style={{ marginTop: 2 }}>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <div
+                  className="rounded-full"
                   style={{
-                    width: 8,
-                    height: 8,
+                    width: 6,
+                    height: 6,
                     backgroundColor: item.color,
                     flexShrink: 0,
                   }}
                 />
-                <span style={{ color: retro.muted, fontSize: 10 }}>{item.name}</span>
+                <span style={{ color: colors.muted, fontSize: 10 }}>{item.name}</span>
               </div>
-              <span style={{ color: retro.text, fontFamily: 'monospace', fontSize: 10 }}>
+              <span style={{ color: colors.text, fontFamily: 'monospace', fontSize: 10 }}>
                 {valueFormatter(item.amount)}
               </span>
             </div>
@@ -224,24 +180,19 @@ const CustomTooltip = ({
 };
 
 /**
- * Retro-styled vertical stacked bar chart
+ * Vertical stacked bar chart with clean dark mode styling
  *
  * X-axis: Categories (dividend, rental, salary, etc.)
  * Y-axis: Amount
  * Stacked segments: Individual sources within each category
- *
- * Example:
- * - Dividend bar: [AAPL][MSFT][GOOG] stacked vertically
- * - Rental bar: [Property A][Property B] stacked
- * - Salary bar: [Acme Corp] single segment
  */
-export function RetroStackedBarChart({
+export function StackedBarChart({
   data,
   height = 200,
   valueFormatter = (v) => v.toLocaleString(),
   showBrush = true,
   visibleBars = 6,
-}: RetroStackedBarChartProps) {
+}: StackedBarChartProps) {
   // Group data by category
   const chartData: ChartDataItem[] = useMemo(() => {
     const grouped = new Map<string, StackedBarItem[]>();
@@ -287,36 +238,36 @@ export function RetroStackedBarChart({
   return (
     <div>
       <ResponsiveContainer width="100%" height={height}>
-        <BarChart
+        <RBarChart
           data={chartData}
           margin={{ top: 10, right: 10, left: 10, bottom: needsBrush ? 40 : 20 }}
           barCategoryGap="20%"
         >
           <XAxis
             dataKey="category"
-            axisLine={{ stroke: retro.border }}
-            tickLine={{ stroke: retro.border }}
+            axisLine={{ stroke: colors.border }}
+            tickLine={false}
             tickFormatter={(value) => getCategoryLabel(value)}
             tick={{
-              fill: retro.text,
+              fill: colors.muted,
               fontSize: 10,
               fontFamily: 'inherit',
             }}
           />
           <YAxis
-            axisLine={{ stroke: retro.border }}
-            tickLine={{ stroke: retro.border }}
+            axisLine={false}
+            tickLine={false}
             tickFormatter={(value) => valueFormatter(value)}
             tick={{
-              fill: retro.muted,
+              fill: colors.muted,
               fontSize: 9,
               fontFamily: 'monospace',
             }}
             width={50}
           />
           <Tooltip
-            content={<CustomTooltip valueFormatter={valueFormatter} />}
-            cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+            content={<ChartTooltip valueFormatter={valueFormatter} />}
+            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
           />
           <Bar
             dataKey="total"
@@ -326,15 +277,15 @@ export function RetroStackedBarChart({
             barSize={32}
           >
             {chartData.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={retro.accent} />
+              <Cell key={`cell-${index}`} fill={colors.accent} />
             ))}
           </Bar>
           {needsBrush && (
             <Brush
               dataKey="category"
               height={20}
-              stroke={retro.border}
-              fill={retro.surfaceLight}
+              stroke={colors.border}
+              fill={colors.surfaceLight}
               startIndex={0}
               endIndex={Math.min(visibleBars - 1, barCount - 1)}
               travellerWidth={8}
@@ -342,22 +293,21 @@ export function RetroStackedBarChart({
               y={height - 30}
             />
           )}
-        </BarChart>
+        </RBarChart>
       </ResponsiveContainer>
 
       {/* Legend - show source names */}
       {legendItems.length > 1 && (
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
           {legendItems.map((item, i) => (
-            <div key={i} className="flex items-center gap-1">
+            <div key={i} className="flex items-center gap-1.5">
               <div
-                className="w-2.5 h-2.5"
+                className="w-2 h-2 rounded-full"
                 style={{
                   backgroundColor: item.color,
-                  border: `1px solid ${retro.border}`,
                 }}
               />
-              <span style={{ color: retro.muted }}>{item.name}</span>
+              <span style={{ color: colors.muted }}>{item.name}</span>
             </div>
           ))}
         </div>

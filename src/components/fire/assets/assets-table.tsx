@@ -1,11 +1,11 @@
 'use client';
 
 import {
-  retro,
-  retroStyles,
+  colors,
   Card,
   Loader,
   FilterDropdown,
+  Input,
   IconCash,
   IconBank,
   IconStock,
@@ -172,25 +172,21 @@ export function AssetsTable({
 
         {/* Search */}
         <div className="flex-1 min-w-[150px] max-w-[250px]">
-          <input
+          <Input
             type="text"
             placeholder="Search assets..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs rounded-sm"
-            style={{
-              ...retroStyles.sunken,
-              color: retro.text,
-            }}
+            className="py-1.5 text-xs"
           />
         </div>
 
         {/* Total Value */}
         <div className="ml-auto text-right">
-          <span className="text-xs" style={{ color: retro.muted }}>
+          <span className="text-xs" style={{ color: colors.muted }}>
             Total:{' '}
           </span>
-          <span className="text-sm font-bold tabular-nums" style={{ color: retro.text }}>
+          <span className="text-sm font-bold tabular-nums" style={{ color: colors.text }}>
             {formatCurrency(totalValue, { currency })}
           </span>
         </div>
@@ -198,24 +194,24 @@ export function AssetsTable({
 
       {/* Table */}
       <div
-        className="rounded-sm overflow-hidden"
+        className="rounded-md overflow-hidden"
         style={{
-          border: `2px solid ${retro.border}`,
+          border: `1px solid ${colors.border}`,
         }}
       >
         {/* Table Header */}
         <div
           className="grid grid-cols-[1fr_80px_140px_100px_50px_70px_60px] gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wide"
           style={{
-            backgroundColor: retro.bevelMid,
-            color: retro.text,
-            borderBottom: `2px solid ${retro.border}`,
+            backgroundColor: colors.surfaceLight,
+            color: colors.text,
+            borderBottom: `1px solid ${colors.border}`,
           }}
         >
           <button
             onClick={() => onSort?.('name')}
-            className="flex items-center gap-1 hover:opacity-70 text-left"
-            style={{ color: sortBy === 'name' ? retro.accent : retro.text }}
+            className="flex items-center gap-1 hover:opacity-70 text-left transition-opacity duration-150 cursor-pointer"
+            style={{ color: sortBy === 'name' ? colors.accent : colors.text }}
           >
             Name
             {sortBy === 'name' && (
@@ -224,8 +220,8 @@ export function AssetsTable({
           </button>
           <button
             onClick={() => onSort?.('type')}
-            className="flex items-center gap-1 hover:opacity-70 text-left"
-            style={{ color: sortBy === 'type' ? retro.accent : retro.text }}
+            className="flex items-center gap-1 hover:opacity-70 text-left transition-opacity duration-150 cursor-pointer"
+            style={{ color: sortBy === 'type' ? colors.accent : colors.text }}
           >
             Type
             {sortBy === 'type' && (
@@ -235,8 +231,8 @@ export function AssetsTable({
           <div>Details</div>
           <button
             onClick={() => onSort?.('balance')}
-            className="flex items-center gap-1 justify-end hover:opacity-70 text-right w-full"
-            style={{ color: sortBy === 'balance' ? retro.accent : retro.text }}
+            className="flex items-center gap-1 justify-end hover:opacity-70 text-right w-full transition-opacity duration-150 cursor-pointer"
+            style={{ color: sortBy === 'balance' ? colors.accent : colors.text }}
           >
             Value
             {sortBy === 'balance' && (
@@ -245,8 +241,8 @@ export function AssetsTable({
           </button>
           <button
             onClick={() => onSort?.('balance')}
-            className="flex items-center gap-1 justify-end hover:opacity-70 text-right w-full"
-            style={{ color: sortBy === 'balance' ? retro.accent : retro.text }}
+            className="flex items-center gap-1 justify-end hover:opacity-70 text-right w-full transition-opacity duration-150 cursor-pointer"
+            style={{ color: sortBy === 'balance' ? colors.accent : colors.text }}
           >
             %
             {sortBy === 'balance' && (
@@ -260,7 +256,7 @@ export function AssetsTable({
         {/* Table Body - Fixed Height */}
         <div
           style={{
-            backgroundColor: retro.surfaceLight,
+            backgroundColor: colors.surfaceLight,
             height: TABLE_BODY_HEIGHT,
             overflowY: 'auto',
           }}
@@ -275,7 +271,7 @@ export function AssetsTable({
           ) : assets.length === 0 ? (
             <div
               className="flex items-center justify-center text-xs"
-              style={{ color: retro.muted, height: TABLE_BODY_HEIGHT }}
+              style={{ color: colors.muted, height: TABLE_BODY_HEIGHT }}
             >
               No assets found
             </div>
@@ -293,28 +289,28 @@ export function AssetsTable({
                   key={asset.id}
                   className="grid grid-cols-[1fr_80px_140px_100px_50px_70px_60px] gap-2 px-3 py-2 items-center text-sm group hover:bg-[var(--hover)] cursor-pointer"
                   style={{
-                    '--hover': retro.surface,
+                    '--hover': colors.surface,
                     borderBottom:
                       index < assets.length - 1
-                        ? `1px solid ${retro.bevelMid}`
+                        ? `1px solid ${colors.surfaceLight}`
                         : 'none',
                   } as React.CSSProperties}
                   onClick={() => onRowClick?.(asset)}
                 >
                   {/* Name */}
                   <div className="flex items-center gap-2 min-w-0">
-                    <span style={{ color: retro.muted }} className="flex-shrink-0">
+                    <span style={{ color: colors.muted }} className="flex-shrink-0">
                       <IconComponent size={14} />
                     </span>
                     <div className="min-w-0">
                       <p
                         className="text-xs font-medium truncate"
-                        style={{ color: retro.text }}
+                        style={{ color: colors.text }}
                       >
                         {asset.name}
                       </p>
                       {asset.ticker && (
-                        <p className="text-[10px]" style={{ color: retro.muted }}>
+                        <p className="text-[10px]" style={{ color: colors.muted }}>
                           {asset.ticker}
                         </p>
                       )}
@@ -322,12 +318,12 @@ export function AssetsTable({
                   </div>
 
                   {/* Type */}
-                  <div className="text-xs" style={{ color: retro.muted }}>
+                  <div className="text-xs" style={{ color: colors.muted }}>
                     {ASSET_TYPE_LABELS[asset.type]}
                   </div>
 
                   {/* Details */}
-                  <div className="text-xs truncate" style={{ color: retro.muted }}>
+                  <div className="text-xs truncate" style={{ color: colors.muted }}>
                     {details}
                   </div>
 
@@ -335,7 +331,7 @@ export function AssetsTable({
                   <div className="text-right">
                     <div
                       className="text-xs font-bold tabular-nums"
-                      style={{ color: retro.text }}
+                      style={{ color: colors.text }}
                     >
                       {formatCurrency(value, { currency: valueCurrency })}
                     </div>
@@ -346,7 +342,7 @@ export function AssetsTable({
                       !SHARE_BASED_TYPES.includes(asset.type) && (
                         <div
                           className="text-[10px] tabular-nums"
-                          style={{ color: retro.muted }}
+                          style={{ color: colors.muted }}
                         >
                           ({formatCurrency(asset.balance, { currency: asset.currency })})
                         </div>
@@ -357,7 +353,7 @@ export function AssetsTable({
                   <div className="text-right">
                     <span
                       className="text-xs tabular-nums"
-                      style={{ color: retro.muted }}
+                      style={{ color: colors.muted }}
                     >
                       {percentOfTotal.toFixed(1)}%
                     </span>
@@ -369,14 +365,14 @@ export function AssetsTable({
                       <span
                         className="text-xs tabular-nums"
                         style={{
-                          color: dayChange.percent >= 0 ? retro.positive : retro.negative,
+                          color: dayChange.percent >= 0 ? colors.positive : colors.negative,
                         }}
                       >
                         {dayChange.percent >= 0 ? '+' : ''}
                         {formatPercent(dayChange.percent)}
                       </span>
                     ) : (
-                      <span className="text-xs" style={{ color: retro.muted }}>
+                      <span className="text-xs" style={{ color: colors.muted }}>
                         —
                       </span>
                     )}
@@ -390,10 +386,10 @@ export function AssetsTable({
                           e.stopPropagation();
                           onEdit(asset);
                         }}
-                        className="p-1 rounded-sm hover:bg-[var(--hover)]"
+                        className="p-1 rounded-md hover:bg-[var(--hover)]"
                         style={{
-                          color: retro.muted,
-                          '--hover': retro.bevelMid,
+                          color: colors.muted,
+                          '--hover': colors.surfaceLight,
                         } as React.CSSProperties}
                         title="Edit"
                       >
@@ -406,10 +402,10 @@ export function AssetsTable({
                           e.stopPropagation();
                           onDelete(asset);
                         }}
-                        className="p-1 rounded-sm hover:bg-[var(--hover)]"
+                        className="p-1 rounded-md hover:bg-[var(--hover)]"
                         style={{
-                          color: retro.negative,
-                          '--hover': retro.bevelMid,
+                          color: colors.negative,
+                          '--hover': colors.surfaceLight,
                         } as React.CSSProperties}
                         title="Delete"
                       >
@@ -427,9 +423,9 @@ export function AssetsTable({
       {/* Pagination */}
       <div
         className="flex items-center justify-between mt-3 pt-3"
-        style={{ borderTop: `1px solid ${retro.border}` }}
+        style={{ borderTop: `1px solid ${colors.border}` }}
       >
-        <div className="text-xs" style={{ color: retro.muted }}>
+        <div className="text-xs" style={{ color: colors.muted }}>
           {totalCount > 0 ? `Showing ${startItem}-${endItem} of ${totalCount}` : 'No results'}
         </div>
 
@@ -438,10 +434,10 @@ export function AssetsTable({
               <button
                 onClick={() => onPageChange(1)}
                 disabled={currentPage === 1}
-                className="px-2 py-1 text-xs rounded-sm disabled:opacity-50"
+                className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
                 style={{
-                  ...retroStyles.raised,
-                  color: retro.text,
+                  backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                  color: colors.text,
                 }}
               >
                 ««
@@ -449,10 +445,10 @@ export function AssetsTable({
               <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-2 py-1 text-xs rounded-sm disabled:opacity-50"
+                className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
                 style={{
-                  ...retroStyles.raised,
-                  color: retro.text,
+                  backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                  color: colors.text,
                 }}
               >
                 «
@@ -475,17 +471,17 @@ export function AssetsTable({
                   <button
                     key={pageNum}
                     onClick={() => onPageChange(pageNum)}
-                    className="px-2 py-1 text-xs rounded-sm min-w-[28px]"
+                    className="px-2 py-1 text-xs rounded-md min-w-[28px] transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
                     style={
                       currentPage === pageNum
                         ? {
-                            ...retroStyles.sunken,
-                            color: retro.text,
+                            backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+                            color: colors.text,
                             fontWeight: 'bold',
                           }
                         : {
-                            ...retroStyles.raised,
-                            color: retro.text,
+                            backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                            color: colors.text,
                           }
                     }
                   >
@@ -497,10 +493,10 @@ export function AssetsTable({
               <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-2 py-1 text-xs rounded-sm disabled:opacity-50"
+                className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
                 style={{
-                  ...retroStyles.raised,
-                  color: retro.text,
+                  backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                  color: colors.text,
                 }}
               >
                 »
@@ -508,10 +504,10 @@ export function AssetsTable({
               <button
                 onClick={() => onPageChange(totalPages)}
                 disabled={currentPage === totalPages}
-                className="px-2 py-1 text-xs rounded-sm disabled:opacity-50"
+                className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
                 style={{
-                  ...retroStyles.raised,
-                  color: retro.text,
+                  backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                  color: colors.text,
                 }}
               >
                 »»

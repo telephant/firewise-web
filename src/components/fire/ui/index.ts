@@ -1,13 +1,13 @@
-// Retro UI Components for FIRE Management
-// Design system inspired by Windows 95/98 + Game aesthetic
+// FIRE UI Components
+// Linear-inspired dark mode design system
 
 // Theme
-export { retro, typography, retroStyles } from './theme';
-export type { RetroTheme } from './theme';
+export { colors, typography } from './theme';
+export type { ColorTokens } from './theme';
 
 // Charts
-export { RetroBarShape, RetroBarChart, RetroStackedBarChart, RetroPieChart } from './charts';
-export type { RetroBarShapeProps, RetroBarChartProps, RetroBarChartData, RetroStackedBarChartProps, StackedBarItem, RetroPieChartProps, PieSegment } from './charts';
+export { BarShape, BarChart, StackedBarChart, PieChart } from './charts';
+export type { BarShapeProps, BarChartProps, BarChartData, StackedBarChartProps, StackedBarItem, PieChartProps, PieSegment } from './charts';
 
 // Icons
 export * from './icons';
@@ -77,3 +77,5 @@ export { FilterDropdown } from './filter-dropdown';
 export type { FilterOption, FilterGroup } from './filter-dropdown';
 export { Tag } from './tag';
 export type { TagProps } from './tag';
+export { Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell, TableActionButton } from './table';
+export { Pagination } from './pagination';

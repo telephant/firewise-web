@@ -1,11 +1,11 @@
 'use client';
 
 import {
-  retro,
-  retroStyles,
+  colors,
   Card,
   Loader,
   FilterDropdown,
+  Input,
   SimpleProgressBar,
   IconDebt,
   IconHome,
@@ -145,25 +145,21 @@ export function DebtsTable({
 
         {/* Search */}
         <div className="flex-1 min-w-[150px] max-w-[250px]">
-          <input
+          <Input
             type="text"
             placeholder="Search debts..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs rounded-sm"
-            style={{
-              ...retroStyles.sunken,
-              color: retro.text,
-            }}
+            className="py-1.5 text-xs"
           />
         </div>
 
         {/* Total Value */}
         <div className="ml-auto text-right">
-          <span className="text-xs" style={{ color: retro.muted }}>
+          <span className="text-xs" style={{ color: colors.muted }}>
             Total Owed:{' '}
           </span>
-          <span className="text-sm font-bold tabular-nums" style={{ color: retro.negative }}>
+          <span className="text-sm font-bold tabular-nums" style={{ color: colors.negative }}>
             {formatCurrency(totalValue, { currency })}
           </span>
         </div>
@@ -171,18 +167,18 @@ export function DebtsTable({
 
       {/* Table */}
       <div
-        className="rounded-sm overflow-hidden"
+        className="rounded-md overflow-hidden"
         style={{
-          border: `2px solid ${retro.border}`,
+          border: `1px solid ${colors.border}`,
         }}
       >
         {/* Table Header */}
         <div
           className="grid grid-cols-[1fr_100px_100px_100px_80px_70px_60px] gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wide"
           style={{
-            backgroundColor: retro.bevelMid,
-            color: retro.text,
-            borderBottom: `2px solid ${retro.border}`,
+            backgroundColor: colors.surfaceLight,
+            color: colors.text,
+            borderBottom: `1px solid ${colors.border}`,
           }}
         >
           <div>Name</div>
@@ -197,7 +193,7 @@ export function DebtsTable({
         {/* Table Body - Fixed Height */}
         <div
           style={{
-            backgroundColor: retro.surfaceLight,
+            backgroundColor: colors.surfaceLight,
             height: TABLE_BODY_HEIGHT,
             overflowY: 'auto',
           }}
@@ -212,7 +208,7 @@ export function DebtsTable({
           ) : debts.length === 0 ? (
             <div
               className="flex items-center justify-center text-xs"
-              style={{ color: retro.muted, height: TABLE_BODY_HEIGHT }}
+              style={{ color: colors.muted, height: TABLE_BODY_HEIGHT }}
             >
               No debts found
             </div>
@@ -228,28 +224,28 @@ export function DebtsTable({
                   key={debt.id}
                   className="grid grid-cols-[1fr_100px_100px_100px_80px_70px_60px] gap-2 px-3 py-2 items-center text-sm group hover:bg-[var(--hover)] cursor-pointer"
                   style={{
-                    '--hover': retro.surface,
+                    '--hover': colors.surface,
                     borderBottom:
                       index < debts.length - 1
-                        ? `1px solid ${retro.bevelMid}`
+                        ? `1px solid ${colors.surfaceLight}`
                         : 'none',
                   } as React.CSSProperties}
                   onClick={() => onRowClick?.(debt)}
                 >
                   {/* Name */}
                   <div className="flex items-center gap-2 min-w-0">
-                    <span style={{ color: retro.negative }} className="flex-shrink-0">
+                    <span style={{ color: colors.negative }} className="flex-shrink-0">
                       <IconComponent size={14} />
                     </span>
                     <div className="min-w-0">
                       <p
                         className="text-xs font-medium truncate"
-                        style={{ color: retro.text }}
+                        style={{ color: colors.text }}
                       >
                         {debt.name}
                       </p>
                       {debt.interest_rate && (
-                        <p className="text-[10px]" style={{ color: retro.muted }}>
+                        <p className="text-[10px]" style={{ color: colors.muted }}>
                           {formatPercent(debt.interest_rate * 100)} APR
                         </p>
                       )}
@@ -257,7 +253,7 @@ export function DebtsTable({
                   </div>
 
                   {/* Type */}
-                  <div className="text-xs" style={{ color: retro.muted }}>
+                  <div className="text-xs" style={{ color: colors.muted }}>
                     {DEBT_TYPE_LABELS[debt.debt_type]}
                   </div>
 
@@ -265,7 +261,7 @@ export function DebtsTable({
                   <div className="text-right">
                     <div
                       className="text-xs font-bold tabular-nums"
-                      style={{ color: retro.negative }}
+                      style={{ color: colors.negative }}
                     >
                       {formatCurrency(value, { currency: valueCurrency })}
                     </div>
@@ -275,7 +271,7 @@ export function DebtsTable({
                       debt.converted_currency !== debt.currency && (
                         <div
                           className="text-[10px] tabular-nums"
-                          style={{ color: retro.muted }}
+                          style={{ color: colors.muted }}
                         >
                           ({formatCurrency(debt.current_balance, { currency: debt.currency })})
                         </div>
@@ -287,12 +283,12 @@ export function DebtsTable({
                     {debt.monthly_payment ? (
                       <span
                         className="text-xs tabular-nums"
-                        style={{ color: retro.text }}
+                        style={{ color: colors.text }}
                       >
                         {formatCurrency(debt.monthly_payment, { currency: debt.currency })}/mo
                       </span>
                     ) : (
-                      <span className="text-xs" style={{ color: retro.muted }}>
+                      <span className="text-xs" style={{ color: colors.muted }}>
                         —
                       </span>
                     )}
@@ -304,10 +300,10 @@ export function DebtsTable({
                       <SimpleProgressBar
                         value={progress}
                         size="sm"
-                        color={progress >= 100 ? retro.positive : retro.accent}
+                        color={progress >= 100 ? colors.positive : colors.accent}
                         className="w-12"
                       />
-                      <span className="text-[10px] tabular-nums" style={{ color: retro.muted }}>
+                      <span className="text-[10px] tabular-nums" style={{ color: colors.muted }}>
                         {Math.round(progress)}%
                       </span>
                     </div>
@@ -316,10 +312,10 @@ export function DebtsTable({
                   {/* Status */}
                   <div>
                     <span
-                      className="text-[10px] px-1.5 py-0.5 rounded-sm"
+                      className="text-[10px] px-1.5 py-0.5 rounded-md"
                       style={{
-                        backgroundColor: debt.status === 'paid_off' ? retro.positive + '20' : retro.accent + '20',
-                        color: debt.status === 'paid_off' ? retro.positive : retro.accent,
+                        backgroundColor: debt.status === 'paid_off' ? colors.positive + '20' : colors.accent + '20',
+                        color: debt.status === 'paid_off' ? colors.positive : colors.accent,
                       }}
                     >
                       {debt.status === 'paid_off' ? 'Paid Off' : 'Active'}
@@ -336,10 +332,10 @@ export function DebtsTable({
                             e.stopPropagation();
                             onDelete(debt);
                           }}
-                          className="p-1 rounded-sm hover:bg-[var(--hover)]"
+                          className="p-1 rounded-md hover:bg-[var(--hover)]"
                           style={{
-                            color: retro.negative,
-                            '--hover': retro.bevelMid,
+                            color: colors.negative,
+                            '--hover': colors.surfaceLight,
                           } as React.CSSProperties}
                           title="Delete"
                         >
@@ -355,10 +351,10 @@ export function DebtsTable({
                               e.stopPropagation();
                               onEdit(debt);
                             }}
-                            className="p-1 rounded-sm hover:bg-[var(--hover)]"
+                            className="p-1 rounded-md hover:bg-[var(--hover)]"
                             style={{
-                              color: retro.muted,
-                              '--hover': retro.bevelMid,
+                              color: colors.muted,
+                              '--hover': colors.surfaceLight,
                             } as React.CSSProperties}
                             title="Edit"
                           >
@@ -371,10 +367,10 @@ export function DebtsTable({
                               e.stopPropagation();
                               onDelete(debt);
                             }}
-                            className="p-1 rounded-sm hover:bg-[var(--hover)]"
+                            className="p-1 rounded-md hover:bg-[var(--hover)]"
                             style={{
-                              color: retro.negative,
-                              '--hover': retro.bevelMid,
+                              color: colors.negative,
+                              '--hover': colors.surfaceLight,
                             } as React.CSSProperties}
                             title="Delete"
                           >
@@ -394,9 +390,9 @@ export function DebtsTable({
       {/* Pagination */}
       <div
         className="flex items-center justify-between mt-3 pt-3"
-        style={{ borderTop: `1px solid ${retro.border}` }}
+        style={{ borderTop: `1px solid ${colors.border}` }}
       >
-        <div className="text-xs" style={{ color: retro.muted }}>
+        <div className="text-xs" style={{ color: colors.muted }}>
           {totalCount > 0 ? `Showing ${startItem}-${endItem} of ${totalCount}` : 'No results'}
         </div>
 
@@ -405,10 +401,10 @@ export function DebtsTable({
             <button
               onClick={() => onPageChange(1)}
               disabled={currentPage === 1}
-              className="px-2 py-1 text-xs rounded-sm disabled:opacity-50"
+              className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
               style={{
-                ...retroStyles.raised,
-                color: retro.text,
+                backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                color: colors.text,
               }}
             >
               ««
@@ -416,10 +412,10 @@ export function DebtsTable({
             <button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-2 py-1 text-xs rounded-sm disabled:opacity-50"
+              className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
               style={{
-                ...retroStyles.raised,
-                color: retro.text,
+                backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                color: colors.text,
               }}
             >
               «
@@ -442,17 +438,17 @@ export function DebtsTable({
                 <button
                   key={pageNum}
                   onClick={() => onPageChange(pageNum)}
-                  className="px-2 py-1 text-xs rounded-sm min-w-[28px]"
+                  className="px-2 py-1 text-xs rounded-md min-w-[28px] transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
                   style={
                     currentPage === pageNum
                       ? {
-                          ...retroStyles.sunken,
-                          color: retro.text,
+                          backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+                          color: colors.text,
                           fontWeight: 'bold',
                         }
                       : {
-                          ...retroStyles.raised,
-                          color: retro.text,
+                          backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                          color: colors.text,
                         }
                   }
                 >
@@ -464,10 +460,10 @@ export function DebtsTable({
             <button
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-2 py-1 text-xs rounded-sm disabled:opacity-50"
+              className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
               style={{
-                ...retroStyles.raised,
-                color: retro.text,
+                backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                color: colors.text,
               }}
             >
               »
@@ -475,10 +471,10 @@ export function DebtsTable({
             <button
               onClick={() => onPageChange(totalPages)}
               disabled={currentPage === totalPages}
-              className="px-2 py-1 text-xs rounded-sm disabled:opacity-50"
+              className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
               style={{
-                ...retroStyles.raised,
-                color: retro.text,
+                backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                color: colors.text,
               }}
             >
               »»

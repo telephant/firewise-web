@@ -2,20 +2,27 @@
 
 ## Design System
 
-The FIRE module uses a **Retro Windows 95/98** aesthetic with warm beige tones and 3D beveled effects.
+The FIRE module uses a **Linear-inspired dark mode** aesthetic with a dark neutral background and subtle borders.
 
 ### Theme Colors
 
 ```tsx
-import { retro } from '@/components/fire/ui';
+import { colors } from '@/components/fire/ui';
 
-retro.bg          // Page background (warm beige)
-retro.surface     // Card/window background
-retro.text        // Primary text (deep navy)
-retro.muted       // Secondary text
-retro.accent      // Copper/burnt orange (actions)
-retro.positive    // Success (forest green)
-retro.negative    // Error (deep red)
+colors.bg          // Page background (#0A0A0B)
+colors.surface     // Card background (#141415)
+colors.surfaceLight // Elevated surface (#1C1C1E)
+colors.text        // Primary text (#EDEDEF)
+colors.muted       // Secondary text (#7C7C82)
+colors.border      // Borders (rgba(255,255,255,0.08))
+colors.accent      // Linear violet (#5E6AD2)
+colors.accentLight // Lighter violet (#7C85DE)
+colors.positive    // Success green (#4ADE80)
+colors.negative    // Error red (#F87171)
+colors.info        // Info blue (#60A5FA)
+colors.warning     // Warning yellow (#FBBF24)
+colors.purple      // Purple accent (#A78BFA)
+colors.cyan        // Cyan accent (#67E8F9)
 ```
 
 ---
@@ -29,19 +36,18 @@ Always use the `<Loader>` component instead of text like "Loading...".
 ```tsx
 import { Loader } from '@/components/fire/ui';
 
-// Full page/section loading
-<Loader size="lg" variant="hourglass" text="Loading dashboard..." />
-
 // Card/container loading
 <Loader size="md" variant="bar" />
+
+// Full page/section loading
+<Loader size="lg" variant="bar" text="Loading dashboard..." />
 
 // Inline/small loading
 <Loader size="sm" variant="dots" />
 ```
 
 **Variants:**
-- `hourglass` - Page-level loading (classic Windows wait)
-- `bar` - Data fetching in cards (Windows file copy style)
+- `bar` - Data fetching in cards
 - `dots` - Small inline/form loading
 
 ### 2. Form Labels
@@ -96,7 +102,7 @@ const CARD_HEIGHT = '280px';
 
 // Empty state
 <Card title="Assets" contentHeight={CARD_HEIGHT}>
-  <div className="h-full flex items-center justify-center text-xs" style={{ color: retro.muted }}>
+  <div className="h-full flex items-center justify-center text-xs" style={{ color: colors.muted }}>
     No data yet.
   </div>
 </Card>
@@ -116,19 +122,32 @@ const CARD_HEIGHT = '280px';
 
 ### 5. Styling
 
-Use `retro` theme tokens and `retroStyles` presets instead of hardcoded colors.
+Use `colors` theme tokens for all styling. Inline styles directly — no preset objects.
 
 ```tsx
-import { retro, retroStyles } from '@/components/fire/ui';
+import { colors } from '@/components/fire/ui';
 
-// Raised effect (buttons, cards)
-style={retroStyles.raised}
+// Card-like surface
+style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}
 
-// Sunken effect (inputs, wells)
-style={retroStyles.sunken}
+// Inset/elevated surface
+style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
 
-// Colors
-style={{ color: retro.muted }}
+// Text colors
+style={{ color: colors.muted }}
+style={{ color: colors.text }}
+style={{ color: colors.positive }}
+```
+
+### 6. Form Inputs
+
+Always use the shared `Input`, `Select`, and `CurrencyCombobox` components from the UI library. Never use raw HTML `<input>` or `<select>` elements.
+
+```tsx
+import { Input, Select } from '@/components/fire/ui';
+
+<Input label="Search" placeholder="Search assets..." value={q} onChange={...} />
+<Select label="Type" value={type} onChange={...} options={options} />
 ```
 
 ---
@@ -140,8 +159,8 @@ All FIRE UI components are exported from a single entry point:
 ```tsx
 import {
   // Theme
-  retro,
-  retroStyles,
+  colors,
+  typography,
 
   // Components
   Button,
@@ -153,8 +172,13 @@ import {
   Dialog,
   Tabs,
 
-  // Icons
-  IconDollar,
+  // Charts
+  BarChart,
+  StackedBarChart,
+  PieChart,
+
+  // Icons (Lucide re-exports)
+  IconPlus,
   IconArrow,
   // ...
 } from '@/components/fire/ui';

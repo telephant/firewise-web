@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 import type { AssetType } from '@/types/fire';
-import { retroStyles, Button, Input, Select } from '@/components/fire/ui';
+import { colors, Button, Input, Select } from '@/components/fire/ui';
 
 // Placeholder examples based on asset type
 const ASSET_NAME_PLACEHOLDERS: Record<AssetType, string> = {
@@ -70,8 +70,8 @@ export function NewAssetForm({
 
   return (
     <div
-      className="mt-2 p-3 rounded-sm space-y-3"
-      style={retroStyles.sunken}
+      className="mt-2 p-3 rounded-md space-y-3"
+      style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
     >
       <Input
         label="Asset Name"

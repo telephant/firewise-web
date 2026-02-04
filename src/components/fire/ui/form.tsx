@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { createContext, useContext, useId } from 'react';
-import { retro } from './theme';
+import { colors } from './theme';
 import { cn } from '@/lib/utils';
 
 // Form Field Context
@@ -53,11 +53,11 @@ export function FormField({
           <label
             htmlFor={id}
             className="text-xs uppercase tracking-wide block mb-1 font-medium"
-            style={{ color: hasError ? '#c53030' : retro.text }}
+            style={{ color: hasError ? colors.negative : colors.text }}
           >
             {label}
             {required && (
-              <span className="ml-0.5" style={{ color: '#c53030' }}>
+              <span className="ml-0.5" style={{ color: colors.negative }}>
                 *
               </span>
             )}
@@ -71,17 +71,17 @@ export function FormField({
           <div className="mt-1.5 flex items-start gap-1.5 text-xs">
             <span
               className="flex-shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[9px] font-bold mt-0.5"
-              style={{ backgroundColor: '#c53030' }}
+              style={{ backgroundColor: colors.negative }}
             >
               !
             </span>
-            <span style={{ color: '#c53030' }}>{error}</span>
+            <span style={{ color: colors.negative }}>{error}</span>
           </div>
         )}
 
         {/* Hint text (only show if no error) */}
         {hint && !hasError && (
-          <p className="mt-1 text-xs" style={{ color: retro.muted }}>
+          <p className="mt-1 text-xs" style={{ color: colors.muted }}>
             {hint}
           </p>
         )}

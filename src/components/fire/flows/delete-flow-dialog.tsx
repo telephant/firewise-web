@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -66,9 +66,9 @@ export function DeleteFlowDialog({
 
   const getFlowTypeColor = (type: string): string => {
     switch (type) {
-      case 'income': return retro.positive;
-      case 'expense': return retro.negative;
-      default: return retro.text;
+      case 'income': return colors.positive;
+      case 'expense': return colors.negative;
+      default: return colors.text;
     }
   };
 
@@ -101,24 +101,24 @@ export function DeleteFlowDialog({
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>
-            <span style={{ color: retro.negative }}>Delete Flow</span>
+            <span style={{ color: colors.negative }}>Delete Flow</span>
           </DialogTitle>
         </DialogHeader>
 
         <DialogBody>
           <div className="space-y-4">
-            <p className="text-sm" style={{ color: retro.text }}>
+            <p className="text-sm" style={{ color: colors.text }}>
               Are you sure you want to delete this flow? This action cannot be undone.
             </p>
 
             {/* Flow Summary */}
             <div
-              className="p-3 rounded-sm space-y-2"
-              style={{ backgroundColor: retro.surfaceLight }}
+              className="p-3 rounded-md space-y-2"
+              style={{ backgroundColor: colors.surfaceLight }}
             >
               <div className="flex items-center gap-2">
                 {getCategoryIcon(flow.category || flow.type, 16)}
-                <span className="text-sm font-medium" style={{ color: retro.text }}>
+                <span className="text-sm font-medium" style={{ color: colors.text }}>
                   {getCategoryLabel(flow.category)}
                 </span>
               </div>
@@ -136,18 +136,18 @@ export function DeleteFlowDialog({
               {flow.converted_amount !== undefined &&
                 flow.converted_currency &&
                 flow.converted_currency !== flow.currency && (
-                <div className="text-xs tabular-nums" style={{ color: retro.muted }}>
+                <div className="text-xs tabular-nums" style={{ color: colors.muted }}>
                   ({formatCurrency(flow.amount, { currency: flow.currency })})
                 </div>
               )}
 
-              <div className="text-xs" style={{ color: retro.muted }}>
+              <div className="text-xs" style={{ color: colors.muted }}>
                 {formatDate(flow.date)} · {from} → {to}
               </div>
             </div>
 
             {error && (
-              <p className="text-xs" style={{ color: retro.negative }}>
+              <p className="text-xs" style={{ color: colors.negative }}>
                 {error}
               </p>
             )}

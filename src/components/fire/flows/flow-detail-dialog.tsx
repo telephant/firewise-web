@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -94,9 +94,9 @@ export function FlowDetailDialog({
 
   const getFlowTypeColor = (type: string): string => {
     switch (type) {
-      case 'income': return retro.positive;
-      case 'expense': return retro.negative;
-      default: return retro.text;
+      case 'income': return colors.positive;
+      case 'expense': return colors.negative;
+      default: return colors.text;
     }
   };
 
@@ -130,11 +130,11 @@ export function FlowDetailDialog({
             {/* Under Review Warning */}
             {flow.needs_review && (
               <div
-                className="flex items-center gap-2 px-3 py-2 rounded-sm text-xs"
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-xs"
                 style={{
-                  backgroundColor: `${retro.warning}20`,
-                  border: `1px solid ${retro.warning}`,
-                  color: retro.warning,
+                  backgroundColor: `${colors.warning}20`,
+                  border: `1px solid ${colors.warning}`,
+                  color: colors.warning,
                 }}
               >
                 <span>⚠</span>
@@ -144,8 +144,8 @@ export function FlowDetailDialog({
 
             {/* Amount - show converted as primary if available */}
             <div
-              className="text-center py-4 rounded-sm"
-              style={{ backgroundColor: retro.surfaceLight }}
+              className="text-center py-4 rounded-md"
+              style={{ backgroundColor: colors.surfaceLight }}
             >
               {flow.converted_amount !== undefined && flow.converted_currency ? (
                 <>
@@ -157,7 +157,7 @@ export function FlowDetailDialog({
                     {formatCurrency(flow.converted_amount, { currency: flow.converted_currency })}
                   </p>
                   {flow.converted_currency !== flow.currency && (
-                    <p className="text-xs mt-1" style={{ color: retro.muted }}>
+                    <p className="text-xs mt-1" style={{ color: colors.muted }}>
                       ({formatCurrency(flow.amount, { currency: flow.currency })})
                     </p>
                   )}
@@ -172,11 +172,11 @@ export function FlowDetailDialog({
                 </p>
               )}
               <p
-                className="text-xs mt-2 px-2 py-0.5 rounded-sm inline-block"
+                className="text-xs mt-2 px-2 py-0.5 rounded-md inline-block"
                 style={{
-                  backgroundColor: retro.surface,
+                  backgroundColor: colors.surface,
                   color: getFlowTypeColor(flow.type),
-                  border: `1px solid ${retro.bevelMid}`,
+                  border: `1px solid ${colors.surfaceLight}`,
                 }}
               >
                 {getFlowTypeLabel(flow.type)}
@@ -227,30 +227,30 @@ export function FlowDetailDialog({
                 <DetailRow
                   label="Realized P/L"
                   value={formatCurrency(realizedPL, { currency: flow.currency })}
-                  valueColor={realizedPL >= 0 ? retro.positive : retro.negative}
+                  valueColor={realizedPL >= 0 ? colors.positive : colors.negative}
                 />
               )}
 
               {/* Recurring Schedule */}
               {flow.schedule_id && (
                 <div
-                  className="flex items-center gap-2 px-3 py-2 rounded-sm text-xs"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-xs"
                   style={{
-                    backgroundColor: `${retro.info}15`,
-                    border: `1px solid ${retro.info}40`,
+                    backgroundColor: `${colors.info}15`,
+                    border: `1px solid ${colors.info}40`,
                   }}
                 >
-                  <span style={{ color: retro.info }}>
+                  <span style={{ color: colors.info }}>
                     <IconRepeat size={14} />
                   </span>
                   <div className="flex-1">
-                    <span style={{ color: retro.text }}>
+                    <span style={{ color: colors.text }}>
                       {schedule
                         ? FREQUENCY_LABELS[schedule.frequency] || schedule.frequency
                         : 'Recurring'}
                     </span>
                     {schedule && (
-                      <span style={{ color: retro.muted }}>
+                      <span style={{ color: colors.muted }}>
                         {' '}· Next: {formatDate(schedule.next_run_date)}
                       </span>
                     )}
@@ -272,7 +272,7 @@ export function FlowDetailDialog({
                     onDelete(flow);
                     onOpenChange(false);
                   }}
-                  style={{ color: retro.negative }}
+                  style={{ color: colors.negative }}
                 >
                   Delete
                 </Button>
@@ -314,12 +314,12 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="text-xs shrink-0" style={{ color: retro.muted }}>
+      <span className="text-xs shrink-0" style={{ color: colors.muted }}>
         {label}
       </span>
       <span
         className="text-sm text-right"
-        style={{ color: valueColor || retro.text }}
+        style={{ color: valueColor || colors.text }}
       >
         {value}
       </span>

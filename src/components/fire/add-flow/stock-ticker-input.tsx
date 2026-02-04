@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { retro, retroStyles, Loader } from '@/components/fire/ui';
+import { colors, Loader } from '@/components/fire/ui';
 import { stockSymbolApi, StockSymbol } from '@/lib/fire/api';
 import { MissingStockFeedbackDialog } from '@/components/fire/feedback-dialog';
 import { cn } from '@/lib/utils';
@@ -192,7 +192,7 @@ export function StockTickerInput({
       {label && (
         <label
           className="text-xs uppercase tracking-wide block mb-1 font-medium"
-          style={{ color: retro.text }}
+          style={{ color: colors.text }}
         >
           {label}
         </label>
@@ -211,15 +211,14 @@ export function StockTickerInput({
           placeholder={placeholder}
           disabled={disabled}
           className={cn(
-            'w-full px-3 py-2 rounded-sm text-sm outline-none pr-16',
+            'w-full px-3 py-2 rounded-md text-sm outline-none pr-16',
             disabled && 'opacity-50 cursor-not-allowed',
             noResults && inputValue && !isLoading && 'animate-shake'
           )}
           style={{
-            ...retroStyles.sunken,
+            backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
             ...(noResults && inputValue && !isLoading ? {
-              borderColor: '#c53030',
-              boxShadow: `inset 2px 2px 0 rgba(197, 48, 48, 0.2)`,
+              borderColor: colors.negative,
             } : {}),
           }}
           autoComplete="off"
@@ -237,8 +236,8 @@ export function StockTickerInput({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-sm text-xs hover:bg-gray-200"
-            style={{ color: retro.muted }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded text-xs hover:opacity-70 transition-colors duration-150"
+            style={{ color: colors.muted }}
           >
             x
           </button>
@@ -247,7 +246,7 @@ export function StockTickerInput({
 
       {/* Selected name display */}
       {hasSelection && (
-        <p className="text-xs mt-1 truncate" style={{ color: retro.muted }}>
+        <p className="text-xs mt-1 truncate" style={{ color: colors.muted }}>
           {selectedName}
         </p>
       )}
@@ -256,10 +255,10 @@ export function StockTickerInput({
       {isOpen && results.length > 0 && (
         <div
           ref={listRef}
-          className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-sm"
+          className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-md"
           style={{
-            ...retroStyles.raised,
-            boxShadow: `3px 3px 0 ${retro.bevelDark}, 0 4px 12px rgba(0,0,0,0.15)`,
+            backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
           }}
         >
           {results.map((symbol, index) => (
@@ -272,19 +271,19 @@ export function StockTickerInput({
               )}
               style={{
                 backgroundColor:
-                  highlightedIndex === index ? retro.bevelMid : 'transparent',
+                  highlightedIndex === index ? colors.surfaceLight : 'transparent',
               }}
             >
               <div className="flex-1 min-w-0">
                 <span
                   className="font-bold text-sm"
-                  style={{ color: retro.text }}
+                  style={{ color: colors.text }}
                 >
                   {symbol.symbol}
                 </span>
                 <p
                   className="text-xs truncate"
-                  style={{ color: retro.muted }}
+                  style={{ color: colors.muted }}
                 >
                   {symbol.name}
                 </p>
@@ -299,21 +298,21 @@ export function StockTickerInput({
         <div className="mt-2 flex items-start gap-2 text-xs">
           <span
             className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-            style={{ backgroundColor: '#c53030' }}
+            style={{ backgroundColor: colors.negative }}
           >
             !
           </span>
           <div>
-            <p style={{ color: '#c53030' }}>
+            <p style={{ color: colors.negative }}>
               Stock &quot;{inputValue}&quot; not found in US market
             </p>
-            <p className="mt-0.5" style={{ color: retro.muted }}>
+            <p className="mt-0.5" style={{ color: colors.muted }}>
               Check the ticker symbol or{' '}
               <button
                 type="button"
                 onClick={handleOpenFeedback}
-                className="underline hover:no-underline font-medium"
-                style={{ color: retro.accent }}
+                className="underline hover:no-underline font-medium transition-colors duration-150"
+                style={{ color: colors.accent }}
               >
                 report missing stock
               </button>
@@ -332,7 +331,7 @@ export function StockTickerInput({
 
       {/* Error message from parent */}
       {error && (
-        <p className="text-xs mt-1" style={{ color: '#c53030' }}>
+        <p className="text-xs mt-1" style={{ color: colors.negative }}>
           {error}
         </p>
       )}

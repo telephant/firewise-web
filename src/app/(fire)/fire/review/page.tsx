@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import useSWR, { mutate } from 'swr';
 import {
-  retro,
+  colors,
   Button,
   Card,
   Loader,
@@ -122,19 +122,19 @@ export default function ReviewPage() {
         className="flex items-center justify-between px-3 py-2"
         style={{
           backgroundColor: 'transparent',
-          borderBottom: `2px solid ${retro.border}`,
+          borderBottom: `1px solid ${colors.border}`,
         }}
       >
         <div className="flex items-center gap-3">
           <SidebarTrigger />
-          <h1 className="text-sm font-bold" style={{ color: retro.text }}>
+          <h1 className="text-sm font-bold" style={{ color: colors.text }}>
             Review Flows
           </h1>
         </div>
         {flows.length > 0 && (
           <span
             className="text-xs px-2 py-0.5 rounded"
-            style={{ backgroundColor: retro.warning, color: retro.text }}
+            style={{ backgroundColor: colors.warning, color: colors.text }}
           >
             {flows.length} pending
           </span>
@@ -154,7 +154,7 @@ export default function ReviewPage() {
             <Card>
               <div
                 className="h-40 flex items-center justify-center text-sm"
-                style={{ color: retro.negative }}
+                style={{ color: colors.negative }}
               >
                 Failed to load flows
               </div>
@@ -162,10 +162,10 @@ export default function ReviewPage() {
           ) : flows.length === 0 ? (
             <Card>
               <div className="h-40 flex flex-col items-center justify-center gap-2">
-                <span style={{ color: retro.positive }}>
+                <span style={{ color: colors.positive }}>
                   <IconCheck size={32} />
                 </span>
-                <p className="text-sm" style={{ color: retro.muted }}>
+                <p className="text-sm" style={{ color: colors.muted }}>
                   All caught up! No flows need review.
                 </p>
               </div>
@@ -183,7 +183,7 @@ export default function ReviewPage() {
                       <div className="flex items-center gap-2">
                         <span
                           style={{
-                            color: retro.positive,
+                            color: colors.positive,
                             transform: 'rotate(-90deg)',
                             display: 'inline-block',
                           }}
@@ -193,11 +193,11 @@ export default function ReviewPage() {
                         <div>
                           <p
                             className="text-sm font-medium capitalize"
-                            style={{ color: retro.text }}
+                            style={{ color: colors.text }}
                           >
                             {flow.category || flow.type}
                           </p>
-                          <p className="text-xs" style={{ color: retro.muted }}>
+                          <p className="text-xs" style={{ color: colors.muted }}>
                             {formatDate(flow.date)}
                           </p>
                         </div>
@@ -205,7 +205,7 @@ export default function ReviewPage() {
                       <div className="text-right">
                         <p
                           className="text-lg font-bold tabular-nums"
-                          style={{ color: retro.positive }}
+                          style={{ color: colors.positive }}
                         >
                           +{formatCurrency(
                             flow.converted_amount ?? flow.amount,
@@ -215,7 +215,7 @@ export default function ReviewPage() {
                         {flow.converted_amount !== undefined &&
                           flow.converted_currency &&
                           flow.converted_currency !== flow.currency && (
-                          <p className="text-[10px] tabular-nums" style={{ color: retro.muted }}>
+                          <p className="text-[10px] tabular-nums" style={{ color: colors.muted }}>
                             ({formatCurrency(flow.amount, { currency: flow.currency })})
                           </p>
                         )}
@@ -224,7 +224,7 @@ export default function ReviewPage() {
 
                     {/* Details */}
                     {flow.description && (
-                      <p className="text-xs" style={{ color: retro.muted }}>
+                      <p className="text-xs" style={{ color: colors.muted }}>
                         {flow.description}
                       </p>
                     )}
@@ -233,47 +233,47 @@ export default function ReviewPage() {
                     {dividendInfo && (
                       <div
                         className="text-xs p-2 rounded space-y-1"
-                        style={{ backgroundColor: retro.surfaceLight }}
+                        style={{ backgroundColor: colors.surfaceLight }}
                       >
                         <div className="flex justify-between">
-                          <span style={{ color: retro.muted }}>Stock:</span>
-                          <span style={{ color: retro.text }}>
+                          <span style={{ color: colors.muted }}>Stock:</span>
+                          <span style={{ color: colors.text }}>
                             {flow.from_asset?.name || dividendInfo.ticker}
                           </span>
                         </div>
                         {dividendInfo.shares && (
                           <div className="flex justify-between">
-                            <span style={{ color: retro.muted }}>Shares:</span>
-                            <span style={{ color: retro.text }}>
+                            <span style={{ color: colors.muted }}>Shares:</span>
+                            <span style={{ color: colors.text }}>
                               {dividendInfo.shares.toLocaleString()}
                             </span>
                           </div>
                         )}
                         {dividendInfo.dividendPerShare && (
                           <div className="flex justify-between">
-                            <span style={{ color: retro.muted }}>Per Share:</span>
-                            <span style={{ color: retro.text }}>
+                            <span style={{ color: colors.muted }}>Per Share:</span>
+                            <span style={{ color: colors.text }}>
                               ${dividendInfo.dividendPerShare.toFixed(4)}
                             </span>
                           </div>
                         )}
                         <div className="flex justify-between">
-                          <span style={{ color: retro.muted }}>Gross Amount:</span>
-                          <span style={{ color: retro.text }}>
+                          <span style={{ color: colors.muted }}>Gross Amount:</span>
+                          <span style={{ color: colors.text }}>
                             {formatCurrency(dividendInfo.grossAmount, { currency: flow.currency })}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span style={{ color: retro.muted }}>
+                          <span style={{ color: colors.muted }}>
                             Tax Withheld ({(dividendInfo.taxRate * 100).toFixed(0)}%):
                           </span>
-                          <span style={{ color: retro.negative }}>
+                          <span style={{ color: colors.negative }}>
                             -{formatCurrency(dividendInfo.taxWithheld, { currency: flow.currency })}
                           </span>
                         </div>
-                        <div className="flex justify-between pt-1 border-t" style={{ borderColor: retro.border }}>
-                          <span style={{ color: retro.muted }}>Net Amount:</span>
-                          <span style={{ color: retro.positive, fontWeight: 'bold' }}>
+                        <div className="flex justify-between pt-1 border-t" style={{ borderColor: colors.border }}>
+                          <span style={{ color: colors.muted }}>Net Amount:</span>
+                          <span style={{ color: colors.positive, fontWeight: 'bold' }}>
                             {formatCurrency(dividendInfo.netAmount, { currency: flow.currency })}
                           </span>
                         </div>
@@ -282,7 +282,7 @@ export default function ReviewPage() {
 
                     {/* Hint for dividend - open settings dialog */}
                     {dividendInfo && (
-                      <p className="text-xs" style={{ color: retro.info }}>
+                      <p className="text-xs" style={{ color: colors.info }}>
                         Tip: Adjust your tax rate in{' '}
                         <button
                           onClick={() => setTaxSettingsOpen(true)}
@@ -311,7 +311,7 @@ export default function ReviewPage() {
                         onClick={() => handleDelete(flow)}
                         disabled={isProcessing}
                         className="gap-1.5"
-                        style={{ color: retro.negative, borderColor: retro.negative }}
+                        style={{ color: colors.negative, borderColor: colors.negative }}
                       >
                         <IconTrash size={12} />
                         <span>Delete</span>

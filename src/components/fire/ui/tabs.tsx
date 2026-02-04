@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { retro } from './theme';
+import { colors } from './theme';
+import { cn } from '@/lib/utils';
 
 // Context for tabs state
 interface TabsContextValue {
@@ -56,7 +57,7 @@ export function Tabs({
   );
 }
 
-// Tabs List (container for triggers) - Retro raised bar
+// Tabs List (container for triggers) - flat dark bar
 export interface TabsListProps {
   children: ReactNode;
   className?: string;
@@ -65,11 +66,9 @@ export interface TabsListProps {
 export function TabsList({ children, className = '' }: TabsListProps) {
   return (
     <div
-      className={`flex rounded-sm overflow-hidden ${className}`}
+      className={`flex gap-1 rounded-lg p-1 ${className}`}
       style={{
-        backgroundColor: retro.surface,
-        border: `2px solid ${retro.border}`,
-        boxShadow: `2px 2px 0 ${retro.bevelDark}`,
+        backgroundColor: colors.surface,
       }}
       role="tablist"
     >
@@ -78,7 +77,7 @@ export function TabsList({ children, className = '' }: TabsListProps) {
   );
 }
 
-// Tabs Trigger (individual tab button) - Retro 3D button style
+// Tabs Trigger (individual tab button) - pill-style active
 export interface TabsTriggerProps {
   value: string;
   children: ReactNode;
@@ -102,16 +101,19 @@ export function TabsTrigger({
       aria-selected={isSelected}
       disabled={disabled}
       onClick={() => onValueChange(value)}
-      className={`flex-1 px-4 py-2 text-sm font-medium transition-all duration-100 ${className}`}
+      className={cn(
+        'flex-1 px-4 py-1.5 text-sm font-medium rounded-md',
+        'transition-all duration-150 outline-none',
+        'focus-visible:ring-2 focus-visible:ring-[#5E6AD2]/50',
+        disabled
+          ? 'opacity-50 cursor-not-allowed'
+          : !isSelected && 'hover:bg-white/[0.04] hover:text-[#EDEDEF]',
+        isSelected && 'active:scale-[0.97]',
+        className
+      )}
       style={{
-        backgroundColor: isSelected ? retro.accent : retro.surface,
-        color: isSelected ? '#ffffff' : retro.text,
-        borderRight: `2px solid ${retro.border}`,
-        boxShadow: isSelected
-          ? `inset -1px -1px 0 rgba(0,0,0,0.3), inset 1px 1px 0 rgba(255,255,255,0.3)`
-          : `inset -1px -1px 0 ${retro.bevelDark}, inset 1px 1px 0 ${retro.bevelLight}`,
-        opacity: disabled ? 0.5 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
+        backgroundColor: isSelected ? 'rgba(255,255,255,0.06)' : undefined,
+        color: isSelected ? colors.text : colors.muted,
       }}
     >
       {children}

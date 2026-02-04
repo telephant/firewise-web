@@ -1,6 +1,6 @@
 'use client';
 
-import { retro, retroStyles } from '@/components/fire/ui';
+import { colors } from '@/components/fire/ui';
 
 interface MonthSelectorProps {
   value: { year: number; month: number };
@@ -33,29 +33,29 @@ export function MonthSelector({ value, onChange }: MonthSelectorProps) {
     <div className="flex items-center gap-1">
       <button
         onClick={handlePrev}
-        className="px-2 py-1 text-xs font-bold rounded-sm transition-all active:translate-y-[1px]"
+        className="px-2 py-1 text-xs font-bold rounded-md transition-all active:translate-y-[1px]"
         style={{
-          ...retroStyles.raised,
-          color: retro.text,
+          backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+          color: colors.text,
         }}
       >
         ◀
       </button>
       <div
-        className="px-3 py-1 min-w-[100px] text-center text-sm font-medium rounded-sm"
+        className="px-3 py-1 min-w-[100px] text-center text-sm font-medium rounded-md"
         style={{
-          ...retroStyles.sunken,
-          color: retro.text,
+          backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
+          color: colors.text,
         }}
       >
         {MONTHS[value.month]} {value.year}
       </div>
       <button
         onClick={handleNext}
-        className="px-2 py-1 text-xs font-bold rounded-sm transition-all active:translate-y-[1px]"
+        className="px-2 py-1 text-xs font-bold rounded-md transition-all active:translate-y-[1px]"
         style={{
-          ...retroStyles.raised,
-          color: retro.text,
+          backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+          color: colors.text,
         }}
       >
         ▶

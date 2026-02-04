@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { retro, retroStyles, Loader, SimpleProgressBar, IconTriangleUp, IconTriangleDown } from '@/components/fire/ui';
+import { colors, Loader, SimpleProgressBar, IconTriangleUp, IconTriangleDown } from '@/components/fire/ui';
 import { formatCurrency, calculateNetWorth } from '@/lib/fire/utils';
 import { useAssets, useDebts, useFlowFreedom, useRunway, useUserPreferences } from '@/hooks/fire/use-fire-data';
 
@@ -54,25 +54,25 @@ function NetWorthMetric({ currency }: { currency: string }) {
   const isPositive = netWorth >= 0;
 
   return (
-    <div className="p-4 rounded-sm" style={retroStyles.raised}>
-      <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: retro.muted }}>
+    <div className="p-4 rounded-md" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
+      <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.muted }}>
         Net Worth
       </div>
       <div
         className="text-2xl font-bold tabular-nums"
-        style={{ color: isPositive ? retro.text : retro.negative }}
+        style={{ color: isPositive ? colors.text : colors.negative }}
       >
         {formatCurrency(netWorth, { currency: displayCurrency, compact: true })}
       </div>
-      <div className="text-[10px] mt-2 flex gap-2" style={{ color: retro.muted }}>
+      <div className="text-[10px] mt-2 flex gap-2" style={{ color: colors.muted }}>
         <span>
-          Assets <span className="font-bold" style={{ color: retro.positive }}>
+          Assets <span className="font-bold" style={{ color: colors.positive }}>
             {formatCurrency(totalAssets, { currency: displayCurrency, compact: true })}
           </span>
         </span>
         <span>·</span>
         <span>
-          Debts <span className="font-bold" style={{ color: retro.negative }}>
+          Debts <span className="font-bold" style={{ color: colors.negative }}>
             {formatCurrency(totalDebts, { currency: displayCurrency, compact: true })}
           </span>
         </span>
@@ -97,14 +97,14 @@ function FlowFreedomMetric({ currency }: { currency: string }) {
 
   if (!data) {
     return (
-      <div className="p-4 rounded-sm" style={retroStyles.raised}>
-        <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: retro.muted }}>
+      <div className="p-4 rounded-md" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
+        <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.muted }}>
           Flow Freedom
         </div>
-        <div className="text-2xl font-bold" style={{ color: retro.muted }}>
+        <div className="text-2xl font-bold" style={{ color: colors.muted }}>
           —
         </div>
-        <div className="text-[10px] mt-2" style={{ color: retro.muted }}>
+        <div className="text-[10px] mt-2" style={{ color: colors.muted }}>
           Track income & expenses to see
         </div>
       </div>
@@ -117,21 +117,21 @@ function FlowFreedomMetric({ currency }: { currency: string }) {
 
   // Color based on progress
   const getColor = () => {
-    if (percent >= 100) return retro.positive;
-    if (percent >= 50) return retro.warning;
-    return retro.text;
+    if (percent >= 100) return colors.positive;
+    if (percent >= 50) return colors.warning;
+    return colors.text;
   };
 
   return (
-    <div className="p-4 rounded-sm" style={retroStyles.raised}>
+    <div className="p-4 rounded-md" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
       <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-wider" style={{ color: retro.muted }}>
+        <div className="text-[10px] uppercase tracking-wider" style={{ color: colors.muted }}>
           Flow Freedom
         </div>
         {isAchieved && (
           <span
-            className="text-[9px] px-1.5 py-0.5 rounded-sm"
-            style={{ backgroundColor: retro.positive + '20', color: retro.positive }}
+            className="text-[9px] px-1.5 py-0.5 rounded-md"
+            style={{ backgroundColor: colors.positive + '20', color: colors.positive }}
           >
             FIRE!
           </span>
@@ -149,13 +149,13 @@ function FlowFreedomMetric({ currency }: { currency: string }) {
         color={getColor()}
         className="mt-2"
       />
-      <div className="text-[10px] mt-1.5" style={{ color: retro.muted }}>
+      <div className="text-[10px] mt-1.5" style={{ color: colors.muted }}>
         {gap > 0 ? (
           <span>
-            <span style={{ color: retro.negative }}>-{formatCurrency(gap, { currency: dataCurrency, compact: true })}</span> gap/mo
+            <span style={{ color: colors.negative }}>-{formatCurrency(gap, { currency: dataCurrency, compact: true })}</span> gap/mo
           </span>
         ) : (
-          <span style={{ color: retro.positive }}>
+          <span style={{ color: colors.positive }}>
             +{formatCurrency(Math.abs(gap), { currency: dataCurrency, compact: true })} surplus/mo
           </span>
         )}
@@ -177,14 +177,14 @@ function RunwayMetric() {
 
   if (!data) {
     return (
-      <div className="p-4 rounded-sm" style={retroStyles.raised}>
-        <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: retro.muted }}>
+      <div className="p-4 rounded-md" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
+        <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.muted }}>
           Runway
         </div>
-        <div className="text-2xl font-bold" style={{ color: retro.muted }}>
+        <div className="text-2xl font-bold" style={{ color: colors.muted }}>
           —
         </div>
-        <div className="text-[10px] mt-2" style={{ color: retro.muted }}>
+        <div className="text-[10px] mt-2" style={{ color: colors.muted }}>
           Add data to calculate
         </div>
       </div>
@@ -198,11 +198,11 @@ function RunwayMetric() {
   const isCritical = status === 'critical';
 
   const getColor = () => {
-    if (isInfinite) return retro.positive;
-    if (isCritical) return retro.negative;
-    if (years >= 20) return retro.positive;
-    if (years >= 10) return retro.warning;
-    return retro.negative;
+    if (isInfinite) return colors.positive;
+    if (isCritical) return colors.negative;
+    if (years >= 20) return colors.positive;
+    if (years >= 10) return colors.warning;
+    return colors.negative;
   };
 
   const getMessage = () => {
@@ -215,16 +215,16 @@ function RunwayMetric() {
   };
 
   return (
-    <div className="p-4 rounded-sm relative" style={retroStyles.raised}>
+    <div className="p-4 rounded-md relative" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
       {isRefreshing && (
         <div
-          className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded-sm animate-pulse"
-          style={{ backgroundColor: retro.info + '20', color: retro.info }}
+          className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded-md animate-pulse"
+          style={{ backgroundColor: colors.info + '20', color: colors.info }}
         >
           updating
         </div>
       )}
-      <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: retro.muted }}>
+      <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.muted }}>
         Runway
       </div>
       <div className="flex items-baseline gap-1">
@@ -232,7 +232,7 @@ function RunwayMetric() {
           {isInfinite ? '∞' : years}
         </span>
         {!isInfinite && (
-          <span className="text-sm" style={{ color: retro.muted }}>
+          <span className="text-sm" style={{ color: colors.muted }}>
             years
           </span>
         )}
@@ -244,7 +244,7 @@ function RunwayMetric() {
         color={getColor()}
         className="mt-2"
       />
-      <div className="text-[10px] mt-1.5" style={{ color: retro.muted }}>
+      <div className="text-[10px] mt-1.5" style={{ color: colors.muted }}>
         {getMessage()}
       </div>
     </div>
@@ -257,8 +257,8 @@ function RunwayMetric() {
 
 function MetricCardSkeleton({ label }: { label: string }) {
   return (
-    <div className="p-4 rounded-sm" style={retroStyles.raised}>
-      <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: retro.muted }}>
+    <div className="p-4 rounded-md" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
+      <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.muted }}>
         {label}
       </div>
       <div className="flex items-center justify-center py-2">

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { retro, retroStyles } from './theme';
+import { colors } from './theme';
 import { cn } from '@/lib/utils';
 
 export interface InputProps
@@ -20,7 +20,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             className="text-xs uppercase tracking-wide block mb-1 font-medium"
-            style={{ color: hasError ? '#c53030' : retro.text }}
+            style={{ color: hasError ? colors.negative : colors.text }}
           >
             {label}
           </label>
@@ -28,35 +28,25 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           type={type}
           className={cn(
-            'w-full px-3 py-2 rounded-sm text-sm outline-none',
+            'w-full px-3 py-2 rounded-md text-sm outline-none',
+            'transition-all duration-150',
+            'border bg-[#1C1C1E] text-[#EDEDEF]',
+            hasError
+              ? 'border-[#F87171]'
+              : 'border-white/[0.08] hover:border-white/[0.15]',
+            'focus:border-[#5E6AD2]/60 focus:ring-2 focus:ring-[#5E6AD2]/20',
+            'placeholder:text-[#7C7C82]',
             hasError && 'animate-shake',
             className
           )}
-          style={{
-            ...retroStyles.sunken,
-            ...(hasError ? {
-              borderColor: '#c53030',
-              boxShadow: 'inset 2px 2px 0 rgba(197, 48, 48, 0.2)',
-            } : {}),
-          }}
           ref={ref}
           {...props}
         />
-        {/* Error message */}
         {hasError && (
-          <div className="mt-1.5 flex items-start gap-1.5 text-xs">
-            <span
-              className="flex-shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[9px] font-bold mt-0.5"
-              style={{ backgroundColor: '#c53030' }}
-            >
-              !
-            </span>
-            <span style={{ color: '#c53030' }}>{error}</span>
-          </div>
+          <p className="mt-1 text-xs" style={{ color: colors.negative }}>{error}</p>
         )}
-        {/* Hint text */}
         {hint && !hasError && (
-          <p className="mt-1 text-xs" style={{ color: retro.muted }}>
+          <p className="mt-1 text-xs" style={{ color: colors.muted }}>
             {hint}
           </p>
         )}

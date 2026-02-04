@@ -15,9 +15,9 @@ import {
   SidebarProvider as BaseSidebarProvider,
   SidebarTrigger as BaseSidebarTrigger,
 } from '@/components/ui/sidebar';
-import { retro, retroStyles } from './theme';
+import { colors } from './theme';
 
-// Re-export with Retro styling applied
+// Re-export with dark theme styling applied
 
 export function SidebarProvider({ children, ...props }: React.ComponentProps<typeof BaseSidebarProvider>) {
   return <BaseSidebarProvider {...props}>{children}</BaseSidebarProvider>;
@@ -28,23 +28,14 @@ export function Sidebar({ children, style, className, ...props }: React.Componen
     <BaseSidebar
       style={{
         '--sidebar-background': 'transparent',
-        '--sidebar-foreground': retro.text,
-        '--sidebar-border': retro.border,
+        '--sidebar-foreground': colors.text,
+        '--sidebar-border': colors.border,
         ...style,
       } as React.CSSProperties}
       className={`${className || ''} [&_[data-slot=sidebar-inner]]:bg-transparent`}
       {...props}
     >
-      <div
-        className="m-2 rounded-sm"
-        style={{
-          height: 'calc(100% - 16px)',
-          ...retroStyles.raised,
-          backgroundColor: 'transparent',
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </BaseSidebar>
   );
 }
@@ -69,13 +60,12 @@ export function SidebarInset({ children, style, className, ...props }: React.Com
 export function SidebarTrigger({ className, ...props }: Omit<React.ComponentProps<typeof BaseSidebarTrigger>, 'style'>) {
   return (
     <BaseSidebarTrigger
-      className={className}
+      className={`${className || ''} transition-all duration-150 hover:bg-[#1C1C1E] hover:border-white/[0.15] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5E6AD2]/50`}
       style={{
-        backgroundColor: retro.surface,
-        border: `2px solid ${retro.border}`,
-        boxShadow: `inset -1px -1px 0 ${retro.bevelDark}, inset 1px 1px 0 ${retro.bevelLight}, 2px 2px 0 ${retro.bevelDark}`,
-        color: retro.text,
-        borderRadius: '2px',
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.border}`,
+        color: colors.text,
+        borderRadius: '6px',
       }}
       {...props}
     />
@@ -119,17 +109,17 @@ export function SidebarMenuButton({
   return (
     <BaseSidebarMenuButton
       isActive={isActive}
-      className={className || 'rounded-sm px-3 py-2 transition-all'}
+      className={`${className || ''} rounded-md px-3 py-2 transition-all duration-150 ${!isActive ? 'hover:bg-white/[0.04]' : ''}`}
       style={
         isActive
           ? {
-              ...retroStyles.sunken,
-              color: retro.text,
+              backgroundColor: colors.surfaceLight,
+              color: colors.text,
               fontWeight: 500,
               ...style,
             }
           : {
-              color: retro.text,
+              color: colors.muted,
               backgroundColor: 'transparent',
               fontWeight: 400,
               ...style,

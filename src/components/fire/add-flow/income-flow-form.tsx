@@ -1,7 +1,7 @@
 'use client';
 
 import type { FlowCategoryPreset, AssetWithBalance, AssetType, RecurringFrequency } from '@/types/fire';
-import { retro, Input, Select, CurrencyCombobox, Label, Button, IconArrow } from '@/components/fire/ui';
+import { colors, Input, Select, CurrencyCombobox, Label, Button, IconArrow } from '@/components/fire/ui';
 import { NewAssetForm } from './new-asset-form';
 import { FormActions } from './form-actions';
 import { CURRENCY_OPTIONS, ASSET_TYPE_OPTIONS, RECURRING_OPTIONS, getFieldLabels } from './constants';
@@ -104,7 +104,7 @@ export function IncomeFlowForm({
 
       {/* Flow Arrow */}
       <div className="flex justify-center py-1">
-        <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+        <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
           <IconArrow size={18} />
         </span>
       </div>

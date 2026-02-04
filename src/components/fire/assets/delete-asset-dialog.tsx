@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -89,49 +89,49 @@ export function DeleteAssetDialog({
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>
-            <span style={{ color: retro.negative }}>Delete Asset</span>
+            <span style={{ color: colors.negative }}>Delete Asset</span>
           </DialogTitle>
         </DialogHeader>
 
         <DialogBody>
           <div className="space-y-4">
-            <p className="text-sm" style={{ color: retro.text }}>
+            <p className="text-sm" style={{ color: colors.text }}>
               Are you sure you want to delete this asset? This action cannot be undone.
             </p>
 
             {/* Asset Summary */}
             <div
-              className="p-3 rounded-sm space-y-2"
-              style={{ backgroundColor: retro.surfaceLight }}
+              className="p-3 rounded-md space-y-2"
+              style={{ backgroundColor: colors.surfaceLight }}
             >
               <div className="flex items-center gap-2">
-                <span style={{ color: retro.muted }}>
+                <span style={{ color: colors.muted }}>
                   <IconComponent size={16} />
                 </span>
-                <span className="text-sm font-medium" style={{ color: retro.text }}>
+                <span className="text-sm font-medium" style={{ color: colors.text }}>
                   {asset.name}
                 </span>
               </div>
 
               <div
                 className="text-lg font-bold tabular-nums"
-                style={{ color: retro.text }}
+                style={{ color: colors.text }}
               >
                 {formatCurrency(asset.balance, { currency: asset.currency })}
               </div>
 
-              <div className="text-xs" style={{ color: retro.muted }}>
+              <div className="text-xs" style={{ color: colors.muted }}>
                 {ASSET_TYPE_LABELS[asset.type]}
                 {asset.ticker && ` · ${asset.ticker}`}
               </div>
             </div>
 
-            <p className="text-xs" style={{ color: retro.warning }}>
+            <p className="text-xs" style={{ color: colors.warning }}>
               Note: Related flows will not be deleted, but will no longer be linked to this asset.
             </p>
 
             {error && (
-              <p className="text-xs" style={{ color: retro.negative }}>
+              <p className="text-xs" style={{ color: colors.negative }}>
                 {error}
               </p>
             )}

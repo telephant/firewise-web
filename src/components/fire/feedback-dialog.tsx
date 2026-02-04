@@ -11,8 +11,7 @@ import {
   Button,
   Label,
   LoadingText,
-  retro,
-  retroStyles,
+  colors,
 } from '@/components/fire/ui';
 import { feedbackApi, FeedbackType } from '@/lib/fire/api';
 import { toast } from 'sonner';
@@ -73,7 +72,7 @@ export function FeedbackDialog({
         </DialogHeader>
         <DialogBody>
           {description && (
-            <p className="text-sm mb-4" style={{ color: retro.muted }}>
+            <p className="text-sm mb-4" style={{ color: colors.muted }}>
               {description}
             </p>
           )}
@@ -81,16 +80,16 @@ export function FeedbackDialog({
           {/* Show prefilled data */}
           {Object.keys(prefill).length > 0 && (
             <div
-              className="mb-4 p-3 rounded-sm text-sm"
+              className="mb-4 p-3 rounded-md text-sm"
               style={{
-                backgroundColor: retro.surfaceLight,
-                border: `1px solid ${retro.border}`,
+                backgroundColor: colors.surfaceLight,
+                border: `1px solid ${colors.border}`,
               }}
             >
               {Object.entries(prefill).map(([key, value]) => (
                 <div key={key} className="flex gap-2">
-                  <span style={{ color: retro.muted }}>{key}:</span>
-                  <span style={{ color: retro.text }}>{String(value)}</span>
+                  <span style={{ color: colors.muted }}>{key}:</span>
+                  <span style={{ color: colors.text }}>{String(value)}</span>
                 </div>
               ))}
             </div>
@@ -99,7 +98,7 @@ export function FeedbackDialog({
           <div>
             <label
               className="text-xs uppercase tracking-wide block mb-1 font-medium"
-              style={{ color: retro.text }}
+              style={{ color: colors.text }}
             >
               Additional notes (optional)
             </label>
@@ -109,9 +108,9 @@ export function FeedbackDialog({
               placeholder="Any additional details..."
               rows={3}
               className={cn(
-                'w-full px-3 py-2 rounded-sm text-sm outline-none resize-none'
+                'w-full px-3 py-2 rounded-md text-sm outline-none resize-none'
               )}
-              style={retroStyles.sunken}
+              style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
             />
           </div>
         </DialogBody>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { retro, retroStyles, Card, Loader } from '@/components/fire/ui';
+import { colors, Card, Loader } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 import { useFlows, useAssets } from '@/hooks/fire/use-fire-data';
 import type { FlowWithDetails } from '@/types/fire';
@@ -35,9 +35,9 @@ const COLORS = {
 };
 
 // Generate color from string hash for expense categories
-const getExpenseColor = (label: string, index: number): string => {
-  const colors = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f39c12', '#e67e22', '#2ecc71', '#8e44ad'];
-  return colors[index % colors.length];
+const EXPENSE_COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f39c12', '#e67e22', '#2ecc71', '#8e44ad'];
+const getExpenseColor = (_label: string, index: number): string => {
+  return EXPENSE_COLORS[index % EXPENSE_COLORS.length];
 };
 
 interface BucketLayer {
@@ -302,13 +302,12 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
     return (
       <div className="flex flex-col items-center">
         <div
-          className="rounded-sm overflow-hidden flex flex-col-reverse"
+          className="rounded-md overflow-hidden flex flex-col-reverse"
           style={{
             width,
             height: maxHeight,
-            border: `2px solid ${retro.border}`,
-            boxShadow: `inset 2px 2px 0 ${retro.bevelDark}, inset -2px -2px 0 ${retro.bevelLight}`,
-            backgroundColor: retro.bevelMid,
+            border: `1px solid ${colors.border}`,
+            backgroundColor: colors.surfaceLight,
           }}
         >
           {layers.map((layer, idx) => {
@@ -326,10 +325,10 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
             );
           })}
         </div>
-        <p className="text-[10px] mt-1 font-medium text-center" style={{ color: retro.text }}>
+        <p className="text-[10px] mt-1 font-medium text-center" style={{ color: colors.text }}>
           {title}
         </p>
-        <p className="text-[9px]" style={{ color: retro.muted }}>
+        <p className="text-[9px]" style={{ color: colors.muted }}>
           {formatCurrency(total, { currency, compact: true })}
         </p>
       </div>
@@ -341,19 +340,18 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
     return (
       <div className="flex flex-col items-center">
         <div
-          className="rounded-sm"
+          className="rounded-md"
           style={{
             width: 50,
             height: Math.max(30, Math.min(80, (source.amount / totalIncome) * 100)),
             backgroundColor: source.color,
-            border: `2px solid ${retro.border}`,
-            boxShadow: `2px 2px 0 ${retro.bevelDark}`,
+            border: `1px solid ${colors.border}`,
           }}
         />
-        <p className="text-[9px] mt-1 font-medium text-center" style={{ color: retro.text }}>
+        <p className="text-[9px] mt-1 font-medium text-center" style={{ color: colors.text }}>
           {source.label}
         </p>
-        <p className="text-[8px]" style={{ color: retro.muted }}>
+        <p className="text-[8px]" style={{ color: colors.muted }}>
           {formatCurrency(source.amount, { currency, compact: true })}
         </p>
       </div>
@@ -375,18 +373,18 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
       <Card title="Money Flow" contentHeight="200px">
         <div className="h-full flex flex-col items-center justify-center text-center">
           <div
-            className="w-12 h-12 rounded-sm flex items-center justify-center mb-3"
+            className="w-12 h-12 rounded-md flex items-center justify-center mb-3"
             style={{
-              backgroundColor: retro.bevelMid,
-              border: `2px solid ${retro.border}`,
+              backgroundColor: colors.surfaceLight,
+              border: `1px solid ${colors.border}`,
             }}
           >
             <span className="text-xl">💸</span>
           </div>
-          <p className="text-sm font-medium" style={{ color: retro.text }}>
+          <p className="text-sm font-medium" style={{ color: colors.text }}>
             No flow data yet
           </p>
-          <p className="text-xs mt-1" style={{ color: retro.muted }}>
+          <p className="text-xs mt-1" style={{ color: colors.muted }}>
             Record income and expenses to see your money flow!
           </p>
         </div>
@@ -402,7 +400,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
         {/* Top: External Income */}
         {externalIncome.length > 0 && (
           <div className="mb-3">
-            <p className="text-[9px] text-center uppercase tracking-wider mb-2" style={{ color: retro.muted }}>
+            <p className="text-[9px] text-center uppercase tracking-wider mb-2" style={{ color: colors.muted }}>
               Income Sources
             </p>
             <div className="flex justify-center gap-3">
@@ -414,7 +412,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                       width: 44,
                       height: 44,
                       backgroundColor: source.color,
-                      border: `2px solid ${retro.border}`,
+                      border: `1px solid ${colors.border}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -424,7 +422,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                       {formatCurrency(source.amount, { currency, compact: true })}
                     </span>
                   </div>
-                  <p className="text-[8px] mt-1 font-medium" style={{ color: retro.text }}>
+                  <p className="text-[8px] mt-1 font-medium" style={{ color: colors.text }}>
                     {source.label}
                   </p>
                 </div>
@@ -433,8 +431,8 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
             {/* Flow indicator */}
             <div className="flex justify-center mt-1">
               <div className="flex flex-col items-center">
-                <div className="w-0.5 h-3" style={{ backgroundColor: retro.muted }} />
-                <div style={{ color: retro.muted }}>▼</div>
+                <div className="w-0.5 h-3" style={{ backgroundColor: colors.muted }} />
+                <div style={{ color: colors.muted }}>▼</div>
               </div>
             </div>
           </div>
@@ -450,8 +448,8 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                 style={{
                   width: 56,
                   height: 72,
-                  border: `2px solid ${retro.border}`,
-                  backgroundColor: retro.bevelMid,
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: colors.surfaceLight,
                 }}
               >
                 {assetLayers.map((layer, idx) => {
@@ -469,8 +467,8 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                   );
                 })}
               </div>
-              <p className="text-[9px] mt-1 font-bold" style={{ color: retro.text }}>ASSETS</p>
-              <p className="text-[8px]" style={{ color: retro.muted }}>
+              <p className="text-[9px] mt-1 font-bold" style={{ color: colors.text }}>ASSETS</p>
+              <p className="text-[8px]" style={{ color: colors.muted }}>
                 {formatCurrency(assetLayers.reduce((s, l) => s + l.amount, 0), { currency, compact: true })}
               </p>
             </div>
@@ -507,8 +505,8 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
               style={{
                 width: 64,
                 height: 72,
-                border: `2px solid ${retro.border}`,
-                backgroundColor: retro.bevelMid,
+                border: `1px solid ${colors.border}`,
+                backgroundColor: colors.surfaceLight,
               }}
             >
               {cashLayers.map((layer, idx) => {
@@ -526,8 +524,8 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                 );
               })}
             </div>
-            <p className="text-[9px] mt-1 font-bold" style={{ color: retro.text }}>CASH</p>
-            <p className="text-[8px]" style={{ color: retro.muted }}>
+            <p className="text-[9px] mt-1 font-bold" style={{ color: colors.text }}>CASH</p>
+            <p className="text-[8px]" style={{ color: colors.muted }}>
               {formatCurrency(totalIncome, { currency, compact: true })}
             </p>
           </div>
@@ -555,8 +553,8 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                   style={{
                     width: 56,
                     height: 72,
-                    border: `2px solid ${retro.border}`,
-                    backgroundColor: retro.bevelMid,
+                    border: `1px solid ${colors.border}`,
+                    backgroundColor: colors.surfaceLight,
                   }}
                 >
                   {expenseCategories.map((exp, idx) => {
@@ -582,7 +580,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                     width: 56,
                     height: 72,
                     backgroundColor: COLORS.spending,
-                    border: `2px solid ${retro.border}`,
+                    border: `1px solid ${colors.border}`,
                   }}
                 >
                   <span className="text-white text-[10px] font-bold">
@@ -590,8 +588,8 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                   </span>
                 </div>
               )}
-              <p className="text-[9px] mt-1 font-bold" style={{ color: retro.text }}>SPENT</p>
-              <p className="text-[8px]" style={{ color: retro.muted }}>
+              <p className="text-[9px] mt-1 font-bold" style={{ color: colors.text }}>SPENT</p>
+              <p className="text-[8px]" style={{ color: colors.muted }}>
                 {formatCurrency(spendingTotal, { currency, compact: true })}
               </p>
             </div>
@@ -603,11 +601,11 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
           <div className="mt-3">
             <div className="flex justify-center mt-1">
               <div className="flex flex-col items-center">
-                <div style={{ color: retro.muted }}>▼</div>
-                <div className="w-0.5 h-2" style={{ backgroundColor: retro.muted }} />
+                <div style={{ color: colors.muted }}>▼</div>
+                <div className="w-0.5 h-2" style={{ backgroundColor: colors.muted }} />
               </div>
             </div>
-            <p className="text-[9px] text-center uppercase tracking-wider mb-2" style={{ color: retro.muted }}>
+            <p className="text-[9px] text-center uppercase tracking-wider mb-2" style={{ color: colors.muted }}>
               Spending Breakdown
             </p>
             <div className="flex justify-center gap-3 flex-wrap">
@@ -619,7 +617,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                       width: 44,
                       height: 44,
                       backgroundColor: exp.color,
-                      border: `2px solid ${retro.border}`,
+                      border: `1px solid ${colors.border}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -629,7 +627,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                       {formatCurrency(exp.amount, { currency, compact: true })}
                     </span>
                   </div>
-                  <p className="text-[8px] mt-1 font-medium truncate max-w-[50px]" style={{ color: retro.text }}>
+                  <p className="text-[8px] mt-1 font-medium truncate max-w-[50px]" style={{ color: colors.text }}>
                     {exp.label}
                   </p>
                 </div>
@@ -640,7 +638,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
 
         {/* Legend / Passive income note */}
         {passiveIncome.length > 0 && (
-          <div className="mt-3 pt-2 text-center" style={{ borderTop: `1px dashed ${retro.border}` }}>
+          <div className="mt-3 pt-2 text-center" style={{ borderTop: `1px dashed ${colors.border}` }}>
             <p className="text-[8px]" style={{ color: COLORS.dividend }}>
               💰 Passive income from: {passiveIncome.map(p => p.label).slice(0, 3).join(', ')}
             </p>
@@ -650,16 +648,16 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
         {/* Color Legend */}
         <div className="flex justify-center gap-3 mt-2 text-[7px]">
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: COLORS.existing }} />
-            <span style={{ color: retro.muted }}>Existing</span>
+            <div className="w-2 h-2 rounded-md" style={{ backgroundColor: COLORS.existing }} />
+            <span style={{ color: colors.muted }}>Existing</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: COLORS.invest }} />
-            <span style={{ color: retro.muted }}>Invested</span>
+            <div className="w-2 h-2 rounded-md" style={{ backgroundColor: COLORS.invest }} />
+            <span style={{ color: colors.muted }}>Invested</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: COLORS.dividend }} />
-            <span style={{ color: retro.muted }}>Passive</span>
+            <div className="w-2 h-2 rounded-md" style={{ backgroundColor: COLORS.dividend }} />
+            <span style={{ color: colors.muted }}>Passive</span>
           </div>
         </div>
       </div>

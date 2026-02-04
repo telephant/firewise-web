@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { retro } from '../theme';
+import { colors } from '../theme';
 import { cn } from '@/lib/utils';
 
 export interface CardLabelProps extends React.HTMLAttributes<HTMLParagraphElement> {}
@@ -11,7 +11,7 @@ export const CardLabel = React.forwardRef<HTMLParagraphElement, CardLabelProps>(
     return (
       <p
         className={cn('text-xs uppercase tracking-wide', className)}
-        style={{ color: retro.muted }}
+        style={{ color: colors.muted }}
         ref={ref}
         {...props}
       >

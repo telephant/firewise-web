@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import {
-  BarChart,
+  BarChart as RBarChart,
   Bar,
   XAxis,
   YAxis,
@@ -11,18 +11,18 @@ import {
   LabelList,
   Tooltip,
 } from 'recharts';
-import { retro } from '../theme';
-import { RetroBarShape } from './retro-bar-shape';
+import { colors } from '../theme';
+import { BarShape } from './bar-shape';
 
-export interface RetroBarChartData {
+export interface BarChartData {
   name: string;
   value: number;
   fill?: string;
   [key: string]: unknown;
 }
 
-export interface RetroBarChartProps {
-  data: RetroBarChartData[];
+export interface BarChartProps {
+  data: BarChartData[];
   /** Height per bar row in pixels */
   rowHeight?: number;
   /** Width for Y-axis labels */
@@ -48,32 +48,21 @@ export interface RetroBarChartProps {
 }
 
 /**
- * Retro-styled horizontal bar chart with Windows 95 aesthetic
- *
- * Usage:
- * ```tsx
- * <RetroBarChart
- *   data={[
- *     { name: 'Salary', value: 5000, fill: retro.positive },
- *     { name: 'Freelance', value: 3000, fill: retro.info },
- *   ]}
- *   valueFormatter={(v) => formatCurrency(v)}
- * />
- * ```
+ * Horizontal bar chart with clean dark mode styling
  */
-export function RetroBarChart({
+export function BarChart({
   data,
   rowHeight = 36,
   labelWidth = 100,
   valueWidth = 70,
   barSize = 18,
   barGap = 8,
-  defaultColor = retro.accent,
+  defaultColor = colors.accent,
   valueFormatter = (v) => v.toLocaleString(),
   showTooltip = false,
   animationDuration = 400,
   maxLabelLength = 12,
-}: RetroBarChartProps) {
+}: BarChartProps) {
   // Process data for display
   const chartData = data.map((item) => ({
     ...item,
@@ -88,7 +77,7 @@ export function RetroBarChart({
 
   return (
     <ResponsiveContainer width="100%" height={chartHeight}>
-      <BarChart
+      <RBarChart
         data={chartData}
         layout="vertical"
         margin={{ top: 4, right: valueWidth, left: 4, bottom: 4 }}
@@ -101,7 +90,7 @@ export function RetroBarChart({
           axisLine={false}
           tickLine={false}
           tick={{
-            fill: retro.text,
+            fill: colors.muted,
             fontSize: 11,
             fontFamily: 'inherit',
           }}
@@ -110,20 +99,23 @@ export function RetroBarChart({
         {showTooltip && (
           <Tooltip
             contentStyle={{
-              backgroundColor: retro.surface,
-              border: `2px solid ${retro.border}`,
-              boxShadow: `2px 2px 0 ${retro.border}`,
+              backgroundColor: colors.surface,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 6,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
               fontFamily: 'inherit',
               fontSize: 11,
+              color: colors.text,
             }}
             formatter={(value) =>
               typeof value === 'number' ? [valueFormatter(value), 'Value'] : [String(value), 'Value']
             }
+            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
           />
         )}
         <Bar
           dataKey="value"
-          shape={<RetroBarShape />}
+          shape={<BarShape />}
           barSize={barSize}
           isAnimationActive={true}
           animationDuration={animationDuration}
@@ -139,14 +131,14 @@ export function RetroBarChart({
               typeof value === 'number' ? valueFormatter(value) : String(value)
             }
             style={{
-              fill: retro.text,
+              fill: colors.text,
               fontSize: 10,
-              fontWeight: 'bold',
+              fontWeight: 500,
               fontFamily: 'monospace',
             }}
           />
         </Bar>
-      </BarChart>
+      </RBarChart>
     </ResponsiveContainer>
   );
 }

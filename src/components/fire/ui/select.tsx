@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { retro, retroStyles } from './theme';
+import { colors } from './theme';
 import { cn } from '@/lib/utils';
-import { IconChevronDown } from './icons';
+import { ChevronDown, Check } from 'lucide-react';
 
 export interface SelectProps {
   label?: string;
@@ -31,7 +31,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         {label && (
           <label
             className="text-xs uppercase tracking-wide block mb-1 font-medium"
-            style={{ color: hasError ? '#c53030' : retro.text }}
+            style={{ color: hasError ? colors.negative : colors.text }}
           >
             {label}
           </label>
@@ -40,45 +40,46 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           <SelectPrimitive.Trigger
             ref={ref}
             className={cn(
-              'w-full px-3 py-2 rounded-sm text-sm text-left flex items-center justify-between gap-2',
-              'focus:outline-none focus:ring-1',
+              'w-full px-3 py-2 rounded-md text-sm text-left flex items-center justify-between gap-2',
+              'outline-none transition-all duration-150',
+              'border bg-[#1C1C1E]',
+              hasError
+                ? 'border-[#F87171]'
+                : 'border-white/[0.08] hover:border-white/[0.15]',
+              'focus:border-[#5E6AD2]/60 focus:ring-2 focus:ring-[#5E6AD2]/20',
+              'data-[state=open]:border-[#5E6AD2]/60 data-[state=open]:ring-2 data-[state=open]:ring-[#5E6AD2]/20',
               disabled && 'opacity-50 cursor-not-allowed',
               hasError && 'animate-shake',
               className
             )}
             style={{
-              ...retroStyles.sunken,
-              color: value ? retro.text : retro.muted,
-              ...(hasError ? {
-                borderColor: '#c53030',
-                boxShadow: 'inset 2px 2px 0 rgba(197, 48, 48, 0.2)',
-              } : {}),
+              color: value ? colors.text : colors.muted,
             }}
           >
             <SelectPrimitive.Value placeholder={placeholder || 'Select...'} />
             <SelectPrimitive.Icon asChild>
-              <span style={{ color: retro.muted }}>
-                <IconChevronDown size={12} />
-              </span>
+              <ChevronDown size={14} strokeWidth={1.5} className="text-[#7C7C82] transition-transform duration-150" />
             </SelectPrimitive.Icon>
           </SelectPrimitive.Trigger>
 
           <SelectPrimitive.Portal>
             <SelectPrimitive.Content
-              className="z-[9999] rounded-sm overflow-hidden max-h-48 overflow-y-auto"
+              className="z-[9999] rounded-lg"
               style={{
-                backgroundColor: retro.surface,
-                border: `2px solid ${retro.border}`,
-                boxShadow: `3px 3px 0 ${retro.bevelDark}`,
+                backgroundColor: colors.surface,
+                border: `1px solid ${colors.border}`,
+                boxShadow: '0 8px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
+                width: 'var(--radix-select-trigger-width)',
+                maxHeight: 'var(--radix-select-content-available-height, 240px)',
               }}
               position="popper"
               sideOffset={4}
             >
-              <SelectPrimitive.Viewport>
+              <SelectPrimitive.Viewport className="p-1 max-h-[240px] overflow-y-auto">
                 {options.length === 0 ? (
                   <div
                     className="px-3 py-2 text-xs"
-                    style={{ color: retro.muted }}
+                    style={{ color: colors.muted }}
                   >
                     No options available
                   </div>
@@ -88,20 +89,19 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                       key={option.value}
                       value={option.value}
                       className={cn(
-                        'px-3 py-2 text-sm cursor-pointer transition-colors outline-none',
-                        'data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white',
-                        'data-[state=checked]:bg-[var(--surface-light)]'
+                        'px-3 py-2 text-sm cursor-pointer rounded-md mx-0.5 outline-none',
+                        'transition-colors duration-100',
+                        'data-[highlighted]:bg-white/[0.06]',
+                        'data-[state=checked]:text-white',
                       )}
-                      style={{
-                        '--accent': retro.accent,
-                        '--surface-light': retro.surfaceLight,
-                        color: retro.text,
-                      } as React.CSSProperties}
+                      style={{ color: colors.text }}
                     >
                       <div className="flex items-center gap-2">
-                        <SelectPrimitive.ItemIndicator>
-                          <span className="text-xs">✓</span>
-                        </SelectPrimitive.ItemIndicator>
+                        <span className="w-4 flex-shrink-0 flex items-center justify-center">
+                          <SelectPrimitive.ItemIndicator>
+                            <Check size={12} strokeWidth={2} style={{ color: colors.accent }} />
+                          </SelectPrimitive.ItemIndicator>
+                        </span>
                         <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
                       </div>
                     </SelectPrimitive.Item>
@@ -112,21 +112,11 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           </SelectPrimitive.Portal>
         </SelectPrimitive.Root>
 
-        {/* Error message */}
         {hasError && (
-          <div className="mt-1.5 flex items-start gap-1.5 text-xs">
-            <span
-              className="flex-shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[9px] font-bold mt-0.5"
-              style={{ backgroundColor: '#c53030' }}
-            >
-              !
-            </span>
-            <span style={{ color: '#c53030' }}>{error}</span>
-          </div>
+          <p className="mt-1 text-xs" style={{ color: colors.negative }}>{error}</p>
         )}
-        {/* Hint text */}
         {hint && !hasError && (
-          <p className="mt-1 text-xs" style={{ color: retro.muted }}>
+          <p className="mt-1 text-xs" style={{ color: colors.muted }}>
             {hint}
           </p>
         )}

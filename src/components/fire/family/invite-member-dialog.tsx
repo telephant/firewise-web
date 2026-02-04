@@ -12,7 +12,7 @@ import {
   Button,
   Input,
   Label,
-  retro,
+  colors,
 } from '@/components/fire/ui';
 
 interface InviteMemberDialogProps {
@@ -75,16 +75,16 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
             {success ? (
               <div
                 className="text-center py-8"
-                style={{ color: retro.positive }}
+                style={{ color: colors.positive }}
               >
                 <div className="text-2xl mb-2">Invitation Sent!</div>
-                <div className="text-sm" style={{ color: retro.muted }}>
+                <div className="text-sm" style={{ color: colors.muted }}>
                   They&apos;ll receive an email with instructions to join.
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm" style={{ color: retro.muted }}>
+                <p className="text-sm" style={{ color: colors.muted }}>
                   Enter the email address of the person you want to invite to your family.
                   They&apos;ll receive an email with a link to join.
                 </p>
@@ -108,8 +108,8 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
                   <div
                     className="text-sm p-2 rounded"
                     style={{
-                      backgroundColor: `${retro.negative}20`,
-                      color: retro.negative,
+                      backgroundColor: `${colors.negative}20`,
+                      color: colors.negative,
                     }}
                   >
                     {error}

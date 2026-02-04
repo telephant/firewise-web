@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { retro } from './theme';
+import { colors } from './theme';
 
 export interface ButtonGroupOption<T extends string = string> {
   id: T;
@@ -64,7 +64,7 @@ export function ButtonGroup<T extends string = string>({
       {label && (
         <label
           className="text-xs uppercase tracking-wide block mb-2 font-medium"
-          style={{ color: retro.text }}
+          style={{ color: colors.text }}
         >
           {label}
         </label>
@@ -86,18 +86,19 @@ export function ButtonGroup<T extends string = string>({
               }}
               disabled={isDisabled}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 rounded-sm transition-all active:translate-y-[1px]',
+                'flex flex-col items-center justify-center gap-1 rounded-lg',
+                'transition-all duration-150 outline-none',
+                'focus-visible:ring-2 focus-visible:ring-[#5E6AD2]/50',
                 styles.padding,
                 styles.minWidth,
-                isDisabled && 'opacity-50 cursor-not-allowed'
+                isDisabled && 'opacity-50 cursor-not-allowed',
+                !isDisabled && !isSelected && 'hover:bg-[#1C1C1E] hover:border-white/[0.12]',
+                !isDisabled && isSelected && 'active:scale-[0.97]',
               )}
               style={{
-                backgroundColor: isSelected ? retro.accent : retro.surface,
-                border: `2px solid ${retro.border}`,
-                color: isSelected ? '#ffffff' : retro.text,
-                boxShadow: isSelected
-                  ? `inset -1px -1px 0 rgba(0,0,0,0.3), inset 1px 1px 0 rgba(255,255,255,0.3), 2px 2px 0 ${retro.bevelDark}`
-                  : `inset -1px -1px 0 ${retro.bevelDark}, inset 1px 1px 0 ${retro.bevelLight}, 2px 2px 0 ${retro.bevelDark}`,
+                backgroundColor: isSelected ? colors.accent : colors.surface,
+                border: `1px solid ${isSelected ? colors.accent : colors.border}`,
+                color: isSelected ? '#ffffff' : colors.text,
               }}
             >
               {option.icon && (
@@ -109,7 +110,7 @@ export function ButtonGroup<T extends string = string>({
               {option.badge && (
                 <span
                   className={styles.badgeSize}
-                  style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : retro.muted }}
+                  style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : colors.muted }}
                 >
                   {option.badge}
                 </span>

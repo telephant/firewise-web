@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { retro, retroStyles, Loader, SimpleProgressBar } from '@/components/fire/ui';
+import { colors, Loader, SimpleProgressBar } from '@/components/fire/ui';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { formatCurrency } from '@/lib/fire/utils';
 import { useFlowFreedom } from '@/hooks/fire/use-fire-data';
@@ -15,7 +15,7 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-sm p-4" style={retroStyles.raised}>
+      <div className="rounded-md p-4" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
         <div className="py-8 flex items-center justify-center">
           <Loader size="sm" variant="bar" />
         </div>
@@ -25,9 +25,9 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
 
   if (error || !data) {
     return (
-      <div className="rounded-sm p-4" style={retroStyles.raised}>
+      <div className="rounded-md p-4" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
         <div className="py-6 text-center">
-          <p className="text-sm" style={{ color: retro.muted }}>
+          <p className="text-sm" style={{ color: colors.muted }}>
             Start tracking passive income to see Flow Freedom
           </p>
         </div>
@@ -42,23 +42,23 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
   const isAchieved = currentPercent >= 100;
 
   return (
-    <div className="rounded-sm p-4" style={retroStyles.raised}>
+    <div className="rounded-md p-4" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
       {/* Header with big percentage */}
       <div className="flex items-center justify-between mb-3">
         <h3
           className="text-xs font-bold uppercase tracking-wider"
-          style={{ color: retro.text }}
+          style={{ color: colors.text }}
         >
           Flow Freedom
         </h3>
         <div className="flex items-center gap-2">
           {isAchieved && (
             <span
-              className="text-xs px-2 py-0.5 rounded-sm"
+              className="text-xs px-2 py-0.5 rounded-md"
               style={{
-                backgroundColor: retro.positive + '20',
-                color: retro.positive,
-                border: `1px solid ${retro.positive}40`,
+                backgroundColor: colors.positive + '20',
+                color: colors.positive,
+                border: `1px solid ${colors.positive}40`,
               }}
             >
               Achieved!
@@ -66,7 +66,7 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
           )}
           <span
             className="text-2xl font-bold tabular-nums"
-            style={{ color: isAchieved ? retro.positive : retro.text }}
+            style={{ color: isAchieved ? colors.positive : colors.text }}
           >
             {currentPercent}%
           </span>
@@ -77,7 +77,7 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
       <div className="mb-4">
         <SimpleProgressBar
           value={currentPercent}
-          color={isAchieved ? retro.positive : retro.accent}
+          color={isAchieved ? colors.positive : colors.accent}
         />
       </div>
 
@@ -85,14 +85,14 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
       <div className="space-y-2 mb-4">
         {/* Passive Income Row */}
         <div className="flex items-center justify-between">
-          <span className="text-xs" style={{ color: retro.muted }}>
+          <span className="text-xs" style={{ color: colors.muted }}>
             Passive Income
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="text-sm font-bold tabular-nums" style={{ color: retro.positive }}>
+            <span className="text-sm font-bold tabular-nums" style={{ color: colors.positive }}>
               {formatCurrency(data.passiveIncome.monthly, { currency, compact: true })}/mo
             </span>
-            <span className="text-xs tabular-nums" style={{ color: retro.muted }}>
+            <span className="text-xs tabular-nums" style={{ color: colors.muted }}>
               ({formatCurrency(data.passiveIncome.annual, { currency, compact: true })}/yr)
             </span>
           </div>
@@ -100,7 +100,7 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
 
         {/* Expenses Row with Tooltip */}
         <div className="flex items-center justify-between">
-          <span className="text-xs" style={{ color: retro.muted }}>
+          <span className="text-xs" style={{ color: colors.muted }}>
             Expenses
             {hasDebts && (
               <TooltipPrimitive.Provider delayDuration={0}>
@@ -108,7 +108,7 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
                   <TooltipPrimitive.Trigger asChild>
                     <span
                       className="ml-1 cursor-help underline decoration-dotted"
-                      style={{ color: retro.muted }}
+                      style={{ color: colors.muted }}
                     >
                       (incl. debt)
                     </span>
@@ -116,10 +116,10 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
                   <TooltipPrimitive.Portal>
                     <TooltipPrimitive.Content
                       sideOffset={6}
-                      className="p-2 text-xs z-50 rounded-sm animate-in fade-in-0 zoom-in-95"
+                      className="p-2 text-xs z-50 rounded-md animate-in fade-in-0 zoom-in-95"
                       style={{
-                        ...retroStyles.raised,
-                        color: retro.text,
+                        backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
+                        color: colors.text,
                       }}
                     >
                       <div className="space-y-1 min-w-[180px]">
@@ -131,9 +131,9 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
                         </div>
                         <div
                           className="border-t pt-1 mt-1"
-                          style={{ borderColor: retro.border }}
+                          style={{ borderColor: colors.border }}
                         >
-                          <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: retro.muted }}>
+                          <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: colors.muted }}>
                             Debt Payments
                           </div>
                           {data.expenses.debtBreakdown.map((debt, idx) => (
@@ -147,7 +147,7 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
                         </div>
                         <div
                           className="border-t pt-1 mt-1 flex justify-between gap-4"
-                          style={{ borderColor: retro.border }}
+                          style={{ borderColor: colors.border }}
                         >
                           <span className="font-medium">Total:</span>
                           <span className="font-bold tabular-nums">
@@ -162,10 +162,10 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
             )}
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="text-sm font-bold tabular-nums" style={{ color: retro.negative }}>
+            <span className="text-sm font-bold tabular-nums" style={{ color: colors.negative }}>
               {formatCurrency(data.expenses.monthly, { currency, compact: true })}/mo
             </span>
-            <span className="text-xs tabular-nums" style={{ color: retro.muted }}>
+            <span className="text-xs tabular-nums" style={{ color: colors.muted }}>
               ({formatCurrency(data.expenses.annual, { currency, compact: true })}/yr)
             </span>
           </div>
@@ -174,17 +174,17 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
         {/* Divider */}
         <div
           className="border-t my-2"
-          style={{ borderColor: retro.border }}
+          style={{ borderColor: colors.border }}
         />
 
         {/* Gap/Surplus Row */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium" style={{ color: retro.text }}>
+          <span className="text-xs font-medium" style={{ color: colors.text }}>
             {gap > 0 ? 'Monthly Gap' : 'Monthly Surplus'}
           </span>
           <span
             className="text-sm font-bold tabular-nums"
-            style={{ color: gap > 0 ? retro.warning : retro.positive }}
+            style={{ color: gap > 0 ? colors.warning : colors.positive }}
           >
             {gap > 0 ? '-' : '+'}{formatCurrency(Math.abs(gap), { currency, compact: true })}
           </span>
@@ -193,18 +193,18 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
 
       {/* Secondary Info Box */}
       <div
-        className="p-3 rounded-sm space-y-1.5"
-        style={retroStyles.sunken}
+        className="p-3 rounded-md space-y-1.5"
+        style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
       >
         {/* After Debts */}
         {hasDebts && (
           <div className="flex items-center justify-between">
-            <span className="text-xs" style={{ color: retro.muted }}>
+            <span className="text-xs" style={{ color: colors.muted }}>
               After debts paid {data.flowFreedom.debtPayoffYear && `(${data.flowFreedom.debtPayoffYear})`}
             </span>
             <span
               className="text-xs font-bold tabular-nums"
-              style={{ color: afterDebtsPercent >= 100 ? retro.positive : retro.info }}
+              style={{ color: afterDebtsPercent >= 100 ? colors.positive : colors.info }}
             >
               {afterDebtsPercent}% Freedom
             </span>
@@ -213,10 +213,10 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
 
         {/* Time to Freedom */}
         <div className="flex items-center justify-between">
-          <span className="text-xs" style={{ color: retro.muted }}>
+          <span className="text-xs" style={{ color: colors.muted }}>
             Time to 100%
           </span>
-          <span className="text-xs font-bold" style={{ color: retro.text }}>
+          <span className="text-xs font-bold" style={{ color: colors.text }}>
             {data.timeToFreedom.years !== null ? (
               data.timeToFreedom.years <= 0 ? (
                 'Now!'
@@ -232,14 +232,14 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
         {/* Data confidence */}
         {data.timeToFreedom.dataMonths > 0 && (
           <div className="flex items-center justify-between">
-            <span className="text-[10px]" style={{ color: retro.muted }}>
+            <span className="text-[10px]" style={{ color: colors.muted }}>
               Based on {data.timeToFreedom.dataMonths} months data
             </span>
             {data.timeToFreedom.trend.direction !== 'stable' && (
               <span
                 className="text-[10px]"
                 style={{
-                  color: data.timeToFreedom.trend.direction === 'up' ? retro.positive : retro.negative,
+                  color: data.timeToFreedom.trend.direction === 'up' ? colors.positive : colors.negative,
                 }}
               >
                 {data.timeToFreedom.trend.direction === 'up' ? '↑ Growing' : '↓ Declining'}
@@ -253,13 +253,13 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
       {data.pendingReview.count > 0 && (
         <Link
           href="/fire/flows?needs_review=true"
-          className="mt-3 p-2 rounded-sm flex items-center justify-between text-xs hover:opacity-80 transition-opacity"
+          className="mt-3 p-2 rounded-md flex items-center justify-between text-xs hover:opacity-80 transition-opacity"
           style={{
-            backgroundColor: retro.warning + '15',
-            border: `1px solid ${retro.warning}40`,
+            backgroundColor: colors.warning + '15',
+            border: `1px solid ${colors.warning}40`,
           }}
         >
-          <span style={{ color: retro.warning }}>
+          <span style={{ color: colors.warning }}>
             {data.pendingReview.count} flow{data.pendingReview.count > 1 ? 's' : ''} excluded
             {data.pendingReview.hasPassiveIncome && data.pendingReview.hasExpenses
               ? ' (income & expenses)'
@@ -268,7 +268,7 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
                 : ' (expenses)'}{' '}
             - needs review
           </span>
-          <span style={{ color: retro.warning }}>Review →</span>
+          <span style={{ color: colors.warning }}>Review →</span>
         </Link>
       )}
     </div>

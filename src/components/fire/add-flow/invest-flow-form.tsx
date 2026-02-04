@@ -1,7 +1,7 @@
 'use client';
 
 import type { FlowCategoryPreset, AssetWithBalance, AssetType } from '@/types/fire';
-import { retro, Input, Select, Label, Button, IconArrow } from '@/components/fire/ui';
+import { colors, Input, Select, Label, Button, IconArrow } from '@/components/fire/ui';
 import { InvestmentTypeSelector, type InvestmentType, getInvestmentTypeConfig } from './investment-type-selector';
 import { StockTickerInput } from './stock-ticker-input';
 import { NewAssetForm } from './new-asset-form';
@@ -128,7 +128,7 @@ export function InvestFlowForm({
 
       {/* Computed price per share */}
       {computedPricePerShare && (
-        <p className="text-xs -mt-2" style={{ color: retro.muted }}>
+        <p className="text-xs -mt-2" style={{ color: colors.muted }}>
           @ ${computedPricePerShare} per share
         </p>
       )}
@@ -137,7 +137,7 @@ export function InvestFlowForm({
       {showToField && !isUsStockInvestment && (
         <>
           <div className="flex justify-center py-1">
-            <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+            <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
               <IconArrow size={18} />
             </span>
           </div>

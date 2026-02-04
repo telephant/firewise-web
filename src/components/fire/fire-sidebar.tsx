@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
 import {
-  retro,
-  retroStyles,
+  colors,
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -89,12 +88,12 @@ export function FireSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/fire" className="flex items-center gap-2 px-1">
+        <Link href="/fire" className="flex items-center gap-2 px-1 transition-opacity duration-150 hover:opacity-80">
           <div>
-            <span className="text-base font-bold tracking-tight" style={{ color: retro.text }}>
+            <span className="text-base font-bold tracking-tight" style={{ color: colors.text }}>
               FIRE
             </span>
-            <span className="block text-[10px] -mt-0.5" style={{ color: retro.muted }}>
+            <span className="block text-[10px] -mt-0.5" style={{ color: colors.muted }}>
               Financial Independence
             </span>
           </div>
@@ -122,8 +121,8 @@ export function FireSidebar() {
                           <span
                             className="text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
                             style={{
-                              backgroundColor: retro.warning,
-                              color: retro.text,
+                              backgroundColor: colors.warning,
+                              color: colors.text,
                             }}
                           >
                             {badgeCount}
@@ -140,7 +139,7 @@ export function FireSidebar() {
 
         {/* Settings section */}
         <SidebarGroup>
-          <div className="px-2 pt-2" style={{ borderTop: `1px solid ${retro.border}` }}>
+          <div className="px-2 pt-2" style={{ borderTop: `1px solid ${colors.border}` }}>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={() => setSettingsMenuOpen(!settingsMenuOpen)}>
@@ -151,7 +150,7 @@ export function FireSidebar() {
                   <span
                     className="text-[10px] ml-auto transition-transform"
                     style={{
-                      color: retro.muted,
+                      color: colors.muted,
                       transform: settingsMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
                     }}
                   >
@@ -185,15 +184,17 @@ export function FireSidebar() {
 
       <SidebarFooter>
         <div
-          className="rounded-sm p-2"
+          className="rounded-md p-2 transition-colors duration-150 hover:bg-[#252528]"
           style={{
-            ...retroStyles.sunken,
+            backgroundColor: colors.surfaceLight,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '6px',
           }}
         >
           <Link
             href="/dashboard"
-            className="flex items-center justify-between text-xs transition-colors hover:opacity-80"
-            style={{ color: retro.muted }}
+            className="flex items-center justify-between text-xs transition-colors duration-150 hover:text-[#EDEDEF]"
+            style={{ color: colors.muted }}
           >
             <span>Expense Tracker</span>
             <IconArrow size={12} />

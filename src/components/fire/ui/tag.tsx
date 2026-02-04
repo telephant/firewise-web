@@ -1,6 +1,6 @@
 'use client';
 
-import { retro } from './theme';
+import { colors } from './theme';
 import type { ReactNode } from 'react';
 
 type TagVariant = 'default' | 'warning' | 'positive' | 'negative' | 'info';
@@ -13,41 +13,36 @@ export interface TagProps {
   className?: string;
 }
 
-const variantStyles: Record<TagVariant, { bg: string; border: string; text: string }> = {
+const variantStyles: Record<TagVariant, { bg: string; text: string }> = {
   default: {
-    bg: retro.bevelMid,
-    border: retro.border,
-    text: retro.text,
+    bg: 'rgba(255,255,255,0.06)',
+    text: colors.text,
   },
   warning: {
-    bg: `${retro.warning}25`,
-    border: retro.warning,
-    text: retro.warning,
+    bg: `${colors.warning}18`,
+    text: colors.warning,
   },
   positive: {
-    bg: `${retro.positive}20`,
-    border: retro.positive,
-    text: retro.positive,
+    bg: `${colors.positive}18`,
+    text: colors.positive,
   },
   negative: {
-    bg: `${retro.negative}20`,
-    border: retro.negative,
-    text: retro.negative,
+    bg: `${colors.negative}18`,
+    text: colors.negative,
   },
   info: {
-    bg: `${retro.info}20`,
-    border: retro.info,
-    text: retro.info,
+    bg: `${colors.info}18`,
+    text: colors.info,
   },
 };
 
 const sizeStyles: Record<TagSize, { padding: string; fontSize: string }> = {
   sm: {
-    padding: '1px 6px',
+    padding: '2px 8px',
     fontSize: '10px',
   },
   md: {
-    padding: '2px 8px',
+    padding: '3px 10px',
     fontSize: '11px',
   },
 };
@@ -63,14 +58,12 @@ export function Tag({
 
   return (
     <span
-      className={`inline-flex items-center font-medium rounded-sm ${className}`}
+      className={`inline-flex items-center font-medium rounded-md ${className}`}
       style={{
         backgroundColor: variantStyle.bg,
-        border: `1.5px solid ${variantStyle.border}`,
         color: variantStyle.text,
         padding: sizeStyle.padding,
         fontSize: sizeStyle.fontSize,
-        boxShadow: `1px 1px 0 ${retro.bevelDark}`,
       }}
     >
       {children}

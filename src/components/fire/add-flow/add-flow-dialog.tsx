@@ -2,8 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import {
-  retro,
-  retroStyles,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -228,8 +227,8 @@ export function AddFlowDialog({ open, onOpenChange, initialCategory, initialDebt
                 <button
                   type="button"
                   onClick={() => setStep('category')}
-                  className="w-4 h-4 flex items-center justify-center transition-colors hover:bg-[#a0a0a0]"
-                  style={retroStyles.windowButton}
+                  className="w-4 h-4 flex items-center justify-center transition-colors hover:opacity-70"
+                  style={{ backgroundColor: 'transparent', border: 'none' }}
                 >
                   <span style={{ display: 'inline-block', transform: 'rotate(180deg)' }}>
                     <IconArrow size={8} />
@@ -248,7 +247,7 @@ export function AddFlowDialog({ open, onOpenChange, initialCategory, initialDebt
           {showStartDateConfirm ? (
             // Confirmation for recurring start date
             <div className="space-y-4">
-              <p className="text-sm" style={{ color: retro.text }}>
+              <p className="text-sm" style={{ color: colors.text }}>
                 The start date is today. Would you like to:
               </p>
               <div className="space-y-2">
@@ -269,7 +268,7 @@ export function AddFlowDialog({ open, onOpenChange, initialCategory, initialDebt
                   {loading ? 'Creating...' : 'Start from next occurrence only'}
                 </Button>
               </div>
-              <p className="text-xs" style={{ color: retro.muted }}>
+              <p className="text-xs" style={{ color: colors.muted }}>
                 Choose &quot;next occurrence&quot; if this flow hasn&apos;t happened yet today.
               </p>
             </div>

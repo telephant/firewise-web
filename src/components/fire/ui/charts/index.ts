@@ -1,14 +1,13 @@
-// Retro-styled chart components for FIRE application
-// Based on Windows 95/98 aesthetic
+// Chart components for FIRE application
 
-export { RetroBarShape } from './retro-bar-shape';
-export type { RetroBarShapeProps } from './retro-bar-shape';
+export { BarShape } from './bar-shape';
+export type { BarShapeProps } from './bar-shape';
 
-export { RetroBarChart } from './retro-bar-chart';
-export type { RetroBarChartProps, RetroBarChartData } from './retro-bar-chart';
+export { BarChart } from './bar-chart';
+export type { BarChartProps, BarChartData } from './bar-chart';
 
-export { RetroStackedBarChart } from './retro-stacked-bar-chart';
-export type { RetroStackedBarChartProps, StackedBarItem } from './retro-stacked-bar-chart';
+export { StackedBarChart } from './stacked-bar-chart';
+export type { StackedBarChartProps, StackedBarItem } from './stacked-bar-chart';
 
-export { RetroPieChart } from './retro-pie-chart';
-export type { RetroPieChartProps, PieSegment } from './retro-pie-chart';
+export { PieChart } from './pie-chart';
+export type { PieChartProps, PieSegment } from './pie-chart';

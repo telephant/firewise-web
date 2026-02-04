@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import type { FlowCategoryPreset, AssetWithBalance, AssetType, FlowWithDetails } from '@/types/fire';
 import {
-  retro,
+  colors,
   Input,
   IconArrow,
   AssetCombobox,
@@ -218,12 +218,12 @@ export function SellFlowForm({
       {/* Asset info when selected */}
       {selectedAsset && (
         <div
-          className="px-3 py-2 rounded-sm flex flex-wrap gap-x-4 gap-y-1 text-xs"
-          style={{ backgroundColor: retro.surfaceLight }}
+          className="px-3 py-2 rounded-md flex flex-wrap gap-x-4 gap-y-1 text-xs"
+          style={{ backgroundColor: colors.surfaceLight }}
         >
           <span>
-            <span style={{ color: retro.muted }}>{isShareBased ? 'Shares: ' : 'Value: '}</span>
-            <span style={{ color: retro.text }}>
+            <span style={{ color: colors.muted }}>{isShareBased ? 'Shares: ' : 'Value: '}</span>
+            <span style={{ color: colors.text }}>
               {isShareBased
                 ? availableShares.toLocaleString()
                 : formatCurrency(selectedAsset.balance, { currency: selectedAsset.currency })}
@@ -231,37 +231,37 @@ export function SellFlowForm({
           </span>
           {isShareBased && (
             <span>
-              <span style={{ color: retro.muted }}>Avg Cost: </span>
+              <span style={{ color: colors.muted }}>Avg Cost: </span>
               {loadingAvgCost ? (
                 <Loader size="sm" />
               ) : avgCostPerShare != null ? (
-                <span style={{ color: retro.text }}>
+                <span style={{ color: colors.text }}>
                   {formatCurrency(avgCostPerShare, { currency: selectedAsset.currency })}
                 </span>
               ) : (
-                <span style={{ color: retro.muted }}>-</span>
+                <span style={{ color: colors.muted }}>-</span>
               )}
             </span>
           )}
           {selectedAsset.ticker && (
             <span>
-              <span style={{ color: retro.muted }}>Market: </span>
+              <span style={{ color: colors.muted }}>Market: </span>
               {loadingPrice ? (
                 <Loader size="sm" />
               ) : stockPrice ? (
-                <span style={{ color: retro.text }}>
+                <span style={{ color: colors.text }}>
                   {formatCurrency(stockPrice.price, { currency: stockPrice.currency })}
                   {stockPrice.changePercent != null && (
                     <span
                       className="ml-1"
-                      style={{ color: (stockPrice.change ?? 0) >= 0 ? retro.positive : retro.negative }}
+                      style={{ color: (stockPrice.change ?? 0) >= 0 ? colors.positive : colors.negative }}
                     >
                       ({(stockPrice.change ?? 0) >= 0 ? '+' : ''}{stockPrice.changePercent.toFixed(1)}%)
                     </span>
                   )}
                 </span>
               ) : (
-                <span style={{ color: retro.muted }}>-</span>
+                <span style={{ color: colors.muted }}>-</span>
               )}
             </span>
           )}
@@ -294,12 +294,12 @@ export function SellFlowForm({
 
           {/* Total proceeds and P/L */}
           {shares > 0 && pricePerShare > 0 && (
-            <div className="text-xs text-right -mt-2 space-x-2" style={{ color: retro.muted }}>
+            <div className="text-xs text-right -mt-2 space-x-2" style={{ color: colors.muted }}>
               <span>Total: {formatCurrency(totalProceeds, { currency: form.currency })}</span>
               {avgCostPerShare != null && (
                 <span
                   style={{
-                    color: pricePerShare >= avgCostPerShare ? retro.positive : retro.negative,
+                    color: pricePerShare >= avgCostPerShare ? colors.positive : colors.negative,
                   }}
                 >
                   P/L: {pricePerShare >= avgCostPerShare ? '+' : ''}
@@ -342,23 +342,23 @@ export function SellFlowForm({
       {/* Proceeds summary - auto-select first cash account */}
       {selectedAsset && netProceeds > 0 && (
         <div
-          className="p-3 rounded-sm"
-          style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.border}` }}
+          className="p-3 rounded-md"
+          style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}` }}
         >
           <div className="flex items-center gap-2 text-sm">
-            <span style={{ color: retro.positive }}>
+            <span style={{ color: colors.positive }}>
               <IconArrow size={14} />
             </span>
-            <span style={{ color: retro.text }}>
+            <span style={{ color: colors.text }}>
               {formatCurrency(netProceeds, { currency: form.currency })}
             </span>
-            <span style={{ color: retro.muted }}>→</span>
-            <span style={{ color: retro.text, fontWeight: 500 }}>
+            <span style={{ color: colors.muted }}>→</span>
+            <span style={{ color: colors.text, fontWeight: 500 }}>
               {cashAssets[0]?.name || 'Cash Account'}
             </span>
           </div>
           {fees > 0 && (
-            <p className="text-[10px] mt-1 ml-5" style={{ color: retro.muted }}>
+            <p className="text-[10px] mt-1 ml-5" style={{ color: colors.muted }}>
               After {formatCurrency(fees, { currency: form.currency })} fees
             </p>
           )}
@@ -368,8 +368,8 @@ export function SellFlowForm({
       {/* Real estate: Mark as sold option */}
       {isRealEstate && selectedAsset && (
         <label
-          className="flex items-center gap-2 p-3 rounded-sm cursor-pointer"
-          style={{ backgroundColor: retro.surfaceLight }}
+          className="flex items-center gap-2 p-3 rounded-md cursor-pointer"
+          style={{ backgroundColor: colors.surfaceLight }}
         >
           <input
             type="checkbox"
@@ -378,10 +378,10 @@ export function SellFlowForm({
             className="w-4 h-4"
           />
           <div>
-            <p className="text-sm font-medium" style={{ color: retro.text }}>
+            <p className="text-sm font-medium" style={{ color: colors.text }}>
               Mark property as sold
             </p>
-            <p className="text-xs" style={{ color: retro.muted }}>
+            <p className="text-xs" style={{ color: colors.muted }}>
               Remove from active assets after sale
             </p>
           </div>

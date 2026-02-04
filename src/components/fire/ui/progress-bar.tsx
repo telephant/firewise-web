@@ -1,6 +1,6 @@
 'use client';
 
-import { retro, retroStyles } from './theme';
+import { colors } from './theme';
 import { cn } from '@/lib/utils';
 
 interface ProgressBarProps {
@@ -26,38 +26,33 @@ export function ProgressBar({
         <div>
           <p
             className="text-xs uppercase tracking-wide font-medium"
-            style={{ color: retro.text }}
+            style={{ color: colors.text }}
           >
             {label}
           </p>
           {sublabel && (
-            <p className="text-xs" style={{ color: retro.muted }}>
+            <p className="text-xs" style={{ color: colors.muted }}>
               {sublabel}
             </p>
           )}
         </div>
-        <p className="text-sm font-bold" style={{ color: retro.text }}>
+        <p className="text-sm font-bold" style={{ color: colors.text }}>
           {displayValue}
         </p>
       </div>
-      {/* Retro sunken progress track */}
+      {/* Progress track */}
       <div
-        className="h-5 rounded-sm p-[2px]"
-        style={retroStyles.sunken}
+        className="h-2 rounded-full overflow-hidden"
+        style={{
+          backgroundColor: colors.surfaceLight,
+        }}
       >
-        {/* Striped progress fill */}
+        {/* Progress fill */}
         <div
-          className="h-full rounded-sm transition-all duration-500"
+          className="h-full rounded-full transition-all duration-500"
           style={{
             width: `${clampedValue}%`,
-            backgroundColor: retro.accent,
-            backgroundImage: `repeating-linear-gradient(
-              90deg,
-              ${retro.accent} 0px,
-              ${retro.accent} 8px,
-              ${retro.accentLight} 8px,
-              ${retro.accentLight} 16px
-            )`,
+            backgroundColor: colors.accent,
           }}
         />
       </div>

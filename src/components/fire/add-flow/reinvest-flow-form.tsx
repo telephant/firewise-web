@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useRef } from 'react';
 import type { FlowCategoryPreset, AssetWithBalance } from '@/types/fire';
-import { retro, Input, AssetCombobox } from '@/components/fire/ui';
+import { colors, Input, AssetCombobox } from '@/components/fire/ui';
 import { FormActions } from './form-actions';
 import type { FlowFormState, FlowFormErrors, NewAssetState } from './types';
 import { formatCurrency } from '@/lib/fire/utils';
@@ -78,10 +78,10 @@ export function ReinvestFlowForm({
       {/* Show current shares */}
       {selectedAsset && (
         <div
-          className="px-3 py-2 rounded-sm text-xs"
-          style={{ backgroundColor: retro.surfaceLight }}
+          className="px-3 py-2 rounded-md text-xs"
+          style={{ backgroundColor: colors.surfaceLight }}
         >
-          <span style={{ color: retro.muted }}>
+          <span style={{ color: colors.muted }}>
             Current: {currentShares.toLocaleString()} shares of {selectedAsset.ticker || selectedAsset.name}
           </span>
         </div>
@@ -111,7 +111,7 @@ export function ReinvestFlowForm({
 
       {/* Calculated price per share */}
       {amount > 0 && shares > 0 && (
-        <div className="text-xs text-right -mt-2" style={{ color: retro.muted }}>
+        <div className="text-xs text-right -mt-2" style={{ color: colors.muted }}>
           Price: {formatCurrency(pricePerShare, { currency: form.currency })}/share
         </div>
       )}
@@ -119,13 +119,13 @@ export function ReinvestFlowForm({
       {/* Summary */}
       {selectedAsset && shares > 0 && (
         <div
-          className="p-3 rounded-sm"
-          style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.border}` }}
+          className="p-3 rounded-md"
+          style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}` }}
         >
           <div className="flex items-center gap-2 text-sm">
-            <span style={{ color: retro.positive }}>+{shares.toLocaleString()}</span>
-            <span style={{ color: retro.muted }}>shares →</span>
-            <span style={{ color: retro.text, fontWeight: 500 }}>
+            <span style={{ color: colors.positive }}>+{shares.toLocaleString()}</span>
+            <span style={{ color: colors.muted }}>shares →</span>
+            <span style={{ color: colors.text, fontWeight: 500 }}>
               {newTotalShares.toLocaleString()} total
             </span>
           </div>

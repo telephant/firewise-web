@@ -7,7 +7,7 @@ import { mutateDebts } from '@/hooks/fire/use-fire-data';
 import type { Debt, DebtType } from '@/types/fire';
 import { DEBT_TYPE_LABELS } from '@/types/fire';
 import {
-  retro,
+  colors,
   Dialog,
   DialogBody,
   DialogContent,
@@ -289,11 +289,11 @@ export function EditDebtDialog({ debt, open, onOpenChange, onMakePayment }: Edit
             {/* Monthly Payment Preview */}
             {monthlyPayment > 0 && (
               <div
-                className="p-3 rounded-sm text-center"
-                style={{ backgroundColor: retro.surfaceLight, border: `1px solid ${retro.bevelMid}` }}
+                className="p-3 rounded-md text-center"
+                style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.surfaceLight}` }}
               >
                 <Label variant="muted" className="block mb-1">Estimated Monthly Payment</Label>
-                <p className="text-lg font-bold" style={{ color: retro.negative }}>
+                <p className="text-lg font-bold" style={{ color: colors.negative }}>
                   {formatMoney(monthlyPayment)}
                 </p>
               </div>

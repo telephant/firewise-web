@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { retro, retroStyles, Loader } from '@/components/fire/ui';
+import { colors, Loader } from '@/components/fire/ui';
 import { formatCurrency, calculateNetWorth } from '@/lib/fire/utils';
 import { useAssets, useFlowFreedom, useRunway } from '@/hooks/fire/use-fire-data';
 
@@ -124,8 +124,8 @@ export function HumanInsightCard({ currency = 'USD' }: HumanInsightCardProps) {
   if (isLoading) {
     return (
       <div
-        className="p-4 rounded-sm flex items-center justify-center"
-        style={retroStyles.raised}
+        className="p-4 rounded-md flex items-center justify-center"
+        style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}
       >
         <Loader size="sm" variant="bar" />
       </div>
@@ -135,10 +135,10 @@ export function HumanInsightCard({ currency = 'USD' }: HumanInsightCardProps) {
   if (!insight) {
     return (
       <div
-        className="p-4 rounded-sm text-center"
-        style={retroStyles.raised}
+        className="p-4 rounded-md text-center"
+        style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' }}
       >
-        <span className="text-sm" style={{ color: retro.muted }}>
+        <span className="text-sm" style={{ color: colors.muted }}>
           Add income and expenses to see insights
         </span>
       </div>
@@ -146,36 +146,35 @@ export function HumanInsightCard({ currency = 'USD' }: HumanInsightCardProps) {
   }
 
   const bgColor = {
-    positive: retro.positive + '15',
-    warning: retro.warning + '15',
-    info: retro.info + '15',
-    neutral: retro.surfaceLight,
+    positive: colors.positive + '15',
+    warning: colors.warning + '15',
+    info: colors.info + '15',
+    neutral: colors.surfaceLight,
   }[insight.type];
 
   const borderColor = {
-    positive: retro.positive + '40',
-    warning: retro.warning + '40',
-    info: retro.info + '40',
-    neutral: retro.border,
+    positive: colors.positive + '40',
+    warning: colors.warning + '40',
+    info: colors.info + '40',
+    neutral: colors.border,
   }[insight.type];
 
   return (
     <div
-      className="p-4 rounded-sm"
+      className="p-4 rounded-md"
       style={{
         backgroundColor: bgColor,
-        border: `2px solid ${borderColor}`,
-        boxShadow: `3px 3px 0 ${retro.bevelDark}`,
+        border: `1px solid ${borderColor}`,
       }}
     >
       <div className="flex items-start gap-3">
         <span className="text-xl">{insight.icon}</span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium" style={{ color: retro.text }}>
+          <p className="text-sm font-medium" style={{ color: colors.text }}>
             {insight.message}
           </p>
           {insight.detail && (
-            <p className="text-xs mt-1" style={{ color: retro.muted }}>
+            <p className="text-xs mt-1" style={{ color: colors.muted }}>
               {insight.detail}
             </p>
           )}

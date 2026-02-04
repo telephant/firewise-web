@@ -1,7 +1,7 @@
 'use client';
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { retro } from '../theme';
+import { PieChart as RPieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { colors } from '../theme';
 
 export interface PieSegment {
   name: string;
@@ -10,7 +10,7 @@ export interface PieSegment {
   [key: string]: unknown;
 }
 
-export interface RetroPieChartProps {
+export interface PieChartProps {
   /** Outer ring data (categories) */
   outerData: PieSegment[];
   /** Inner ring data (individual items) */
@@ -60,18 +60,19 @@ function CustomTooltip({
   return (
     <div
       style={{
-        backgroundColor: retro.surface,
-        border: `2px solid ${retro.border}`,
-        boxShadow: `2px 2px 0 ${retro.border}`,
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.border}`,
+        borderRadius: 6,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
         padding: '8px 12px',
         fontSize: 11,
       }}
     >
-      <div style={{ fontWeight: 'bold', color: retro.text, marginBottom: 4 }}>
+      <div style={{ fontWeight: 500, color: colors.text, marginBottom: 4 }}>
         {data.name}
       </div>
-      <div style={{ color: retro.muted }}>
-        <span style={{ fontFamily: 'monospace', color: retro.text }}>
+      <div style={{ color: colors.muted }}>
+        <span style={{ fontFamily: 'monospace', color: colors.text }}>
           {valueFormatter(data.value)}
         </span>
         <span style={{ marginLeft: 8, color: data.payload.color }}>
@@ -83,25 +84,9 @@ function CustomTooltip({
 }
 
 /**
- * Retro-styled two-layer pie/donut chart with Windows 95 aesthetic
- *
- * Usage:
- * ```tsx
- * <RetroPieChart
- *   outerData={[
- *     { name: 'Stocks', value: 50000, color: retro.accent },
- *     { name: 'Cash', value: 20000, color: retro.positive },
- *   ]}
- *   innerData={[
- *     { name: 'AAPL', value: 30000, color: retro.accent + 'cc' },
- *     { name: 'GOOGL', value: 20000, color: retro.accent + '99' },
- *     { name: 'Savings', value: 20000, color: retro.positive + 'cc' },
- *   ]}
- *   valueFormatter={(v) => formatCurrency(v)}
- * />
- * ```
+ * Two-layer pie/donut chart with clean dark mode styling
  */
-export function RetroPieChart({
+export function PieChart({
   outerData,
   innerData,
   size = 200,
@@ -112,7 +97,7 @@ export function RetroPieChart({
   outerOuterRadius = 0.85,
   innerInnerRadius = 0.25,
   innerOuterRadius = 0.50,
-}: RetroPieChartProps) {
+}: PieChartProps) {
   const total = outerData.reduce((sum, d) => sum + d.value, 0);
 
   // Filter out zero values
@@ -122,7 +107,7 @@ export function RetroPieChart({
   return (
     <div>
       <ResponsiveContainer width="100%" height={size}>
-        <PieChart>
+        <RPieChart>
           {/* Inner ring - individual items */}
           {filteredInner.length > 0 && (
             <Pie
@@ -141,7 +126,7 @@ export function RetroPieChart({
                 <Cell
                   key={`inner-${index}`}
                   fill={entry.color}
-                  stroke={retro.border}
+                  stroke={colors.bg}
                   strokeWidth={1}
                 />
               ))}
@@ -165,11 +150,8 @@ export function RetroPieChart({
               <Cell
                 key={`outer-${index}`}
                 fill={entry.color}
-                stroke={retro.border}
+                stroke={colors.bg}
                 strokeWidth={2}
-                style={{
-                  filter: 'drop-shadow(1px 1px 0 rgba(0,0,0,0.2))',
-                }}
               />
             ))}
           </Pie>
@@ -183,7 +165,7 @@ export function RetroPieChart({
               />
             }
           />
-        </PieChart>
+        </RPieChart>
       </ResponsiveContainer>
 
       {/* Legend */}
@@ -195,17 +177,16 @@ export function RetroPieChart({
           {filteredOuter.map((item, index) => {
             const percent = total > 0 ? (item.value / total) * 100 : 0;
             return (
-              <div key={index} className="flex items-center gap-1">
+              <div key={index} className="flex items-center gap-1.5">
                 <div
-                  className="w-3 h-3 rounded-sm"
+                  className="w-2.5 h-2.5 rounded-full"
                   style={{
                     backgroundColor: item.color,
-                    border: `1px solid ${retro.border}`,
                   }}
                 />
-                <span style={{ color: retro.muted }}>{item.name}</span>
+                <span style={{ color: colors.muted }}>{item.name}</span>
                 <span
-                  style={{ color: retro.text, fontFamily: 'monospace' }}
+                  style={{ color: colors.text, fontFamily: 'monospace' }}
                 >
                   {percentFormatter(percent)}
                 </span>

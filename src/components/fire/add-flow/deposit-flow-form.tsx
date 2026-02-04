@@ -1,7 +1,7 @@
 'use client';
 
 import type { FlowCategoryPreset, AssetWithBalance } from '@/types/fire';
-import { retro, Input, Select, CurrencyCombobox, IconArrow } from '@/components/fire/ui';
+import { colors, Input, Select, CurrencyCombobox, IconArrow } from '@/components/fire/ui';
 import { AssetFieldSelector } from './asset-field-selector';
 import { FormActions } from './form-actions';
 import { CURRENCY_OPTIONS, PAYMENT_PERIOD_OPTIONS, getFieldLabels } from './constants';
@@ -82,7 +82,7 @@ export function DepositFlowForm({
 
       {/* Arrow */}
       <div className="flex justify-center">
-        <span style={{ color: retro.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
+        <span style={{ color: colors.muted, display: 'inline-block', transform: 'rotate(90deg)' }}>
           <IconArrow size={16} />
         </span>
       </div>
