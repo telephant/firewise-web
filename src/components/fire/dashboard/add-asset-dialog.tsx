@@ -350,6 +350,8 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
           date: new Date().toISOString().split('T')[0],
           description: `Initial balance for ${asset.name}`,
         });
+        // Update asset balance
+        await assetApi.update(asset.id, { balance: value });
       }
 
       toast.success(`${ASSET_TYPE_LABELS[assetType]} "${asset.name}" added`);
@@ -374,6 +376,9 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
       if (purchasePrice > 0) realEstateMetadata.purchase_price = purchasePrice;
       if (propertyBoughtDate) realEstateMetadata.purchase_date = propertyBoughtDate;
       if (propertySqm) realEstateMetadata.size_sqm = parseFloat(propertySqm);
+      // Current value stored in metadata for reference
+      const currentValue = parseFloat(assetValue);
+      if (currentValue > 0) realEstateMetadata.current_value = currentValue;
 
       // Create the real estate asset
       const realEstateAsset = await createAsset({
@@ -390,7 +395,6 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
       }
 
       // Set initial property value (Current Value goes to asset balance)
-      const currentValue = parseFloat(assetValue);
       if (currentValue > 0) {
         await createFlow({
           type: 'income',
@@ -401,6 +405,8 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
           date: propertyBoughtDate || new Date().toISOString().split('T')[0],
           description: `Initial value for ${realEstateAsset.name}`,
         });
+        // Update asset balance to current value
+        await assetApi.update(realEstateAsset.id, { balance: currentValue });
       }
 
       // Create mortgage if user said yes (using new debts table)

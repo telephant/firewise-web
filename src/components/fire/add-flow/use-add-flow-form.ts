@@ -335,7 +335,9 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
 
     // Validate required asset selections (before auto-selection kicks in)
     // Check if to_asset is required but not selected and can't be auto-selected
-    if (selectedPreset.to.type === 'asset' && !form.toAssetId && !newAsset.show) {
+    // Skip for US stock invest - asset is created automatically from ticker selection
+    const isUsStockInvest = selectedPreset.id === 'invest' && form.investmentType === 'us_stock';
+    if (selectedPreset.to.type === 'asset' && !form.toAssetId && !newAsset.show && !isUsStockInvest) {
       const filtered = selectedPreset.to.assetFilter
         ? assets.filter(a => selectedPreset.to.assetFilter!.includes(a.type))
         : assets;
@@ -703,6 +705,11 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
         if (form.selectedTicker) {
           metadata.ticker = form.selectedTicker;
         }
+        // For value-based investments, store both bought and current values
+        if (form.investmentType === 'real_estate' || form.investmentType === 'other') {
+          metadata.bought_value = parseFloat(form.amount) || 0;
+          metadata.current_value = parseFloat(form.currentValue) || 0;
+        }
       }
 
       // Add sell flow metadata (P/L calculation)
@@ -965,6 +972,61 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
         return; // Early return - pay debt handled
       }
 
+      // Handle deposit flow (to existing or new deposit account)
+      // Special handling needed because:
+      // - If cash account selected: transfer from cash to deposit
+      // - If no cash account: income to deposit (recording money that came from elsewhere)
+      // - Must update deposit asset balance after flow creation
+      if (selectedPreset.id === 'deposit') {
+        // Validate deposit account is selected
+        if (!finalToAssetId) {
+          setFormErrors(prev => ({ ...prev, toAsset: 'Select deposit account' }));
+          setLoading(false);
+          return;
+        }
+
+        const depositAmount = parseFloat(form.amount);
+
+        // Determine flow type: transfer if cash account selected, income otherwise
+        const depositFlowType = finalFromAssetId ? 'transfer' : 'income';
+
+        // Add interest rate to metadata if provided (for new deposits)
+        const interestRate = parseFloat(form.interestRate);
+        if (interestRate > 0) {
+          metadata.interest_rate = interestRate / 100; // Store as decimal
+          metadata.payment_period = form.interestPaymentPeriod;
+        }
+
+        const success = await createFlow({
+          type: depositFlowType,
+          amount: depositAmount,
+          currency: form.currency,
+          from_asset_id: finalFromAssetId || null,
+          to_asset_id: finalToAssetId,
+          category: 'deposit',
+          date: form.date,
+          description: form.description || (finalFromAssetId ? 'Transfer to deposit' : 'Deposit'),
+          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        });
+
+        if (success) {
+          // Update deposit asset balance
+          const depositAsset = assets.find(a => a.id === finalToAssetId);
+          const currentBalance = depositAsset?.balance || 0;
+          const newBalance = currentBalance + depositAmount;
+
+          await assetApi.update(finalToAssetId, { balance: newBalance });
+          await mutateAssets();
+
+          toast.success('Deposit recorded');
+          onOpenChange(false);
+        } else {
+          toast.error('Failed to record deposit');
+        }
+        setLoading(false);
+        return; // Early return - deposit handled
+      }
+
       // Handle sell flow with asset updates
       if (selectedPreset.id === 'sell') {
         const soldAsset = assets.find(a => a.id === form.fromAssetId);
@@ -1142,14 +1204,23 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
         return; // Early return - other handled
       }
 
-      // Handle invest flow - create flow and update asset balance (shares) in transaction
+      // Handle invest flow - create flow and update asset balance (shares or value) in transaction
       if (selectedPreset.id === 'invest') {
         const sharesAcquired = parseFloat(form.shares) || 0;
         const amount = parseFloat(form.amount) || 0;
 
-        // Validate: shares required for investment
-        if (sharesAcquired <= 0) {
+        // Check if this is a real estate or value-based investment (no shares)
+        const isValueBasedInvestment = form.investmentType === 'real_estate' || form.investmentType === 'other';
+        const currentValue = parseFloat(form.currentValue) || 0;
+
+        // Validate: shares required for share-based investments, currentValue required for value-based
+        if (!isValueBasedInvestment && sharesAcquired <= 0) {
           setFormErrors(prev => ({ ...prev, shares: 'Shares required' }));
+          setLoading(false);
+          return;
+        }
+        if (isValueBasedInvestment && currentValue <= 0) {
+          setFormErrors(prev => ({ ...prev, currentValue: 'Current value required' }));
           setLoading(false);
           return;
         }
@@ -1177,10 +1248,15 @@ export function useAddFlowForm({ open, onOpenChange, initialCategory, initialDeb
         // Track flow for potential rollback
         createdFlowIds.push(flowResponse.data.id);
 
-        // Update asset balance to add shares
+        // Update asset balance (shares for stocks/ETFs, current value for real estate/other)
         if (finalToAssetId) {
-          const targetAsset = assets.find(a => a.id === finalToAssetId);
-          const newBalance = (targetAsset?.balance || 0) + sharesAcquired;
+          const assetToUpdate = assets.find(a => a.id === finalToAssetId);
+          const isValueBased = assetToUpdate?.type === 'real_estate' || assetToUpdate?.type === 'other';
+          // For value-based assets, SET balance to currentValue; for share-based, ADD shares
+          const currentValueNum = parseFloat(form.currentValue) || amount;
+          const newBalance = isValueBased
+            ? currentValueNum  // SET to current value for real estate/other
+            : (assetToUpdate?.balance || 0) + sharesAcquired;  // ADD shares for stocks
 
           const balanceResponse = await assetApi.update(finalToAssetId, { balance: newBalance });
 

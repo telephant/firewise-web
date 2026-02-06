@@ -18,6 +18,9 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
+  IconCheck,
+  IconWarning,
+  IconPlus,
 } from '@/components/fire/ui';
 import { FamilyMembersList } from './family-members-list';
 import { InviteMemberDialog } from './invite-member-dialog';
@@ -25,6 +28,127 @@ import { InviteMemberDialog } from './invite-member-dialog';
 interface FamilySettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+// Custom checkbox component
+function Checkbox({
+  checked,
+  onChange,
+  disabled,
+  id,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  id?: string;
+}) {
+  return (
+    <button
+      id={id}
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 cursor-pointer disabled:opacity-50"
+      style={{
+        backgroundColor: checked ? colors.accent : colors.surface,
+        border: `1px solid ${checked ? colors.accent : colors.border}`,
+      }}
+    >
+      {checked && <span style={{ color: '#fff' }}><IconCheck size={12} /></span>}
+    </button>
+  );
+}
+
+// Action card for danger zone
+function ActionCard({
+  title,
+  description,
+  buttonText,
+  onAction,
+  isLoading,
+  confirmText,
+  variant = 'default',
+}: {
+  title: string;
+  description: string;
+  buttonText: string;
+  onAction: () => void;
+  isLoading: boolean;
+  confirmText: string;
+  variant?: 'default' | 'danger';
+}) {
+  const [confirming, setConfirming] = useState(false);
+
+  const handleAction = async () => {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    await onAction();
+    setConfirming(false);
+  };
+
+  const isDanger = variant === 'danger';
+
+  return (
+    <div
+      className="p-4 rounded-lg"
+      style={{
+        backgroundColor: colors.surfaceLight,
+        border: `1px solid ${isDanger ? `${colors.negative}40` : colors.border}`,
+      }}
+    >
+      {!confirming ? (
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-medium" style={{ color: colors.text }}>
+              {title}
+            </div>
+            <div className="text-xs mt-0.5" style={{ color: colors.muted }}>
+              {description}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant={isDanger ? 'ghost' : 'outline'}
+            onClick={handleAction}
+            style={isDanger ? { color: colors.negative } : undefined}
+          >
+            {buttonText}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-start gap-2">
+            <span style={{ color: colors.negative, flexShrink: 0, marginTop: 2, display: 'flex' }}><IconWarning size={16} /></span>
+            <div className="text-sm" style={{ color: isDanger ? colors.negative : colors.text }}>
+              {confirmText}
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setConfirming(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleAction}
+              disabled={isLoading}
+              style={isDanger ? { backgroundColor: colors.negative } : undefined}
+            >
+              {isLoading ? 'Processing...' : 'Confirm'}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialogProps) {
@@ -44,10 +168,6 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
   const [migrateOnCreate, setMigrateOnCreate] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState(false);
-
-  const isCreator = family?.created_by === family?.id; // This would need the current user ID
 
   const handleCreateFamily = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +194,6 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
   const handleLeaveFamily = async () => {
     const success = await leaveFamily();
     if (success) {
-      setConfirmLeave(false);
       onOpenChange(false);
     }
   };
@@ -82,7 +201,6 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
   const handleDeleteFamily = async () => {
     const success = await deleteFamily();
     if (success) {
-      setConfirmDelete(false);
       onOpenChange(false);
     }
   };
@@ -106,12 +224,20 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
 
           <form onSubmit={handleCreateFamily}>
             <DialogBody>
-              <div className="space-y-4">
-                <p className="text-sm" style={{ color: colors.muted }}>
-                  Create a family to share your financial data with your partner or family members.
-                  Everyone in the family can view and edit shared data.
-                </p>
+              <div className="space-y-5">
+                {/* Description */}
+                <div
+                  className="flex items-start gap-3 p-3 rounded-lg"
+                  style={{ backgroundColor: `${colors.info}15` }}
+                >
+                  <span className="text-lg">👨‍👩‍👧</span>
+                  <p className="text-sm" style={{ color: colors.text }}>
+                    Create a family to share your financial data with your partner or family members.
+                    Everyone in the family can view and edit shared data.
+                  </p>
+                </div>
 
+                {/* Family name input */}
                 <div className="space-y-2">
                   <Label>Family Name</Label>
                   <Input
@@ -126,20 +252,24 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                   />
                 </div>
 
+                {/* Migrate checkbox */}
                 <div
-                  className="flex items-start gap-3 p-3 rounded-md"
-                  style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
+                  className="flex items-start gap-3 p-4 rounded-lg cursor-pointer transition-colors duration-150 hover:bg-white/[0.02]"
+                  style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}` }}
+                  onClick={() => !isCreating && setMigrateOnCreate(!migrateOnCreate)}
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="migrate-data"
                     checked={migrateOnCreate}
-                    onChange={(e) => setMigrateOnCreate(e.target.checked)}
+                    onChange={setMigrateOnCreate}
                     disabled={isCreating}
-                    className="mt-1"
                   />
-                  <div>
-                    <label htmlFor="migrate-data" className="cursor-pointer text-xs uppercase tracking-wide font-medium" style={{ color: colors.text }}>
+                  <div className="min-w-0">
+                    <label
+                      htmlFor="migrate-data"
+                      className="cursor-pointer text-sm font-medium"
+                      style={{ color: colors.text }}
+                    >
                       Share my existing data with the family
                     </label>
                     <p className="text-xs mt-1" style={{ color: colors.muted }}>
@@ -149,14 +279,13 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                   </div>
                 </div>
 
+                {/* Error */}
                 {error && (
                   <div
-                    className="text-sm p-2 rounded"
-                    style={{
-                      backgroundColor: `${colors.negative}20`,
-                      color: colors.negative,
-                    }}
+                    className="flex items-center gap-2 text-sm p-3 rounded-lg"
+                    style={{ backgroundColor: `${colors.negative}15`, color: colors.negative }}
                   >
+                    <IconWarning size={14} />
                     {error}
                   </div>
                 )}
@@ -188,7 +317,12 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{family?.name || 'Family'} Settings</DialogTitle>
+            <DialogTitle>
+              <span className="flex items-center gap-2">
+                <span>👨‍👩‍👧</span>
+                {family?.name || 'Family'}
+              </span>
+            </DialogTitle>
           </DialogHeader>
 
           <DialogBody>
@@ -201,12 +335,14 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
 
               <TabsContent value="members" className="mt-4">
                 <div className="space-y-4">
+                  {/* Header with invite button */}
                   <div className="flex items-center justify-between">
                     <div className="text-sm" style={{ color: colors.muted }}>
                       Family members can view and edit all shared data.
                     </div>
                     <Button size="sm" onClick={() => setInviteDialogOpen(true)}>
-                      + Invite
+                      <IconPlus size={14} />
+                      <span className="ml-1">Invite</span>
                     </Button>
                   </div>
 
@@ -220,147 +356,38 @@ export function FamilySettingsDialog({ open, onOpenChange }: FamilySettingsDialo
                     Migrate your personal data to the family, or keep it separate.
                   </div>
 
-                  <div
-                    className="p-4 rounded-md"
-                    style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium" style={{ color: colors.text }}>
-                          Migrate Personal Data
-                        </div>
-                        <div className="text-xs" style={{ color: colors.muted }}>
-                          Move all your personal assets, flows, and debts to the family.
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleMigrateData}
-                        disabled={isMigrating}
-                      >
-                        {isMigrating ? 'Migrating...' : 'Migrate'}
-                      </Button>
-                    </div>
-                  </div>
+                  <ActionCard
+                    title="Migrate Personal Data"
+                    description="Move all your personal assets, flows, and debts to the family."
+                    buttonText={isMigrating ? 'Migrating...' : 'Migrate'}
+                    onAction={handleMigrateData}
+                    isLoading={isMigrating}
+                    confirmText="This will move all your personal financial data to the family. Other family members will be able to see and edit it."
+                  />
                 </div>
               </TabsContent>
 
               <TabsContent value="danger" className="mt-4">
-                <div className="space-y-4">
-                  {/* Leave Family (for non-creators) */}
-                  <div
-                    className="p-4 rounded-md"
-                    style={{
-                      backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
-                      borderColor: colors.negative,
-                    }}
-                  >
-                    {!confirmLeave ? (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium" style={{ color: colors.text }}>
-                            Leave Family
-                          </div>
-                          <div className="text-xs" style={{ color: colors.muted }}>
-                            You&apos;ll lose access to shared family data.
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setConfirmLeave(true)}
-                          style={{ color: colors.negative }}
-                        >
-                          Leave
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="text-sm" style={{ color: colors.negative }}>
-                          Are you sure you want to leave this family?
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setConfirmLeave(false)}
-                            disabled={isLeaving}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={handleLeaveFamily}
-                            disabled={isLeaving}
-                            style={{
-                              backgroundColor: colors.negative,
-                              borderColor: colors.negative,
-                            }}
-                          >
-                            {isLeaving ? 'Leaving...' : 'Confirm Leave'}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                <div className="space-y-3">
+                  <ActionCard
+                    title="Leave Family"
+                    description="You'll lose access to shared family data."
+                    buttonText="Leave"
+                    onAction={handleLeaveFamily}
+                    isLoading={isLeaving}
+                    confirmText="Are you sure you want to leave this family? You'll lose access to all shared data."
+                    variant="danger"
+                  />
 
-                  {/* Delete Family (for creators only) */}
-                  <div
-                    className="p-4 rounded-md"
-                    style={{
-                      backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
-                      borderColor: colors.negative,
-                    }}
-                  >
-                    {!confirmDelete ? (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium" style={{ color: colors.text }}>
-                            Delete Family
-                          </div>
-                          <div className="text-xs" style={{ color: colors.muted }}>
-                            This will permanently delete the family and all shared data.
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setConfirmDelete(true)}
-                          style={{ color: colors.negative }}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="text-sm" style={{ color: colors.negative }}>
-                          This action cannot be undone. All shared data will be deleted.
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setConfirmDelete(false)}
-                            disabled={isDeleting}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={handleDeleteFamily}
-                            disabled={isDeleting}
-                            style={{
-                              backgroundColor: colors.negative,
-                              borderColor: colors.negative,
-                            }}
-                          >
-                            {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <ActionCard
+                    title="Delete Family"
+                    description="This will permanently delete the family and all shared data."
+                    buttonText="Delete"
+                    onAction={handleDeleteFamily}
+                    isLoading={isDeleting}
+                    confirmText="This action cannot be undone. All shared data including assets, flows, and debts will be permanently deleted."
+                    variant="danger"
+                  />
                 </div>
               </TabsContent>
             </Tabs>

@@ -2,7 +2,7 @@
 
 import { ButtonGroup, type ButtonGroupOption } from '@/components/fire/ui';
 
-export type InvestmentType = 'us_stock' | 'sgx_stock' | 'cn_stock' | 'crypto' | 'other';
+export type InvestmentType = 'us_stock' | 'sgx_stock' | 'cn_stock' | 'crypto' | 'real_estate' | 'other';
 
 export interface InvestmentTypeOption {
   id: InvestmentType;
@@ -51,13 +51,20 @@ export const INVESTMENT_TYPE_OPTIONS: InvestmentTypeOption[] = [
     comingSoon: true,
   },
   {
+    id: 'real_estate',
+    label: 'Property',
+    icon: '🏠',
+    currency: null,
+    market: null,
+    enabled: true,
+  },
+  {
     id: 'other',
     label: 'Other',
     icon: '📦',
     currency: null,
     market: null,
-    enabled: false,
-    comingSoon: true,
+    enabled: true,
   },
 ];
 
@@ -87,7 +94,7 @@ export function InvestmentTypeSelector({
       value={value}
       onChange={onChange}
       label="Type"
-      columns={5}
+      columns={6}
       disabled={disabled}
     />
   );

@@ -39,6 +39,9 @@ import {
   Upload,
   AlertTriangle,
   X,
+  Mail,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 
 // Common icon props interface
@@ -85,6 +88,9 @@ export const IconPlay = wrap(Play);
 export const IconUpload = wrap(Upload);
 export const IconWarning = wrap(AlertTriangle);
 export const IconX = wrap(X);
+export const IconMail = wrap(Mail);
+export const IconMaximize = wrap(Maximize2);
+export const IconMinimize = wrap(Minimize2);
 
 // Asset type icons
 export const IconCash = wrap(Banknote);

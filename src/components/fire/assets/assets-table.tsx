@@ -16,6 +16,8 @@ import {
   IconBox,
   IconEdit,
   IconTrash,
+  IconMaximize,
+  IconMinimize,
 } from '@/components/fire/ui';
 import type { FilterOption } from '@/components/fire/ui';
 import { formatCurrency, formatShares, formatPercent } from '@/lib/fire/utils';
@@ -43,6 +45,9 @@ interface AssetsTableProps {
   sortBy?: AssetSortField;
   sortOrder?: SortOrder;
   onSort?: (field: AssetSortField) => void;
+  // Fullscreen
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
   // Actions
   onRowClick?: (asset: AssetWithBalance) => void;
   onEdit?: (asset: AssetWithBalance) => void;
@@ -104,6 +109,8 @@ export function AssetsTable({
   sortBy,
   sortOrder,
   onSort,
+  isFullscreen = false,
+  onToggleFullscreen,
   onRowClick,
   onEdit,
   onAdjust,
@@ -155,7 +162,8 @@ export function AssetsTable({
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalCount);
 
-  const TABLE_BODY_HEIGHT = 400;
+  // Table body height: fixed 400px normally, calc for fullscreen
+  const TABLE_BODY_HEIGHT = isFullscreen ? 'calc(100vh - 280px)' : 400;
 
   return (
     <Card>
@@ -182,13 +190,30 @@ export function AssetsTable({
         </div>
 
         {/* Total Value */}
-        <div className="ml-auto text-right">
-          <span className="text-xs" style={{ color: colors.muted }}>
-            Total:{' '}
-          </span>
-          <span className="text-sm font-bold tabular-nums" style={{ color: colors.text }}>
-            {formatCurrency(totalValue, { currency })}
-          </span>
+        <div className="ml-auto flex items-center gap-3">
+          <div className="text-right">
+            <span className="text-xs" style={{ color: colors.muted }}>
+              Total:{' '}
+            </span>
+            <span className="text-sm font-bold tabular-nums" style={{ color: colors.text }}>
+              {formatCurrency(totalValue, { currency })}
+            </span>
+          </div>
+
+          {/* Fullscreen Toggle */}
+          {onToggleFullscreen && (
+            <button
+              onClick={onToggleFullscreen}
+              className="p-1.5 rounded-md hover:bg-white/[0.06] transition-colors duration-150 cursor-pointer"
+              style={{
+                color: colors.muted,
+                border: `1px solid ${colors.border}`,
+              }}
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? <IconMinimize size={14} /> : <IconMaximize size={14} />}
+            </button>
+          )}
         </div>
       </div>
 

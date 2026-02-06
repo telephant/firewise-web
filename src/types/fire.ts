@@ -382,7 +382,7 @@ export const FLOW_CATEGORY_PRESETS: FlowCategoryPreset[] = [
     label: 'Invest',
     flowType: 'transfer',
     from: { type: 'asset', assetFilter: ['cash'] },
-    to: { type: 'asset', assetFilter: ['stock', 'etf', 'crypto', 'bond'], allowCreate: true },
+    to: { type: 'asset', assetFilter: ['stock', 'etf', 'crypto', 'bond', 'real_estate', 'other'], allowCreate: true },
     extraFields: ['shares', 'price_per_share'],
   },
   {

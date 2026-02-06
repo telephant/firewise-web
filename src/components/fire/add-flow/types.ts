@@ -24,6 +24,7 @@ export interface FlowFormState {
   investmentType: InvestmentType;
   selectedTicker: string;
   selectedTickerName: string;
+  currentValue: string; // Current market value for real estate/other investments
   // Interest-specific fields
   interestPaymentPeriod: PaymentPeriod;
   depositBalance: string; // Balance for new deposit asset
@@ -60,6 +61,7 @@ export interface FlowFormErrors {
   debtPrincipal?: string;
   debtId?: string;
   recurringFrequency?: string;
+  currentValue?: string;
 }
 
 // State for creating a new asset inline
@@ -96,6 +98,7 @@ export const getInitialFormState = (): FlowFormState => ({
   investmentType: 'us_stock',
   selectedTicker: '',
   selectedTickerName: '',
+  currentValue: '',
   interestPaymentPeriod: 'monthly',
   depositBalance: '',
   interestRate: '',

@@ -13,6 +13,9 @@ import {
   Input,
   Label,
   colors,
+  IconCheck,
+  IconWarning,
+  IconMail,
 } from '@/components/fire/ui';
 
 interface InviteMemberDialogProps {
@@ -50,7 +53,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
       setTimeout(() => {
         onOpenChange(false);
         setSuccess(false);
-      }, 2000);
+      }, 2500);
     } else {
       setError(result.error || 'Failed to send invitation');
     }
@@ -67,28 +70,49 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Invite Family Member</DialogTitle>
+          <DialogTitle>
+            <span className="flex items-center gap-2">
+              <IconMail size={18} />
+              Invite Family Member
+            </span>
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <DialogBody>
             {success ? (
-              <div
-                className="text-center py-8"
-                style={{ color: colors.positive }}
-              >
-                <div className="text-2xl mb-2">Invitation Sent!</div>
-                <div className="text-sm" style={{ color: colors.muted }}>
-                  They&apos;ll receive an email with instructions to join.
+              <div className="py-6">
+                {/* Success animation */}
+                <div className="flex flex-col items-center text-center">
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                    style={{ backgroundColor: `${colors.positive}20` }}
+                  >
+                    <span style={{ color: colors.positive }}><IconCheck size={32} /></span>
+                  </div>
+                  <div className="text-lg font-medium mb-1" style={{ color: colors.text }}>
+                    Invitation Sent!
+                  </div>
+                  <div className="text-sm" style={{ color: colors.muted }}>
+                    They&apos;ll receive an email with instructions to join your family.
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <p className="text-sm" style={{ color: colors.muted }}>
-                  Enter the email address of the person you want to invite to your family.
-                  They&apos;ll receive an email with a link to join.
-                </p>
+              <div className="space-y-5">
+                {/* Description */}
+                <div
+                  className="flex items-start gap-3 p-3 rounded-lg"
+                  style={{ backgroundColor: `${colors.info}15` }}
+                >
+                  <span className="text-lg">✉️</span>
+                  <p className="text-sm" style={{ color: colors.text }}>
+                    Enter the email address of the person you want to invite.
+                    They&apos;ll receive an email with a link to join your family.
+                  </p>
+                </div>
 
+                {/* Email input */}
                 <div className="space-y-2">
                   <Label>Email Address</Label>
                   <Input
@@ -104,14 +128,13 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
                   />
                 </div>
 
+                {/* Error */}
                 {error && (
                   <div
-                    className="text-sm p-2 rounded"
-                    style={{
-                      backgroundColor: `${colors.negative}20`,
-                      color: colors.negative,
-                    }}
+                    className="flex items-center gap-2 text-sm p-3 rounded-lg"
+                    style={{ backgroundColor: `${colors.negative}15`, color: colors.negative }}
                   >
+                    <IconWarning size={14} />
                     {error}
                   </div>
                 )}

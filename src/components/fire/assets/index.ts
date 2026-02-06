@@ -1,4 +1,5 @@
 // Assets Page Components
+export { AssetAllocationBar } from './asset-allocation-bar';
 export { AssetTypeStats } from './asset-type-stats';
 export { AssetsTable } from './assets-table';
 export { AssetDetailDialog } from './asset-detail-dialog';

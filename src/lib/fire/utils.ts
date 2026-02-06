@@ -1,6 +1,50 @@
 // Shared utility functions for FIRE management
 
-import type { Asset, AssetWithBalance, Debt } from '@/types/fire';
+import type { Asset, AssetWithBalance, AssetType, Debt, DebtType } from '@/types/fire';
+
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+
+export const ASSET_COLORS: Record<AssetType, string> = {
+  cash: '#22C55E',
+  deposit: '#3B82F6',
+  stock: '#F59E0B',
+  etf: '#8B5CF6',
+  bond: '#06B6D4',
+  real_estate: '#EC4899',
+  crypto: '#F97316',
+  other: '#6B7280',
+};
+
+export const ASSET_LABELS: Record<AssetType, string> = {
+  cash: 'Cash',
+  deposit: 'Deposits',
+  stock: 'Stocks',
+  etf: 'ETFs',
+  bond: 'Bonds',
+  real_estate: 'Property',
+  crypto: 'Crypto',
+  other: 'Other',
+};
+
+export const DEBT_COLORS: Record<DebtType, string> = {
+  mortgage: '#EF4444',
+  personal_loan: '#F87171',
+  credit_card: '#DC2626',
+  student_loan: '#FB7185',
+  auto_loan: '#F43F5E',
+  other: '#9CA3AF',
+};
+
+export const DEBT_LABELS: Record<DebtType, string> = {
+  mortgage: 'Mortgage',
+  personal_loan: 'Personal',
+  credit_card: 'Card',
+  student_loan: 'Student',
+  auto_loan: 'Auto',
+  other: 'Other',
+};
 
 /**
  * Get currency symbol for a given currency code

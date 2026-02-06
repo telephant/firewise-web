@@ -50,6 +50,9 @@ export function InvestFlowForm({
 }: InvestFlowFormProps) {
   const labels = getFieldLabels(selectedPreset.id);
 
+  // Check if this is a value-based investment (real estate, other) vs share-based (stocks)
+  const isValueBasedInvestment = form.investmentType === 'real_estate' || form.investmentType === 'other';
+
   return (
     <>
       {/* Investment Type Selector */}
@@ -106,31 +109,56 @@ export function InvestFlowForm({
         </div>
       )}
 
-      {/* Amount & Shares row */}
-      <div className="grid grid-cols-2 gap-3">
-        <Input
-          label={`Total Cost (${form.currency})`}
-          type="number"
-          placeholder="0.00"
-          value={form.amount}
-          onChange={(e) => updateForm('amount', e.target.value)}
-          error={formErrors.amount}
-        />
-        <Input
-          label="Qty"
-          type="number"
-          placeholder="0"
-          value={form.shares}
-          onChange={(e) => updateForm('shares', e.target.value)}
-          error={formErrors.shares}
-        />
-      </div>
+      {/* Amount & Shares/Value row */}
+      {isValueBasedInvestment ? (
+        /* Real estate / Other: Bought Value + Current Value */
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label={`Bought Value (${form.currency})`}
+            type="number"
+            placeholder="0.00"
+            value={form.amount}
+            onChange={(e) => updateForm('amount', e.target.value)}
+            error={formErrors.amount}
+          />
+          <Input
+            label={`Current Value (${form.currency})`}
+            type="number"
+            placeholder="0.00"
+            value={form.currentValue}
+            onChange={(e) => updateForm('currentValue', e.target.value)}
+            error={formErrors.currentValue}
+          />
+        </div>
+      ) : (
+        /* Stocks / ETFs: Total Cost + Qty */
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label={`Total Cost (${form.currency})`}
+              type="number"
+              placeholder="0.00"
+              value={form.amount}
+              onChange={(e) => updateForm('amount', e.target.value)}
+              error={formErrors.amount}
+            />
+            <Input
+              label="Qty"
+              type="number"
+              placeholder="0"
+              value={form.shares}
+              onChange={(e) => updateForm('shares', e.target.value)}
+              error={formErrors.shares}
+            />
+          </div>
 
-      {/* Computed price per share */}
-      {computedPricePerShare && (
-        <p className="text-xs -mt-2" style={{ color: colors.muted }}>
-          @ ${computedPricePerShare} per share
-        </p>
+          {/* Computed price per share */}
+          {computedPricePerShare && (
+            <p className="text-xs -mt-2" style={{ color: colors.muted }}>
+              @ ${computedPricePerShare} per share
+            </p>
+          )}
+        </>
       )}
 
       {/* To Field (only if NOT US stock) */}
