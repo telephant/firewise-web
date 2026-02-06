@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { colors, Loader } from '@/components/fire/ui';
 import { formatCurrency, ASSET_COLORS, ASSET_LABELS, DEBT_LABELS } from '@/lib/fire/utils';
@@ -34,6 +34,8 @@ export function NetWorthAllocationBar({
   currency = 'USD',
 }: NetWorthAllocationBarProps) {
   const [hoveredBar, setHoveredBar] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // Group assets by type with individual items
@@ -293,6 +295,7 @@ export function NetWorthAllocationBar({
 
   return (
     <div
+      ref={containerRef}
       className="p-5 rounded-xl relative"
       style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
     >
@@ -375,8 +378,23 @@ export function NetWorthAllocationBar({
                     zIndex: isHovered ? 10 : bar.isTotal ? 5 : 1,
                     boxShadow: bar.isTotal ? `0 2px 8px ${bar.color}40` : isHovered ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
                   }}
-                  onMouseEnter={() => setHoveredBar(bar.id)}
-                  onMouseLeave={() => setHoveredBar(null)}
+                  onMouseEnter={(e) => {
+                    setHoveredBar(bar.id);
+                    if (containerRef.current) {
+                      const rect = containerRef.current.getBoundingClientRect();
+                      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    if (containerRef.current) {
+                      const rect = containerRef.current.getBoundingClientRect();
+                      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredBar(null);
+                    setMousePos(null);
+                  }}
                   onClick={() => handleBarClick(bar.id)}
                 >
                   {showValue && barHeight > 20 && (
@@ -411,29 +429,6 @@ export function NetWorthAllocationBar({
         </div>
       </div>
 
-      {/* Hover Tooltip */}
-      {hoveredBar && (
-        <div
-          className="absolute z-50 p-3 rounded-lg shadow-xl min-w-[200px] max-w-[260px] cursor-pointer"
-          style={{
-            left: '50%',
-            transform: 'translateX(-50%)',
-            top: chartHeight + 70,
-            backgroundColor: colors.surface,
-            border: `1px solid ${colors.border}`,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          }}
-          onMouseEnter={() => setHoveredBar(hoveredBar)}
-          onMouseLeave={() => setHoveredBar(null)}
-          onClick={() => handleBarClick(hoveredBar)}
-        >
-          {getTooltipContent()}
-          <div className="mt-2 pt-2 text-center" style={{ borderTop: `1px solid ${colors.border}` }}>
-            <span className="text-xs" style={{ color: colors.accent }}>Click to view details →</span>
-          </div>
-        </div>
-      )}
-
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 pt-3" style={{ borderTop: `1px solid ${colors.border}` }}>
         {assetBars.slice(0, 6).map((asset) => (
@@ -441,8 +436,23 @@ export function NetWorthAllocationBar({
             key={asset.type}
             className="flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-100"
             style={{ opacity: hoveredBar === `asset-${asset.type}` ? 1 : 0.7 }}
-            onMouseEnter={() => setHoveredBar(`asset-${asset.type}`)}
-            onMouseLeave={() => setHoveredBar(null)}
+            onMouseEnter={(e) => {
+              setHoveredBar(`asset-${asset.type}`);
+              if (containerRef.current) {
+                const rect = containerRef.current.getBoundingClientRect();
+                setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+              }
+            }}
+            onMouseMove={(e) => {
+              if (containerRef.current) {
+                const rect = containerRef.current.getBoundingClientRect();
+                setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+              }
+            }}
+            onMouseLeave={() => {
+              setHoveredBar(null);
+              setMousePos(null);
+            }}
             onClick={() => handleBarClick(`asset-${asset.type}`)}
           >
             <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: asset.color }} />
@@ -457,8 +467,23 @@ export function NetWorthAllocationBar({
                 key={debt.type}
                 className="flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-100"
                 style={{ opacity: hoveredBar === `debt-${debt.type}` ? 1 : 0.7 }}
-                onMouseEnter={() => setHoveredBar(`debt-${debt.type}`)}
-                onMouseLeave={() => setHoveredBar(null)}
+                onMouseEnter={(e) => {
+                  setHoveredBar(`debt-${debt.type}`);
+                  if (containerRef.current) {
+                    const rect = containerRef.current.getBoundingClientRect();
+                    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                  }
+                }}
+                onMouseMove={(e) => {
+                  if (containerRef.current) {
+                    const rect = containerRef.current.getBoundingClientRect();
+                    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                  }
+                }}
+                onMouseLeave={() => {
+                  setHoveredBar(null);
+                  setMousePos(null);
+                }}
                 onClick={() => handleBarClick(`debt-${debt.type}`)}
               >
                 <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: '#EF4444' }} />
@@ -468,6 +493,26 @@ export function NetWorthAllocationBar({
           </>
         )}
       </div>
+
+      {/* Hover Tooltip - follows mouse */}
+      {hoveredBar && mousePos && (
+        <div
+          className="absolute z-50 p-3 rounded-lg shadow-xl min-w-[200px] max-w-[260px] pointer-events-none"
+          style={{
+            left: mousePos.x,
+            top: mousePos.y + 20,
+            transform: 'translateX(-50%)',
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          }}
+        >
+          {getTooltipContent()}
+          <div className="mt-2 pt-2 text-center" style={{ borderTop: `1px solid ${colors.border}` }}>
+            <span className="text-xs" style={{ color: colors.accent }}>Click to view details →</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
