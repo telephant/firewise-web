@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import {
   colors,
   Button,
   SidebarTrigger,
   IconPlus,
   IconUpload,
+  Loader,
 } from '@/components/fire/ui';
 import {
   AssetAllocationBar,
@@ -27,6 +28,33 @@ const PAGE_SIZE = 20;
 const VALID_ASSET_TYPES: AssetType[] = ['cash', 'deposit', 'stock', 'etf', 'bond', 'real_estate', 'crypto', 'other'];
 
 export default function AssetsPage() {
+  return (
+    <Suspense fallback={<AssetsPageSkeleton />}>
+      <AssetsPageContent />
+    </Suspense>
+  );
+}
+
+function AssetsPageSkeleton() {
+  return (
+    <div className="flex flex-col h-full">
+      <header
+        className="flex items-center justify-between px-3 py-2"
+        style={{ backgroundColor: 'transparent', borderBottom: `1px solid ${colors.border}` }}
+      >
+        <div className="flex items-center gap-3">
+          <SidebarTrigger />
+          <h1 className="text-sm font-bold" style={{ color: colors.text }}>Assets</h1>
+        </div>
+      </header>
+      <main className="flex-1 flex items-center justify-center">
+        <Loader size="md" variant="dots" />
+      </main>
+    </div>
+  );
+}
+
+function AssetsPageContent() {
   // URL-based filters
   const { filters, setType, setSearch, setPage } = useUrlFilters<AssetType>({
     validTypes: VALID_ASSET_TYPES,
