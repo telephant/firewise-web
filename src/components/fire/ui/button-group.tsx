@@ -17,7 +17,7 @@ export interface ButtonGroupProps<T extends string = string> {
   value: T | null;
   onChange: (value: T) => void;
   label?: string;
-  columns?: 2 | 3 | 4 | 5;
+  columns?: 2 | 3 | 4 | 5 | 6;
   size?: 'sm' | 'md';
   disabled?: boolean;
   className?: string;
@@ -38,6 +38,7 @@ export function ButtonGroup<T extends string = string>({
     3: 'grid-cols-3',
     4: 'grid-cols-4',
     5: 'grid-cols-5',
+    6: 'grid-cols-6',
   };
 
   const sizeStyles = {
