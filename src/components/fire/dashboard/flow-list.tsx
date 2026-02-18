@@ -7,9 +7,9 @@ import {
   Loader,
   IconArrow,
 } from '@/components/fire/ui';
-import { useFlows } from '@/hooks/fire/use-fire-data';
+import { useTransactions } from '@/hooks/fire/use-fire-data';
 import { formatCurrency } from '@/lib/fire/utils';
-import type { FlowWithDetails } from '@/types/fire';
+import type { TransactionWithDetails } from '@/types/fire';
 
 interface FlowListProps {
   maxItems?: number;
@@ -20,15 +20,19 @@ interface FlowListProps {
 const FLOW_ROTATIONS: Record<string, number> = {
   income: -90,   // Point up
   expense: 90,   // Point down
-  transfer: 0,   // Point right (for transfers)
+  buy: 0,
+  sell: 0,
+  debt_payment: 90,
 };
 
 export function FlowList({
   maxItems = 5,
   showViewAll = true,
 }: FlowListProps) {
-  // Use SWR hook for data fetching (adjustments filtered at SQL level)
-  const { flows, isLoading } = useFlows({ limit: maxItems, exclude_category: 'adjustment' });
+  // Use SWR hook for data fetching
+  const { transactions, isLoading } = useTransactions({ limit: maxItems });
+  // Filter out adjustments client-side
+  const flows = transactions.filter(t => t.category !== 'adjustment');
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -38,33 +42,39 @@ export function FlowList({
     });
   };
 
-  const getFlowColor = (type: FlowWithDetails['type']) => {
+  const getFlowColor = (type: TransactionWithDetails['type']) => {
     switch (type) {
       case 'income':
         return colors.positive;
       case 'expense':
+      case 'debt_payment':
         return colors.negative;
       default:
         return colors.text;
     }
   };
 
-  const getFlowSign = (type: FlowWithDetails['type']) => {
+  const getFlowSign = (type: TransactionWithDetails['type']) => {
     switch (type) {
       case 'income':
         return '+';
       case 'expense':
+      case 'debt_payment':
         return '−';
       default:
         return '';
     }
   };
 
-  const getFlowDescription = (flow: FlowWithDetails) => {
-    if (flow.type === 'transfer') {
-      return `${flow.from_asset?.name || 'Unknown'} → ${flow.to_asset?.name || 'Unknown'}`;
+  const getFlowDescription = (txn: TransactionWithDetails) => {
+    if (txn.type === 'buy' || txn.type === 'sell') {
+      const fromAsset = txn.from_asset || txn.source_asset;
+      const toAsset = txn.to_asset || txn.asset;
+      return `${fromAsset?.name || 'Unknown'} → ${toAsset?.name || 'Unknown'}`;
     }
-    return flow.to_asset?.name || flow.from_asset?.name || '';
+    const toAsset = txn.to_asset || txn.asset;
+    const fromAsset = txn.from_asset || txn.source_asset;
+    return toAsset?.name || fromAsset?.name || '';
   };
 
   const CARD_HEIGHT = '280px';
@@ -157,7 +167,7 @@ export function FlowList({
             {showViewAll && flows.length > 0 && (
               <div className="pt-2 text-center flex-shrink-0">
                 <Link
-                  href="/fire/flows"
+                  href="/fire/transactions"
                   className="text-xs font-medium transition-colors hover:underline"
                   style={{ color: colors.info }}
                 >

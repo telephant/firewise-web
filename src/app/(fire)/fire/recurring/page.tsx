@@ -13,7 +13,7 @@ import {
   IconPlus,
 } from '@/components/fire/ui';
 import { getCategoryIcon } from '@/components/fire/ui/category-icons';
-import { AddFlowDialog } from '@/components/fire/add-flow';
+import { AddTransactionDialog } from '@/components/fire/add-transaction';
 import { useRecurringSchedules, useAssets, useUserPreferences } from '@/hooks/fire/use-fire-data';
 import { recurringScheduleApi } from '@/lib/fire/api';
 import { formatCurrency } from '@/lib/fire/utils';
@@ -130,7 +130,8 @@ export default function RecurringPage() {
     let monthlyExpense = 0;
 
     activeSchedules.forEach((schedule) => {
-      const amount = schedule.flow_template.amount;
+      if (!schedule.transaction_template) return;
+      const amount = schedule.transaction_template.amount;
       let monthlyAmount = amount;
 
       // Convert to monthly equivalent
@@ -149,9 +150,9 @@ export default function RecurringPage() {
           break;
       }
 
-      if (schedule.flow_template.type === 'income') {
+      if (schedule.transaction_template.type === 'income') {
         monthlyIncome += monthlyAmount;
-      } else if (schedule.flow_template.type === 'expense') {
+      } else if (schedule.transaction_template.type === 'expense') {
         monthlyExpense += monthlyAmount;
       }
     });
@@ -160,7 +161,8 @@ export default function RecurringPage() {
   }, [activeSchedules]);
 
   const getFromTo = (schedule: RecurringScheduleWithDetails): string => {
-    const template = schedule.flow_template;
+    const template = schedule.transaction_template;
+    if (!template) return 'Unknown → Unknown';
     const fromAsset = template.from_asset_id ? assetMap.get(template.from_asset_id) : null;
     const toAsset = template.to_asset_id ? assetMap.get(template.to_asset_id) : null;
 
@@ -184,7 +186,8 @@ export default function RecurringPage() {
   };
 
   const handleDelete = async (schedule: RecurringScheduleWithDetails) => {
-    if (!confirm(`Delete this recurring ${schedule.flow_template.type}?`)) return;
+    const type = schedule.transaction_template?.type || 'schedule';
+    if (!confirm(`Delete this recurring ${type}?`)) return;
 
     setDeletingId(schedule.id);
     try {
@@ -198,7 +201,8 @@ export default function RecurringPage() {
   };
 
   const renderScheduleRow = (schedule: RecurringScheduleWithDetails, index: number, total: number) => {
-    const template = schedule.flow_template;
+    const template = schedule.transaction_template;
+    if (!template) return null;
     const isDeleting = deletingId === schedule.id;
     const isToggling = togglingId === schedule.id;
 
@@ -435,8 +439,10 @@ export default function RecurringPage() {
         </div>
       </main>
 
-      {/* Add Recurring Schedule Dialog */}
-      <AddFlowDialog open={isAddFlowOpen} onOpenChange={setIsAddFlowOpen} recurringOnly />
+      {/* Add Recurring Schedule Dialog - Only render when open */}
+      {isAddFlowOpen && (
+        <AddTransactionDialog open={isAddFlowOpen} onOpenChange={setIsAddFlowOpen} recurringOnly />
+      )}
     </div>
   );
 }

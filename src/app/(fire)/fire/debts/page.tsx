@@ -15,7 +15,7 @@ import {
   DeleteDebtDialog,
 } from '@/components/fire/debts';
 import { EditDebtDialog } from '@/components/fire/dashboard/edit-debt-dialog';
-import { AddFlowDialog } from '@/components/fire/add-flow';
+import { AddTransactionDialog } from '@/components/fire/add-transaction';
 import { useDebts, useUserPreferences } from '@/hooks/fire/use-fire-data';
 import type { Debt, DebtType, DebtStatus } from '@/types/fire';
 
@@ -232,13 +232,15 @@ export default function DebtsPage() {
         }}
       />
 
-      {/* Payment Dialog */}
-      <AddFlowDialog
-        open={isPaymentOpen}
-        onOpenChange={setIsPaymentOpen}
-        initialCategory="pay_debt"
-        initialDebtId={selectedDebt?.id}
-      />
+      {/* Payment Dialog - Only render when open */}
+      {isPaymentOpen && (
+        <AddTransactionDialog
+          open={isPaymentOpen}
+          onOpenChange={setIsPaymentOpen}
+          initialCategory="pay_debt"
+          initialDebtId={selectedDebt?.id}
+        />
+      )}
     </div>
   );
 }

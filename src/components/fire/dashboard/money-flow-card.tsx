@@ -3,12 +3,12 @@
 import { useMemo } from 'react';
 import { colors, Card, Loader } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
-import { useFlows, useAssets } from '@/hooks/fire/use-fire-data';
-import type { FlowWithDetails } from '@/types/fire';
+import { useTransactions, useAssets } from '@/hooks/fire/use-fire-data';
+import type { TransactionWithDetails } from '@/types/fire';
 
 // Helper to get effective amount for stats (use converted amount when available)
-function getEffectiveAmount(flow: FlowWithDetails): number {
-  return flow.converted_amount ?? flow.amount;
+function getEffectiveAmount(txn: TransactionWithDetails): number {
+  return txn.converted_amount ?? txn.amount;
 }
 
 interface MoneyFlowCardProps {
@@ -61,7 +61,7 @@ interface ExpenseCategory {
 }
 
 export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
-  const { flows, isLoading: flowsLoading } = useFlows();
+  const { transactions: flows, isLoading: flowsLoading } = useTransactions();
   const { assets, isLoading: assetsLoading } = useAssets();
 
   const isLoading = flowsLoading || assetsLoading;
@@ -128,17 +128,18 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
     // Track cash layers by source
     const cashLayerMap: Record<string, number> = {};
 
-    filteredFlows.forEach((flow) => {
-      const category = flow.category || 'other';
-      const amount = getEffectiveAmount(flow);
+    filteredFlows.forEach((txn: TransactionWithDetails) => {
+      const category = txn.category || 'other';
+      const amount = getEffectiveAmount(txn);
+      const fromAsset = txn.from_asset || txn.source_asset;
 
-      if (flow.type === 'income') {
+      if (txn.type === 'income') {
         // Check if it's from an asset (passive) or external (active)
-        if (flow.from_asset) {
+        if (fromAsset) {
           // Passive income - from assets (dividend, interest)
-          const key = flow.from_asset.name;
+          const key = fromAsset.name;
           if (!passiveIncomeMap[key]) {
-            passiveIncomeMap[key] = { amount: 0, assetName: flow.from_asset.name };
+            passiveIncomeMap[key] = { amount: 0, assetName: fromAsset.name };
           }
           passiveIncomeMap[key].amount += amount;
 
@@ -151,11 +152,11 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
           // Add to cash layers by category color
           cashLayerMap[category] = (cashLayerMap[category] || 0) + amount;
         }
-      } else if (flow.type === 'expense') {
+      } else if (txn.type === 'expense' || txn.type === 'debt_payment') {
         totalSpending += amount;
 
         // Check if it's a ledger expense (has ledger_id in metadata) or a Fire expense category
-        const metadata = flow.metadata as Record<string, unknown> | null;
+        const metadata = txn.metadata as Record<string, unknown> | null;
         const isLedgerExpense = metadata?.ledger_id || metadata?.ledger_name;
 
         if (isLedgerExpense) {
@@ -166,15 +167,16 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
           expenseMap['__ledger__'].amount += amount;
         } else {
           // Use Fire expense category name
-          const expenseLabel = flow.flow_expense_category?.name || category || 'Other';
+          const expenseLabel = txn.expense_category?.name || txn.flow_expense_category?.name || category || 'Other';
           if (!expenseMap[expenseLabel]) {
             expenseMap[expenseLabel] = { amount: 0, label: expenseLabel };
           }
           expenseMap[expenseLabel].amount += amount;
         }
-      } else if (flow.type === 'transfer') {
-        // Transfer to investment assets
-        if (flow.to_asset && ['stock', 'etf', 'bond', 'crypto', 'deposit'].includes(flow.to_asset.type)) {
+      } else if (txn.type === 'buy') {
+        // Investment purchases
+        const toAsset = txn.to_asset || txn.asset;
+        if (toAsset && ['stock', 'etf', 'bond', 'crypto', 'deposit'].includes(toAsset.type)) {
           totalInvest += amount;
         }
       }

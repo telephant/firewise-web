@@ -2,10 +2,24 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useFlowData } from '@/contexts/fire/flow-data-context';
-import { assetApi, debtApi } from '@/lib/fire/api';
-import { mutateDebts } from '@/hooks/fire/use-fire-data';
-import type { Asset, AssetType, RealEstateMetadata, Debt } from '@/types/fire';
+import { useViewMode } from '@/contexts/fire/view-mode-context';
+import {
+  assetApi,
+  debtApi,
+  incomeApi,
+  fireExpenseApi,
+  assetTransactionApi,
+  debtTransactionApi,
+} from '@/lib/fire/api';
+import {
+  mutateDebts,
+  mutateAssets,
+  useAssets,
+  mutateTransactions,
+  mutateStats,
+  mutateExpenseStats,
+} from '@/hooks/fire/use-fire-data';
+import type { Asset, AssetType, RealEstateMetadata, Debt, CreateFlowData, CreateAssetData } from '@/types/fire';
 import { ASSET_TYPE_LABELS } from '@/types/fire';
 import {
   colors,
@@ -15,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  DateInput,
   CurrencyCombobox,
   Button,
   Label,
@@ -34,18 +49,14 @@ interface AddAssetDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Asset to edit (if provided, dialog is in edit mode) */
   asset?: Asset | null;
+  /** Callback when user wants to add a deposit (opens flow dialog instead) */
+  onAddDeposit?: () => void;
+  /** Callback when user wants to add stock/metals (opens invest flow dialog) */
+  onAddInvestment?: () => void;
 }
 
 type DialogStep = 'type' | 'details' | 'mortgage';
 
-// Asset types available for manual creation (excluding share-based types that need flows)
-// Note: Debts are now in a separate table - use AddFlowDialog with 'add_loan' or 'add_mortgage' presets
-const MANUAL_ASSET_TYPES: AssetType[] = ['cash', 'deposit', 'real_estate', 'other'];
-
-const ASSET_TYPE_OPTIONS = MANUAL_ASSET_TYPES.map((t) => ({
-  value: t,
-  label: ASSET_TYPE_LABELS[t],
-}));
 
 // Calculate monthly payment using standard amortization formula
 function calculateMonthlyPayment(principal: number, annualRate: number, termMonths: number): number {
@@ -57,8 +68,138 @@ function calculateMonthlyPayment(principal: number, annualRate: number, termMont
   return payment;
 }
 
-export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProps) {
-  const { createAsset, createFlow, refetchAssets } = useFlowData();
+export function AddAssetDialog({ open, onOpenChange, asset, onAddDeposit, onAddInvestment }: AddAssetDialogProps) {
+  // Use hooks directly instead of context
+  const { assets, mutate: refetchAssets } = useAssets();
+  const { viewMode, familyId } = useViewMode();
+
+  // Get the correct belong_id based on view mode
+  const getBelongId = useCallback(() => {
+    return viewMode === 'family' && familyId ? familyId : undefined;
+  }, [viewMode, familyId]);
+
+  // Inline mutation: Create asset
+  const createAsset = useCallback(async (data: CreateAssetData): Promise<Asset | null> => {
+    try {
+      const response = await assetApi.create(data);
+      if (response.success && response.data) {
+        await mutateAssets();
+        return response.data;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Inline mutation: Create flow (routes to domain-specific APIs)
+  const createFlow = useCallback(async (data: CreateFlowData): Promise<boolean> => {
+    const { type, amount, currency, from_asset_id, to_asset_id, category, date, description, metadata } = data;
+    try {
+      let success = false;
+      if (type === 'income') {
+        const result = await incomeApi.create({
+          category: category || 'other',
+          amount,
+          to_asset_id: to_asset_id!,
+          from_asset_id: from_asset_id || undefined,
+          currency,
+          date,
+          description,
+          metadata,
+        });
+        success = result.success;
+      } else if (type === 'expense') {
+        if (category === 'pay_debt' && data.debt_id) {
+          const result = await debtTransactionApi.create({
+            type: 'pay',
+            amount,
+            debt_id: data.debt_id,
+            from_asset_id: from_asset_id || undefined,
+            currency,
+            date,
+            description,
+            metadata,
+          });
+          success = result.success;
+        } else {
+          const result = await fireExpenseApi.create({
+            category: category || 'other',
+            amount,
+            from_asset_id: from_asset_id!,
+            currency,
+            date,
+            description,
+            flow_expense_category_id: data.flow_expense_category_id || undefined,
+            metadata,
+          });
+          success = result.success;
+        }
+      } else if (type === 'transfer') {
+        const flowMetadata = metadata as { shares?: number; action?: string; ticker?: string } | undefined;
+        const shares = flowMetadata?.shares;
+        const action = flowMetadata?.action;
+        if (action === 'buy' || category === 'invest') {
+          const result = await assetTransactionApi.create({
+            type: 'invest',
+            amount,
+            ticker: flowMetadata?.ticker,
+            shares: shares || 0,
+            from_asset_id: from_asset_id || undefined,
+            currency,
+            date,
+            description,
+            metadata,
+          });
+          success = result.success;
+        } else if (action === 'sell' || category === 'sell') {
+          const result = await assetTransactionApi.create({
+            type: 'sell',
+            amount,
+            ticker: flowMetadata?.ticker,
+            shares: Math.abs(shares || 0),
+            from_asset_id: from_asset_id || undefined,
+            to_asset_id: to_asset_id || undefined,
+            currency,
+            date,
+            description,
+            metadata,
+          });
+          success = result.success;
+        } else {
+          const result = await assetTransactionApi.create({
+            type: 'transfer',
+            amount,
+            from_asset_id: from_asset_id || undefined,
+            to_asset_id: to_asset_id || undefined,
+            currency,
+            date,
+            description,
+            metadata,
+          });
+          success = result.success;
+        }
+      } else {
+        const result = await incomeApi.create({
+          category: 'other',
+          amount,
+          to_asset_id: to_asset_id || from_asset_id || '',
+          currency,
+          date,
+          description,
+          metadata,
+        });
+        success = result.success;
+      }
+      if (success) {
+        await Promise.all([mutateTransactions(), mutateAssets(), mutateStats(), mutateExpenseStats()]);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Edit mode detection
   const isEditMode = !!asset;
@@ -274,9 +415,12 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
         metadata = Object.keys(realEstateMetadata).length > 0 ? realEstateMetadata : undefined;
       }
 
+      const newValue = parseFloat(assetValue) || 0;
+
       const response = await assetApi.update(asset.id, {
         name: assetName.trim(),
         currency,
+        balance: newValue,
         metadata,
       });
 
@@ -284,30 +428,6 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
         toast.error(response.error || 'Failed to update asset');
         setLoading(false);
         return;
-      }
-
-      // Update balance if changed (create adjustment flow)
-      const newValue = parseFloat(assetValue) || 0;
-      const currentValue = asset.balance;
-      const difference = newValue - currentValue;
-
-      if (difference !== 0) {
-        // Create adjustment flow
-        // Positive difference = income, Negative difference = expense
-        const flowData = {
-          type: difference > 0 ? 'income' : 'expense',
-          amount: Math.abs(difference),
-          currency,
-          from_asset_id: difference < 0 ? asset.id : undefined,
-          to_asset_id: difference > 0 ? asset.id : undefined,
-          category: 'other',
-          date: new Date().toISOString().split('T')[0],
-          description: `Balance adjustment for ${asset.name}`,
-        };
-        await createFlow(flowData as Parameters<typeof createFlow>[0]);
-
-        // Update asset balance
-        await assetApi.update(asset.id, { balance: newValue });
       }
 
       // Refresh assets to update the list
@@ -326,32 +446,19 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
   const createSimpleAsset = async () => {
     setLoading(true);
     try {
+      const value = parseFloat(assetValue) || 0;
       const asset = await createAsset({
         name: assetName.trim(),
         type: assetType,
         currency,
+        balance: value,
+        belong_id: getBelongId(),
       });
 
       if (!asset) {
         toast.error('Failed to create asset');
         setLoading(false);
         return;
-      }
-
-      // Create an adjustment flow to set initial balance
-      const value = parseFloat(assetValue);
-      if (value !== 0) {
-        await createFlow({
-          type: 'income',
-          amount: value,
-          currency,
-          to_asset_id: asset.id,
-          category: 'adjustment',
-          date: new Date().toISOString().split('T')[0],
-          description: `Initial balance for ${asset.name}`,
-        });
-        // Update asset balance
-        await assetApi.update(asset.id, { balance: value });
       }
 
       toast.success(`${ASSET_TYPE_LABELS[assetType]} "${asset.name}" added`);
@@ -377,36 +484,23 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
       if (propertyBoughtDate) realEstateMetadata.purchase_date = propertyBoughtDate;
       if (propertySqm) realEstateMetadata.size_sqm = parseFloat(propertySqm);
       // Current value stored in metadata for reference
-      const currentValue = parseFloat(assetValue);
+      const currentValue = parseFloat(assetValue) || 0;
       if (currentValue > 0) realEstateMetadata.current_value = currentValue;
 
-      // Create the real estate asset
+      // Create the real estate asset with initial balance
       const realEstateAsset = await createAsset({
         name: assetName.trim(),
         type: 'real_estate',
         currency,
+        balance: currentValue,
         metadata: Object.keys(realEstateMetadata).length > 0 ? realEstateMetadata : undefined,
+        belong_id: getBelongId(),
       });
 
       if (!realEstateAsset) {
         toast.error('Failed to create property');
         setLoading(false);
         return;
-      }
-
-      // Set initial property value (Current Value goes to asset balance)
-      if (currentValue > 0) {
-        await createFlow({
-          type: 'income',
-          amount: currentValue,
-          currency,
-          to_asset_id: realEstateAsset.id,
-          category: 'adjustment',
-          date: propertyBoughtDate || new Date().toISOString().split('T')[0],
-          description: `Initial value for ${realEstateAsset.name}`,
-        });
-        // Update asset balance to current value
-        await assetApi.update(realEstateAsset.id, { balance: currentValue });
       }
 
       // Create mortgage if user said yes (using new debts table)
@@ -676,11 +770,26 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
             <div className="space-y-2">
               <Label variant="muted" className="block mb-2">Select asset type</Label>
               <div className="grid grid-cols-2 gap-2">
-                {ASSET_TYPE_OPTIONS.map((option) => (
+                {/* 1. Cash */}
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect('cash')}
+                  className="p-3 rounded-md text-left transition-all hover:translate-y-[-1px] active:translate-y-[1px] hover:bg-white/[0.04]"
+                  style={{
+                    backgroundColor: colors.surface,
+                    border: `1px solid ${colors.border}`,
+                  }}
+                >
+                  <span className="text-sm font-medium" style={{ color: colors.text }}>
+                    Cash
+                  </span>
+                </button>
+
+                {/* 2. Deposit - opens flow dialog for full interest settings */}
+                {onAddDeposit && (
                   <button
-                    key={option.value}
                     type="button"
-                    onClick={() => handleTypeSelect(option.value as AssetType)}
+                    onClick={onAddDeposit}
                     className="p-3 rounded-md text-left transition-all hover:translate-y-[-1px] active:translate-y-[1px] hover:bg-white/[0.04]"
                     style={{
                       backgroundColor: colors.surface,
@@ -688,14 +797,61 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                     }}
                   >
                     <span className="text-sm font-medium" style={{ color: colors.text }}>
-                      {option.label}
+                      Deposit
                     </span>
                   </button>
-                ))}
+                )}
+
+                {/* 3. Stock / Metals - opens invest flow dialog */}
+                {onAddInvestment && (
+                  <button
+                    type="button"
+                    onClick={onAddInvestment}
+                    className="p-3 rounded-md text-left transition-all hover:translate-y-[-1px] active:translate-y-[1px] hover:bg-white/[0.04]"
+                    style={{
+                      backgroundColor: colors.surface,
+                      border: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    <span className="text-sm font-medium" style={{ color: colors.text }}>
+                      Stock / Metals
+                    </span>
+                    <p className="text-[10px] mt-0.5" style={{ color: colors.muted }}>
+                      Stocks, ETFs, Crypto, Metals
+                    </p>
+                  </button>
+                )}
+
+                {/* 4. Real Estate */}
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect('real_estate')}
+                  className="p-3 rounded-md text-left transition-all hover:translate-y-[-1px] active:translate-y-[1px] hover:bg-white/[0.04]"
+                  style={{
+                    backgroundColor: colors.surface,
+                    border: `1px solid ${colors.border}`,
+                  }}
+                >
+                  <span className="text-sm font-medium" style={{ color: colors.text }}>
+                    Real Estate
+                  </span>
+                </button>
+
+                {/* 5. Other */}
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect('other')}
+                  className="p-3 rounded-md text-left transition-all hover:translate-y-[-1px] active:translate-y-[1px] hover:bg-white/[0.04]"
+                  style={{
+                    backgroundColor: colors.surface,
+                    border: `1px solid ${colors.border}`,
+                  }}
+                >
+                  <span className="text-sm font-medium" style={{ color: colors.text }}>
+                    Other
+                  </span>
+                </button>
               </div>
-              <p className="text-[10px] mt-3" style={{ color: colors.muted }}>
-                For stocks/ETFs, use &quot;Record &gt; Invest&quot; to buy shares.
-              </p>
             </div>
           )}
 
@@ -762,11 +918,10 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                           onChange={(e) => setPropertyPurchasePrice(e.target.value)}
                           hint="For tracking gains"
                         />
-                        <Input
+                        <DateInput
                           label="Purchase Date"
-                          type="date"
                           value={propertyBoughtDate}
-                          onChange={(e) => setPropertyBoughtDate(e.target.value)}
+                          onChange={setPropertyBoughtDate}
                         />
                       </div>
 
@@ -1050,11 +1205,10 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                           />
                         </div>
 
-                        <Input
+                        <DateInput
                           label="Start Date"
-                          type="date"
                           value={mortgageStartDate}
-                          onChange={(e) => setMortgageStartDate(e.target.value)}
+                          onChange={setMortgageStartDate}
                         />
 
                         {mortgageMonthlyPayment > 0 && (
@@ -1153,11 +1307,10 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                           onChange={(e) => setPropertyPurchasePrice(e.target.value)}
                           hint="For tracking gains"
                         />
-                        <Input
+                        <DateInput
                           label="Purchase Date"
-                          type="date"
                           value={propertyBoughtDate}
-                          onChange={(e) => setPropertyBoughtDate(e.target.value)}
+                          onChange={setPropertyBoughtDate}
                         />
                       </div>
 
@@ -1288,11 +1441,10 @@ export function AddAssetDialog({ open, onOpenChange, asset }: AddAssetDialogProp
                     />
                   </div>
 
-                  <Input
+                  <DateInput
                     label="Start Date"
-                    type="date"
                     value={mortgageStartDate}
-                    onChange={(e) => setMortgageStartDate(e.target.value)}
+                    onChange={setMortgageStartDate}
                   />
 
                   {mortgageMonthlyPayment > 0 && (

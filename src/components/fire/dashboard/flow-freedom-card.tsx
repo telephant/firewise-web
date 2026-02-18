@@ -252,7 +252,7 @@ export function FlowFreedomCard({ currency = 'USD' }: FlowFreedomCardProps) {
       {/* Excluded Flows Warning */}
       {data.pendingReview.count > 0 && (
         <Link
-          href="/fire/flows?needs_review=true"
+          href="/fire/transactions?needs_review=true"
           className="mt-3 p-2 rounded-md flex items-center justify-between text-xs hover:opacity-80 transition-opacity"
           style={{
             backgroundColor: colors.warning + '15',

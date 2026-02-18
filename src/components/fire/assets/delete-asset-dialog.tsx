@@ -17,6 +17,8 @@ import {
   IconBond,
   IconRealEstate,
   IconCrypto,
+  IconMetals,
+  IconChart,
   IconBox,
 } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
@@ -38,6 +40,7 @@ const ASSET_ICONS: Record<AssetType, React.ComponentType<{ size?: number; classN
   bond: IconBond,
   real_estate: IconRealEstate,
   crypto: IconCrypto,
+  metals: IconMetals,
   other: IconBox,
 };
 
@@ -49,6 +52,7 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   bond: 'Bond',
   real_estate: 'Real Estate',
   crypto: 'Crypto',
+  metals: 'Metals',
   other: 'Other',
 };
 

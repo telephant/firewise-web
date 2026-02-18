@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AddFlowDialog } from '@/components/fire/add-flow';
+import { AddTransactionDialog } from '@/components/fire/add-transaction';
 import {
   colors,
   Button,
@@ -13,13 +13,7 @@ import {
   IconPlus,
   IconBank,
 } from '@/components/fire/ui';
-import {
-  CoreMetricsRow,
-  HumanInsightCard,
-  MonthlySnapshotCard,
-  RunwayCard,
-  NetWorthAllocationBar,
-} from '@/components/fire/dashboard';
+import { NetWorthAllocationBar, DividendCalendar, PassiveIncomeCard, MonthlySummaryCard } from '@/components/fire/dashboard';
 import { useUserPreferences, useAssets, useDebts } from '@/hooks/fire/use-fire-data';
 
 // Quick action buttons for common flows
@@ -124,7 +118,7 @@ export default function FireDashboardPage() {
       ═══════════════════════════════════════════════════════════════ */}
       <main className="flex-1 overflow-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
-          {/* ROW 1: Net Worth Allocation Bar (Assets + Debts) */}
+          {/* Net Worth Allocation Bar (Assets + Debts) */}
           <NetWorthAllocationBar
             assets={assets}
             debts={debts}
@@ -132,31 +126,30 @@ export default function FireDashboardPage() {
             currency={displayCurrency}
           />
 
-          {/* ROW 2: Core Metrics (Net Worth, Flow Freedom %, Runway) */}
-          <CoreMetricsRow currency={displayCurrency} />
-
-          {/* ROW 3: Human Insight */}
-          <HumanInsightCard currency={displayCurrency} />
-
-          {/* ROW 4: Monthly Snapshot + Runway Details */}
+          {/* Monthly Summary + Passive Income */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MonthlySnapshotCard currency={displayCurrency} />
-            <RunwayCard currency={displayCurrency} />
+            <MonthlySummaryCard />
+            <PassiveIncomeCard />
           </div>
+
+          {/* Dividend Calendar */}
+          <DividendCalendar />
         </div>
       </main>
 
       {/* ═══════════════════════════════════════════════════════════════
-          Add Flow Dialog
+          Add Transaction Dialog - Only render when open to avoid unnecessary API calls
       ═══════════════════════════════════════════════════════════════ */}
-      <AddFlowDialog
-        open={isAddFlowOpen}
-        onOpenChange={(open) => {
-          setIsAddFlowOpen(open);
-          if (!open) setInitialCategory(undefined);
-        }}
-        initialCategory={initialCategory}
-      />
+      {isAddFlowOpen && (
+        <AddTransactionDialog
+          open={isAddFlowOpen}
+          onOpenChange={(open) => {
+            setIsAddFlowOpen(open);
+            if (!open) setInitialCategory(undefined);
+          }}
+          initialCategory={initialCategory}
+        />
+      )}
     </div>
   );
 }

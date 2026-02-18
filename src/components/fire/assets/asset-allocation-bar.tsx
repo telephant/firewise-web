@@ -20,6 +20,7 @@ const CATEGORY_LABELS: Record<AssetType, string> = {
   bond: 'Bonds',
   real_estate: 'Real Estate',
   crypto: 'Crypto',
+  metals: 'Metals',
   other: 'Other',
 };
 
@@ -51,6 +52,7 @@ export function AssetAllocationBar({
       bond: [],
       real_estate: [],
       crypto: [],
+      metals: [],
       other: [],
     };
 

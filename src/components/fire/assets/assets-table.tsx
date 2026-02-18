@@ -3,7 +3,6 @@
 import {
   colors,
   Card,
-  Loader,
   FilterDropdown,
   Input,
   IconCash,
@@ -13,16 +12,33 @@ import {
   IconBond,
   IconRealEstate,
   IconCrypto,
+  IconMetals,
+  IconChart,
   IconBox,
   IconEdit,
   IconTrash,
   IconMaximize,
   IconMinimize,
+  Table,
+  TableHeader,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableActionButton,
+  Pagination,
 } from '@/components/fire/ui';
 import type { FilterOption } from '@/components/fire/ui';
 import { formatCurrency, formatShares, formatPercent } from '@/lib/fire/utils';
 import type { AssetWithBalance, AssetType, AssetSortField, SortOrder } from '@/types/fire';
 import type { StockPrice } from '@/lib/fire/api';
+import {
+  METAL_OPTIONS,
+  UNIT_OPTIONS,
+  convertMetalPrice,
+  type MetalType,
+  type MetalUnit,
+} from '@/components/fire/add-transaction/metals-selector';
 
 interface AssetsTableProps {
   assets: AssetWithBalance[];
@@ -63,6 +79,7 @@ const ASSET_ICONS: Record<AssetType, React.ComponentType<{ size?: number; classN
   bond: IconBond,
   real_estate: IconRealEstate,
   crypto: IconCrypto,
+  metals: IconMetals,
   other: IconBox,
 };
 
@@ -74,10 +91,11 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   bond: 'Bond',
   real_estate: 'Real Estate',
   crypto: 'Crypto',
+  metals: 'Metals',
   other: 'Other',
 };
 
-const SHARE_BASED_TYPES: AssetType[] = ['stock', 'etf', 'crypto'];
+const SHARE_BASED_TYPES: AssetType[] = ['stock', 'etf', 'crypto', 'metals'];
 const ADJUSTABLE_TYPES: AssetType[] = ['cash', 'deposit', 'real_estate', 'bond', 'other'];
 
 const TYPE_OPTIONS: FilterOption[] = [
@@ -88,8 +106,11 @@ const TYPE_OPTIONS: FilterOption[] = [
   { id: 'bond', label: 'Bond', icon: <IconBond size={14} /> },
   { id: 'real_estate', label: 'Real Estate', icon: <IconRealEstate size={14} /> },
   { id: 'crypto', label: 'Crypto', icon: <IconCrypto size={14} /> },
+  { id: 'metals', label: 'Metals', icon: <IconMetals size={14} /> },
   { id: 'other', label: 'Other', icon: <IconBox size={14} /> },
 ];
+
+const COLUMNS = 'grid-cols-[1fr_80px_140px_100px_50px_70px_60px]';
 
 export function AssetsTable({
   assets,
@@ -116,12 +137,30 @@ export function AssetsTable({
   onAdjust,
   onDelete,
 }: AssetsTableProps) {
+  // Helper to get metal display info (for showing weight × price details)
+  const getMetalDisplayInfo = (asset: AssetWithBalance): { pricePerUnit: number; unit: string } | null => {
+    if (asset.type !== 'metals' || !asset.metadata) return null;
+    const metalType = asset.metadata.metal_type as MetalType;
+    const metalUnit = (asset.metadata.metal_unit || 'gram') as MetalUnit;
+    const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
+    if (!metalConfig) return null;
+
+    const yahooPrice = stockPrices[metalConfig.symbol];
+    if (!yahooPrice) return null;
+
+    // Convert Yahoo price (troy oz or pound) to the asset's unit
+    // Note: This is USD price for display only, actual value uses converted_balance from backend
+    const pricePerUnit = convertMetalPrice(yahooPrice.price, metalConfig.priceUnit, metalUnit);
+    const unitConfig = UNIT_OPTIONS.find(u => u.id === metalUnit);
+    return { pricePerUnit, unit: unitConfig?.shortLabel || metalUnit };
+  };
+
   const getAssetValue = (asset: AssetWithBalance): { value: number; currency: string } => {
-    // Use converted_balance if available (backend handles currency conversion for all types)
+    // For all assets, use converted_balance if available (backend handles currency conversion)
     if (asset.converted_balance !== undefined && asset.converted_currency) {
       return { value: asset.converted_balance, currency: asset.converted_currency };
     }
-    // Fallback for share-based assets without conversion
+    // Fallback: Handle share-based assets with real-time price (balance = shares, not currency)
     if (SHARE_BASED_TYPES.includes(asset.type) && asset.ticker) {
       const price = stockPrices[asset.ticker.toUpperCase()];
       if (price) {
@@ -133,6 +172,17 @@ export function AssetsTable({
   };
 
   const getAssetDetails = (asset: AssetWithBalance): string => {
+    // Handle metals display: "10g × $95.50/g" (showing USD price from Yahoo)
+    if (asset.type === 'metals') {
+      const metalInfo = getMetalDisplayInfo(asset);
+      const unitConfig = UNIT_OPTIONS.find(u => u.id === (asset.metadata?.metal_unit || 'gram'));
+      const unitLabel = unitConfig?.shortLabel || 'g';
+      if (metalInfo) {
+        // Show USD price from Yahoo (actual value uses converted_balance from backend)
+        return `${formatShares(asset.balance)}${unitLabel} × ${formatCurrency(metalInfo.pricePerUnit, { currency: 'USD', decimals: 2 })}/${unitLabel}`;
+      }
+      return `${formatShares(asset.balance)} ${unitLabel}`;
+    }
     if (SHARE_BASED_TYPES.includes(asset.type)) {
       const price = asset.ticker ? stockPrices[asset.ticker.toUpperCase()] : null;
       if (price) {
@@ -144,6 +194,24 @@ export function AssetsTable({
   };
 
   const getDayChange = (asset: AssetWithBalance): { change: number; percent: number } | null => {
+    // Handle metals day change
+    if (asset.type === 'metals') {
+      const metalType = asset.metadata?.metal_type as MetalType;
+      const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
+      if (metalConfig) {
+        const yahooPrice = stockPrices[metalConfig.symbol];
+        if (yahooPrice && yahooPrice.changePercent != null) {
+          const metalUnit = (asset.metadata?.metal_unit || 'gram') as MetalUnit;
+          const currentPricePerUnit = convertMetalPrice(yahooPrice.price, metalConfig.priceUnit, metalUnit);
+          const prevPricePerUnit = convertMetalPrice(yahooPrice.previousClose, metalConfig.priceUnit, metalUnit);
+          return {
+            change: asset.balance * (currentPricePerUnit - prevPricePerUnit),
+            percent: yahooPrice.changePercent,
+          };
+        }
+      }
+      return null;
+    }
     if (SHARE_BASED_TYPES.includes(asset.type) && asset.ticker) {
       const price = stockPrices[asset.ticker.toUpperCase()];
       if (price && price.changePercent != null) {
@@ -218,111 +286,61 @@ export function AssetsTable({
       </div>
 
       {/* Table */}
-      <div
-        className="rounded-md overflow-hidden"
-        style={{
-          border: `1px solid ${colors.border}`,
-        }}
-      >
-        {/* Table Header */}
-        <div
-          className="grid grid-cols-[1fr_80px_140px_100px_50px_70px_60px] gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wide"
-          style={{
-            backgroundColor: colors.surfaceLight,
-            color: colors.text,
-            borderBottom: `1px solid ${colors.border}`,
-          }}
-        >
-          <button
-            onClick={() => onSort?.('name')}
-            className="flex items-center gap-1 hover:opacity-70 text-left transition-opacity duration-150 cursor-pointer"
-            style={{ color: sortBy === 'name' ? colors.accent : colors.text }}
+      <Table>
+        <TableHeader columns={COLUMNS}>
+          <TableHeaderCell
+            sortable
+            active={sortBy === 'name'}
+            sortOrder={sortOrder}
+            onSort={() => onSort?.('name')}
           >
             Name
-            {sortBy === 'name' && (
-              <span className="text-[10px]">{sortOrder === 'asc' ? '▲' : '▼'}</span>
-            )}
-          </button>
-          <button
-            onClick={() => onSort?.('type')}
-            className="flex items-center gap-1 hover:opacity-70 text-left transition-opacity duration-150 cursor-pointer"
-            style={{ color: sortBy === 'type' ? colors.accent : colors.text }}
+          </TableHeaderCell>
+          <TableHeaderCell
+            sortable
+            active={sortBy === 'type'}
+            sortOrder={sortOrder}
+            onSort={() => onSort?.('type')}
           >
             Type
-            {sortBy === 'type' && (
-              <span className="text-[10px]">{sortOrder === 'asc' ? '▲' : '▼'}</span>
-            )}
-          </button>
-          <div>Details</div>
-          <button
-            onClick={() => onSort?.('balance')}
-            className="flex items-center gap-1 justify-end hover:opacity-70 text-right w-full transition-opacity duration-150 cursor-pointer"
-            style={{ color: sortBy === 'balance' ? colors.accent : colors.text }}
+          </TableHeaderCell>
+          <TableHeaderCell>Details</TableHeaderCell>
+          <TableHeaderCell
+            align="right"
+            sortable
+            active={sortBy === 'balance'}
+            sortOrder={sortOrder}
+            onSort={() => onSort?.('balance')}
           >
             Value
-            {sortBy === 'balance' && (
-              <span className="text-[10px]">{sortOrder === 'asc' ? '▲' : '▼'}</span>
-            )}
-          </button>
-          <button
-            onClick={() => onSort?.('balance')}
-            className="flex items-center gap-1 justify-end hover:opacity-70 text-right w-full transition-opacity duration-150 cursor-pointer"
-            style={{ color: sortBy === 'balance' ? colors.accent : colors.text }}
-          >
-            %
-            {sortBy === 'balance' && (
-              <span className="text-[10px]">{sortOrder === 'asc' ? '▲' : '▼'}</span>
-            )}
-          </button>
-          <div className="text-right">Change</div>
-          <div></div>
-        </div>
+          </TableHeaderCell>
+          <TableHeaderCell align="right">%</TableHeaderCell>
+          <TableHeaderCell align="right">Change</TableHeaderCell>
+          <TableHeaderCell />
+        </TableHeader>
 
-        {/* Table Body - Fixed Height */}
-        <div
-          style={{
-            backgroundColor: colors.surfaceLight,
-            height: TABLE_BODY_HEIGHT,
-            overflowY: 'auto',
-          }}
+        <TableBody
+          height={TABLE_BODY_HEIGHT}
+          isLoading={isLoading}
+          isEmpty={assets.length === 0}
+          emptyMessage="No assets found"
         >
-          {isLoading ? (
-            <div
-              className="flex items-center justify-center"
-              style={{ height: TABLE_BODY_HEIGHT }}
-            >
-              <Loader size="md" variant="bar" />
-            </div>
-          ) : assets.length === 0 ? (
-            <div
-              className="flex items-center justify-center text-xs"
-              style={{ color: colors.muted, height: TABLE_BODY_HEIGHT }}
-            >
-              No assets found
-            </div>
-          ) : (
-            assets.map((asset, index) => {
-              const IconComponent = ASSET_ICONS[asset.type] || ASSET_ICONS.other;
-              const { value, currency: valueCurrency } = getAssetValue(asset);
-              const details = getAssetDetails(asset);
-              const dayChange = getDayChange(asset);
-              const isAdjustable = ADJUSTABLE_TYPES.includes(asset.type);
-              const percentOfTotal = totalValue > 0 ? (value / totalValue) * 100 : 0;
+          {assets.map((asset, index) => {
+            const IconComponent = ASSET_ICONS[asset.type] || ASSET_ICONS.other;
+            const { value, currency: valueCurrency } = getAssetValue(asset);
+            const details = getAssetDetails(asset);
+            const dayChange = getDayChange(asset);
+            const percentOfTotal = totalValue > 0 ? (value / totalValue) * 100 : 0;
 
-              return (
-                <div
-                  key={asset.id}
-                  className="grid grid-cols-[1fr_80px_140px_100px_50px_70px_60px] gap-2 px-3 py-2 items-center text-sm group hover:bg-[var(--hover)] cursor-pointer"
-                  style={{
-                    '--hover': colors.surface,
-                    borderBottom:
-                      index < assets.length - 1
-                        ? `1px solid ${colors.surfaceLight}`
-                        : 'none',
-                  } as React.CSSProperties}
-                  onClick={() => onRowClick?.(asset)}
-                >
-                  {/* Name */}
+            return (
+              <TableRow
+                key={asset.id}
+                columns={COLUMNS}
+                isLast={index === assets.length - 1}
+                onClick={() => onRowClick?.(asset)}
+              >
+                {/* Name */}
+                <TableCell>
                   <div className="flex items-center gap-2 min-w-0">
                     <span style={{ color: colors.muted }} className="flex-shrink-0">
                       <IconComponent size={14} />
@@ -341,205 +359,102 @@ export function AssetsTable({
                       )}
                     </div>
                   </div>
+                </TableCell>
 
-                  {/* Type */}
-                  <div className="text-xs" style={{ color: colors.muted }}>
+                {/* Type */}
+                <TableCell>
+                  <span className="text-xs" style={{ color: colors.muted }}>
                     {ASSET_TYPE_LABELS[asset.type]}
-                  </div>
+                  </span>
+                </TableCell>
 
-                  {/* Details */}
-                  <div className="text-xs truncate" style={{ color: colors.muted }}>
+                {/* Details */}
+                <TableCell>
+                  <span className="text-xs truncate" style={{ color: colors.muted }}>
                     {details}
-                  </div>
+                  </span>
+                </TableCell>
 
-                  {/* Value */}
-                  <div className="text-right">
-                    <div
-                      className="text-xs font-bold tabular-nums"
-                      style={{ color: colors.text }}
-                    >
-                      {formatCurrency(value, { currency: valueCurrency })}
-                    </div>
-                    {/* Show original amount if displaying converted */}
-                    {asset.converted_balance !== undefined &&
-                      asset.converted_currency &&
-                      asset.converted_currency !== asset.currency &&
-                      !SHARE_BASED_TYPES.includes(asset.type) && (
-                        <div
-                          className="text-[10px] tabular-nums"
-                          style={{ color: colors.muted }}
-                        >
-                          ({formatCurrency(asset.balance, { currency: asset.currency })})
-                        </div>
-                      )}
+                {/* Value */}
+                <TableCell align="right">
+                  <div
+                    className="text-xs font-bold tabular-nums"
+                    style={{ color: colors.text }}
+                  >
+                    {formatCurrency(value, { currency: valueCurrency })}
                   </div>
+                  {asset.converted_balance !== undefined &&
+                    asset.converted_currency &&
+                    asset.converted_currency !== asset.currency &&
+                    !SHARE_BASED_TYPES.includes(asset.type) && (
+                      <div
+                        className="text-[10px] tabular-nums"
+                        style={{ color: colors.muted }}
+                      >
+                        ({formatCurrency(asset.balance, { currency: asset.currency })})
+                      </div>
+                    )}
+                </TableCell>
 
-                  {/* Percentage */}
-                  <div className="text-right">
+                {/* Percentage */}
+                <TableCell align="right">
+                  <span className="text-xs tabular-nums" style={{ color: colors.muted }}>
+                    {percentOfTotal.toFixed(1)}%
+                  </span>
+                </TableCell>
+
+                {/* Day Change */}
+                <TableCell align="right">
+                  {dayChange ? (
                     <span
                       className="text-xs tabular-nums"
-                      style={{ color: colors.muted }}
+                      style={{
+                        color: dayChange.percent >= 0 ? colors.positive : colors.negative,
+                      }}
                     >
-                      {percentOfTotal.toFixed(1)}%
+                      {dayChange.percent >= 0 ? '+' : ''}
+                      {formatPercent(dayChange.percent)}
                     </span>
-                  </div>
+                  ) : (
+                    <span className="text-xs" style={{ color: colors.muted }}>
+                      —
+                    </span>
+                  )}
+                </TableCell>
 
-                  {/* Day Change */}
-                  <div className="text-right">
-                    {dayChange ? (
-                      <span
-                        className="text-xs tabular-nums"
-                        style={{
-                          color: dayChange.percent >= 0 ? colors.positive : colors.negative,
-                        }}
-                      >
-                        {dayChange.percent >= 0 ? '+' : ''}
-                        {formatPercent(dayChange.percent)}
-                      </span>
-                    ) : (
-                      <span className="text-xs" style={{ color: colors.muted }}>
-                        —
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Actions */}
+                {/* Actions */}
+                <TableCell>
                   <div className="flex items-center justify-end gap-1">
                     {onEdit && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(asset);
-                        }}
-                        className="p-1 rounded-md hover:bg-[var(--hover)]"
-                        style={{
-                          color: colors.muted,
-                          '--hover': colors.surfaceLight,
-                        } as React.CSSProperties}
+                      <TableActionButton
+                        icon={<IconEdit size={14} />}
+                        onClick={() => onEdit(asset)}
                         title="Edit"
-                      >
-                        <IconEdit size={14} />
-                      </button>
+                      />
                     )}
                     {onDelete && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(asset);
-                        }}
-                        className="p-1 rounded-md hover:bg-[var(--hover)]"
-                        style={{
-                          color: colors.negative,
-                          '--hover': colors.surfaceLight,
-                        } as React.CSSProperties}
+                      <TableActionButton
+                        icon={<IconTrash size={14} />}
+                        onClick={() => onDelete(asset)}
                         title="Delete"
-                      >
-                        <IconTrash size={14} />
-                      </button>
+                        color={colors.negative}
+                      />
                     )}
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
 
-      {/* Pagination */}
-      <div
-        className="flex items-center justify-between mt-3 pt-3"
-        style={{ borderTop: `1px solid ${colors.border}` }}
-      >
-        <div className="text-xs" style={{ color: colors.muted }}>
-          {totalCount > 0 ? `Showing ${startItem}-${endItem} of ${totalCount}` : 'No results'}
-        </div>
-
-        {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => onPageChange(1)}
-                disabled={currentPage === 1}
-                className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
-                style={{
-                  backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
-                  color: colors.text,
-                }}
-              >
-                ««
-              </button>
-              <button
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
-                style={{
-                  backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
-                  color: colors.text,
-                }}
-              >
-                «
-              </button>
-
-              {/* Page numbers */}
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => onPageChange(pageNum)}
-                    className="px-2 py-1 text-xs rounded-md min-w-[28px] transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
-                    style={
-                      currentPage === pageNum
-                        ? {
-                            backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
-                            color: colors.text,
-                            fontWeight: 'bold',
-                          }
-                        : {
-                            backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
-                            color: colors.text,
-                          }
-                    }
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
-                style={{
-                  backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
-                  color: colors.text,
-                }}
-              >
-                »
-              </button>
-              <button
-                onClick={() => onPageChange(totalPages)}
-                disabled={currentPage === totalPages}
-                className="px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors duration-150 hover:bg-white/[0.06] cursor-pointer"
-                style={{
-                  backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px',
-                  color: colors.text,
-                }}
-              >
-                »»
-              </button>
-            </div>
-          )}
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+      />
     </Card>
   );
 }

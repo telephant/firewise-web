@@ -21,6 +21,8 @@ export { SimpleProgressBar } from './simple-progress-bar';
 export { StatCard } from './stat-card';
 export { Input } from './input';
 export type { InputProps } from './input';
+export { DateInput } from './date-input';
+export type { DateInputProps } from './date-input';
 export { Select } from './select';
 export type { SelectProps } from './select';
 export { CurrencyCombobox, CURRENCIES, getCurrencyInfo, getCurrencySymbolFromCode } from './currency-combobox';

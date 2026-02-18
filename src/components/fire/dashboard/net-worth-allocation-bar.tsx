@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { colors, Loader } from '@/components/fire/ui';
+import { colors, Loader, IconPlus } from '@/components/fire/ui';
 import { formatCurrency, ASSET_COLORS, ASSET_LABELS, DEBT_LABELS } from '@/lib/fire/utils';
+import { useSnapshots } from '@/hooks/fire';
 import type { AssetWithBalance, AssetType, Debt, DebtType } from '@/types/fire';
 
 interface NetWorthAllocationBarProps {
@@ -11,6 +12,7 @@ interface NetWorthAllocationBarProps {
   debts: Debt[];
   isLoading?: boolean;
   currency?: string;
+  onAddAsset?: () => void;
 }
 
 interface WaterfallBar {
@@ -32,17 +34,21 @@ export function NetWorthAllocationBar({
   debts,
   isLoading = false,
   currency = 'USD',
+  onAddAsset,
 }: NetWorthAllocationBarProps) {
   const [hoveredBar, setHoveredBar] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // Get last snapshot for comparison with current data
+  const { snapshots } = useSnapshots({ limit: 1 });
+
   // Group assets by type with individual items
   const { assetBars, totalAssets, assetItems } = useMemo(() => {
     const typeAssets: Record<AssetType, AssetWithBalance[]> = {
       cash: [], deposit: [], stock: [], etf: [],
-      bond: [], real_estate: [], crypto: [], other: [],
+      bond: [], real_estate: [], crypto: [], metals: [], other: [],
     };
 
     assets.forEach((asset) => {
@@ -126,6 +132,17 @@ export function NetWorthAllocationBar({
 
   const netWorth = totalAssets - totalDebts;
 
+  // Calculate comparison: current live netWorth vs last snapshot
+  const comparison = useMemo(() => {
+    if (!snapshots || snapshots.length < 1 || netWorth === 0) return null;
+    const lastSnapshot = snapshots[0];
+    const snapshotNetWorth = lastSnapshot.converted_net_worth ?? lastSnapshot.net_worth;
+    const change = netWorth - snapshotNetWorth;
+    const changePercent = snapshotNetWorth !== 0 ? (change / Math.abs(snapshotNetWorth)) * 100 : 0;
+    const monthName = new Date(lastSnapshot.year, lastSnapshot.month - 1).toLocaleDateString('en-US', { month: 'short' });
+    return { change, changePercent, monthName };
+  }, [snapshots, netWorth]);
+
   // Build waterfall bars
   const waterfallBars = useMemo(() => {
     const bars: WaterfallBar[] = [];
@@ -182,6 +199,64 @@ export function NetWorthAllocationBar({
       <div className="p-4 rounded-xl" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}>
         <div className="flex items-center justify-center py-8">
           <Loader size="sm" variant="dots" />
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state when no assets and no debts
+  const isEmpty = totalAssets === 0 && totalDebts === 0;
+  if (isEmpty) {
+    return (
+      <div
+        className="p-5 rounded-xl"
+        style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+      >
+        {/* Header */}
+        <div className="flex items-baseline justify-between mb-4">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wider mb-0.5" style={{ color: colors.muted }}>
+              Net Worth
+            </div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: colors.muted }}>
+              {formatCurrency(0, { currency })}
+            </div>
+          </div>
+        </div>
+
+        {/* Empty state illustration */}
+        <div
+          className="flex flex-col items-center justify-center py-8 rounded-lg"
+          style={{ backgroundColor: colors.surfaceLight }}
+        >
+          <div
+            className="flex items-center gap-2 mb-3"
+            style={{ color: colors.muted }}
+          >
+            <div className="w-8 h-1 rounded" style={{ backgroundColor: colors.border }} />
+            <div className="w-12 h-3 rounded" style={{ backgroundColor: colors.border }} />
+            <div className="w-6 h-2 rounded" style={{ backgroundColor: colors.border }} />
+            <div className="w-10 h-4 rounded" style={{ backgroundColor: colors.positive + '40' }} />
+          </div>
+          <p className="text-sm mb-1" style={{ color: colors.text }}>
+            Build your wealth waterfall
+          </p>
+          <p className="text-xs mb-4 text-center max-w-[240px]" style={{ color: colors.muted }}>
+            Add assets to visualize how your wealth is distributed
+          </p>
+          {onAddAsset && (
+            <button
+              onClick={onAddAsset}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: colors.accent,
+                color: '#fff',
+              }}
+            >
+              <IconPlus size={14} />
+              Add Asset
+            </button>
+          )}
         </div>
       </div>
     );
@@ -308,6 +383,14 @@ export function NetWorthAllocationBar({
           <div className="text-2xl font-bold tabular-nums" style={{ color: netWorth >= 0 ? colors.positive : colors.negative }}>
             {formatCurrency(netWorth, { currency })}
           </div>
+          {comparison && comparison.change !== 0 && (
+            <div className="text-xs mt-0.5" style={{ color: colors.muted }}>
+              <span style={{ color: comparison.change > 0 ? colors.positive : colors.negative }}>
+                {comparison.change > 0 ? '↑' : '↓'} {comparison.change > 0 ? '+' : ''}{comparison.changePercent.toFixed(1)}%
+              </span>
+              {' '}vs {comparison.monthName}
+            </div>
+          )}
         </div>
         <div className="flex gap-4 text-xs">
           <div className="text-right">

@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { colors, Card, ProgressBar, Loader } from '@/components/fire/ui';
 import { formatCurrency, calculateNetWorth } from '@/lib/fire/utils';
-import { useAssets, useFlowStats } from '@/hooks/fire/use-fire-data';
+import { useAssets, useTransactionStats } from '@/hooks/fire/use-fire-data';
 
 interface FireProgressCardProps {
   fireTarget?: number;
@@ -16,7 +16,7 @@ export function FireProgressCard({
 }: FireProgressCardProps) {
   // Use SWR hooks for data fetching
   const { assets, isLoading: assetsLoading } = useAssets();
-  const { stats, isLoading: statsLoading } = useFlowStats();
+  const { stats, isLoading: statsLoading } = useTransactionStats();
 
   const isLoading = assetsLoading || statsLoading;
 

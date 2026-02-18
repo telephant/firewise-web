@@ -14,6 +14,7 @@ export const ASSET_COLORS: Record<AssetType, string> = {
   bond: '#06B6D4',
   real_estate: '#EC4899',
   crypto: '#F97316',
+  metals: '#EAB308',
   other: '#6B7280',
 };
 
@@ -25,6 +26,7 @@ export const ASSET_LABELS: Record<AssetType, string> = {
   bond: 'Bonds',
   real_estate: 'Property',
   crypto: 'Crypto',
+  metals: 'Metals',
   other: 'Other',
 };
 

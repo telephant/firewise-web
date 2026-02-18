@@ -17,7 +17,7 @@ import { formatCurrency, formatPercent } from '@/lib/fire/utils';
 import type { Debt, DebtType } from '@/types/fire';
 import { DEBT_TYPE_LABELS } from '@/types/fire';
 import { EditDebtDialog } from './edit-debt-dialog';
-import { AddFlowDialog } from '@/components/fire/add-flow';
+import { AddTransactionDialog } from '@/components/fire/add-transaction';
 
 interface DebtListProps {
   maxItems?: number;
@@ -227,13 +227,15 @@ export function DebtList({ maxItems = 4 }: DebtListProps) {
         onMakePayment={handleMakePayment}
       />
 
-      {/* Payment Dialog */}
-      <AddFlowDialog
-        open={paymentDialogOpen}
-        onOpenChange={setPaymentDialogOpen}
-        initialCategory="pay_debt"
-        initialDebtId={paymentDebtId}
-      />
+      {/* Payment Dialog - Only render when open */}
+      {paymentDialogOpen && (
+        <AddTransactionDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          initialCategory="pay_debt"
+          initialDebtId={paymentDebtId}
+        />
+      )}
     </Card>
   );
 }

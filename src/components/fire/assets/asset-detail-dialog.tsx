@@ -16,11 +16,20 @@ import {
   IconBond,
   IconRealEstate,
   IconCrypto,
+  IconMetals,
+  IconChart,
   IconBox,
 } from '@/components/fire/ui';
 import { formatCurrency, formatShares, formatPercent } from '@/lib/fire/utils';
 import type { AssetWithBalance, AssetType, RealEstateMetadata } from '@/types/fire';
 import type { StockPrice } from '@/lib/fire/api';
+import {
+  METAL_OPTIONS,
+  UNIT_OPTIONS,
+  convertMetalPrice,
+  type MetalType,
+  type MetalUnit,
+} from '@/components/fire/add-transaction/metals-selector';
 
 interface AssetDetailDialogProps {
   asset: AssetWithBalance | null;
@@ -30,6 +39,7 @@ interface AssetDetailDialogProps {
   onEdit?: (asset: AssetWithBalance) => void;
   onAdjust?: (asset: AssetWithBalance) => void;
   onDelete?: (asset: AssetWithBalance) => void;
+  currency?: string;
 }
 
 const ASSET_ICONS: Record<AssetType, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -40,6 +50,7 @@ const ASSET_ICONS: Record<AssetType, React.ComponentType<{ size?: number; classN
   bond: IconBond,
   real_estate: IconRealEstate,
   crypto: IconCrypto,
+  metals: IconMetals,
   other: IconBox,
 };
 
@@ -51,10 +62,11 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   bond: 'Bond',
   real_estate: 'Real Estate',
   crypto: 'Crypto',
+  metals: 'Metals',
   other: 'Other',
 };
 
-const SHARE_BASED_TYPES: AssetType[] = ['stock', 'etf', 'crypto'];
+const SHARE_BASED_TYPES: AssetType[] = ['stock', 'etf', 'crypto', 'metals'];
 const ADJUSTABLE_TYPES: AssetType[] = ['cash', 'deposit', 'real_estate', 'bond', 'other'];
 
 export function AssetDetailDialog({
@@ -65,15 +77,40 @@ export function AssetDetailDialog({
   onEdit,
   onAdjust,
   onDelete,
+  currency = 'USD',
 }: AssetDetailDialogProps) {
   if (!asset) return null;
 
   const IconComponent = ASSET_ICONS[asset.type] || ASSET_ICONS.other;
   const isShareBased = SHARE_BASED_TYPES.includes(asset.type);
   const isAdjustable = ADJUSTABLE_TYPES.includes(asset.type);
+  const isMetal = asset.type === 'metals';
   const stockPrice = asset.ticker ? stockPrices[asset.ticker.toUpperCase()] : null;
 
-  // Get the display value - use converted_balance if available (preferred currency)
+  // Helper to get metal display info (for showing weight × price details)
+  const getMetalDisplayInfo = (): { pricePerUnit: number; unit: string; changePercent: number | null } | null => {
+    if (!isMetal || !asset.metadata?.metal_type) return null;
+    const metalType = asset.metadata.metal_type as MetalType;
+    const metalUnit = (asset.metadata.metal_unit || 'gram') as MetalUnit;
+    const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
+    if (!metalConfig) return null;
+
+    const yahooPrice = stockPrices[metalConfig.symbol];
+    if (!yahooPrice) return null;
+
+    // USD price for display only - actual value uses converted_balance from backend
+    const pricePerUnit = convertMetalPrice(yahooPrice.price, metalConfig.priceUnit, metalUnit);
+    const unitConfig = UNIT_OPTIONS.find(u => u.id === metalUnit);
+    return {
+      pricePerUnit,
+      unit: unitConfig?.shortLabel || metalUnit,
+      changePercent: yahooPrice.changePercent,
+    };
+  };
+
+  const metalDisplayInfo = isMetal ? getMetalDisplayInfo() : null;
+
+  // Get the display value - use converted_balance if available (backend handles currency conversion)
   const displayValue = asset.converted_balance ?? (
     isShareBased && stockPrice
       ? asset.balance * stockPrice.price
@@ -139,8 +176,36 @@ export function AssetDetailDialog({
                   </p>
                 )}
 
-              {/* Share-based details */}
-              {isShareBased && (
+              {/* Metal details */}
+              {isMetal && (
+                <div className="mt-2 space-y-1">
+                  {metalDisplayInfo ? (
+                    <>
+                      <p className="text-xs" style={{ color: colors.muted }}>
+                        {formatShares(asset.balance)}{metalDisplayInfo.unit} × {formatCurrency(metalDisplayInfo.pricePerUnit, { currency: 'USD', decimals: 2 })}/{metalDisplayInfo.unit}
+                      </p>
+                      {metalDisplayInfo.changePercent != null && (
+                        <p
+                          className="text-xs"
+                          style={{
+                            color: metalDisplayInfo.changePercent >= 0 ? colors.positive : colors.negative,
+                          }}
+                        >
+                          {metalDisplayInfo.changePercent >= 0 ? '+' : ''}
+                          {formatPercent(metalDisplayInfo.changePercent)} today
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs" style={{ color: colors.muted }}>
+                      {formatShares(asset.balance)} {String((asset.metadata as Record<string, unknown>)?.metal_unit || 'g')}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Share-based details (stocks, ETFs, crypto) */}
+              {isShareBased && !isMetal && (
                 <div className="mt-2 space-y-1">
                   {stockPrice ? (
                     <>

@@ -19,13 +19,15 @@ import {
   ImportAssetsDialog,
 } from '@/components/fire/assets';
 import { AddAssetDialog } from '@/components/fire/dashboard/add-asset-dialog';
+import { AddFlowDialog, METAL_OPTIONS } from '@/components/fire/add-transaction';
 import { AdjustBalanceDialog } from '@/components/fire/dashboard/adjust-balance-dialog';
 import { useAssets, useStockPrices, useUserPreferences } from '@/hooks/fire/use-fire-data';
+import type { MetalType } from '@/components/fire/add-transaction/metals-selector';
 import { useUrlFilters } from '@/hooks/fire/use-url-filters';
 import type { AssetWithBalance, AssetType, AssetSortField, SortOrder } from '@/types/fire';
 
 const PAGE_SIZE = 20;
-const VALID_ASSET_TYPES: AssetType[] = ['cash', 'deposit', 'stock', 'etf', 'bond', 'real_estate', 'crypto', 'other'];
+const VALID_ASSET_TYPES: AssetType[] = ['cash', 'deposit', 'stock', 'etf', 'bond', 'real_estate', 'crypto', 'metals', 'other'];
 
 export default function AssetsPage() {
   return (
@@ -65,6 +67,9 @@ function AssetsPageContent() {
   const currentPage = filters.page;
 
   const [isAddAssetOpen, setIsAddAssetOpen] = useState(false);
+  const [isAddDepositOpen, setIsAddDepositOpen] = useState(false);
+  const [isAddInvestmentOpen, setIsAddInvestmentOpen] = useState(false);
+  const [isEditDepositOpen, setIsEditDepositOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetWithBalance | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -84,15 +89,25 @@ function AssetsPageContent() {
 
   // Get user preferences for currency
   const { preferences } = useUserPreferences();
-  const displayCurrency = preferences?.convert_all_to_preferred
-    ? preferences.preferred_currency
-    : 'USD';
+  const displayCurrency = preferences?.preferred_currency || 'USD';
 
-  // Get tickers for stock prices
+  // Get tickers for stock prices (including metal symbols)
   const tickers = useMemo(() => {
-    return assets
+    const stockTickers = assets
       .filter((a) => ['stock', 'etf', 'crypto'].includes(a.type) && a.ticker)
       .map((a) => (a.ticker as string).toUpperCase());
+
+    // Add metal symbols for metal assets
+    const metalSymbols = assets
+      .filter((a) => a.type === 'metals' && a.metadata?.metal_type)
+      .map((a) => {
+        const metalType = a.metadata?.metal_type as MetalType;
+        const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
+        return metalConfig?.symbol;
+      })
+      .filter((s): s is string => !!s);
+
+    return [...new Set([...stockTickers, ...metalSymbols])];
   }, [assets]);
 
   const { prices: stockPrices } = useStockPrices(tickers);
@@ -270,7 +285,12 @@ function AssetsPageContent() {
             }}
             onEdit={(asset) => {
               setSelectedAsset(asset);
-              setIsEditOpen(true);
+              // Use flow dialog for deposits to edit all fields including interest settings
+              if (asset.type === 'deposit') {
+                setIsEditDepositOpen(true);
+              } else {
+                setIsEditOpen(true);
+              }
             }}
             onAdjust={(asset) => {
               setSelectedAsset(asset);
@@ -288,6 +308,37 @@ function AssetsPageContent() {
       <AddAssetDialog
         open={isAddAssetOpen}
         onOpenChange={setIsAddAssetOpen}
+        onAddDeposit={() => {
+          setIsAddAssetOpen(false);
+          setIsAddDepositOpen(true);
+        }}
+        onAddInvestment={() => {
+          setIsAddAssetOpen(false);
+          setIsAddInvestmentOpen(true);
+        }}
+      />
+
+      {/* Add Deposit Dialog - uses flow form with full interest settings */}
+      <AddFlowDialog
+        open={isAddDepositOpen}
+        onOpenChange={setIsAddDepositOpen}
+        initialCategory="deposit"
+      />
+
+      {/* Add Investment Dialog - for stocks, ETFs, crypto, metals */}
+      <AddFlowDialog
+        open={isAddInvestmentOpen}
+        onOpenChange={setIsAddInvestmentOpen}
+        initialCategory="invest"
+      />
+
+      {/* Edit Deposit Dialog - same form as add but in edit mode */}
+      <AddFlowDialog
+        open={isEditDepositOpen}
+        onOpenChange={setIsEditDepositOpen}
+        initialCategory="deposit"
+        editAssetId={selectedAsset?.id}
+        onSubmitSuccess={() => mutate()}
       />
 
       {/* Edit Asset Dialog */}
@@ -304,10 +355,16 @@ function AssetsPageContent() {
         stockPrices={stockPrices}
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
+        currency={displayCurrency}
         onEdit={(asset) => {
           setIsDetailOpen(false);
           setSelectedAsset(asset);
-          setIsEditOpen(true);
+          // Use flow dialog for deposits to edit all fields including interest settings
+          if (asset.type === 'deposit') {
+            setIsEditDepositOpen(true);
+          } else {
+            setIsEditOpen(true);
+          }
         }}
         onAdjust={(asset) => {
           setIsDetailOpen(false);

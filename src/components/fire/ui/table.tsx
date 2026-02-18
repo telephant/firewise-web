@@ -94,7 +94,7 @@ export function TableHeaderCell({
 
 interface TableBodyProps {
   children: React.ReactNode;
-  height?: number;
+  height?: number | string;
   isLoading?: boolean;
   isEmpty?: boolean;
   emptyMessage?: string;
@@ -157,13 +157,18 @@ export function TableRow({
 }: TableRowProps) {
   return (
     <div
-      className={`grid ${columns} gap-2 px-3 py-2 items-center text-sm group hover:bg-[var(--hover)] cursor-pointer ${className}`}
+      className={`grid ${columns} gap-2 px-3 py-2 items-center text-sm group transition-colors duration-100 ${onClick ? 'cursor-pointer' : ''} ${className}`}
       style={{
-        '--hover': colors.surface,
-        borderBottom: isLast ? 'none' : `1px solid ${colors.surfaceLight}`,
+        borderBottom: isLast ? 'none' : `1px solid ${colors.border}`,
         ...style,
       } as React.CSSProperties}
       onClick={onClick}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = colors.surface;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent';
+      }}
     >
       {children}
     </div>

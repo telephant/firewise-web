@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  DateInput,
   Select,
   CurrencyCombobox,
   Button,
@@ -221,11 +222,10 @@ export function AddDebtDialog({ open, onOpenChange }: AddDebtDialogProps) {
             </div>
 
             {/* Start Date */}
-            <Input
+            <DateInput
               label="Start Date"
-              type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={setStartDate}
               hint="When did the loan start?"
             />
 

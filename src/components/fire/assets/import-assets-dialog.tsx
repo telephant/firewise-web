@@ -43,6 +43,7 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   bond: 'Bond',
   real_estate: 'Real Estate',
   crypto: 'Crypto',
+  metals: 'Metals',
   other: 'Other',
 };
 

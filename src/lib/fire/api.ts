@@ -6,15 +6,9 @@ import type {
   AssetType,
   AssetWithBalance,
   AssetFilters,
-  Flow,
-  FlowWithDetails,
-  FlowFilters,
-  FlowStats,
-  FlowExpenseCategory,
+  ExpenseCategory,
   CreateAssetData,
   UpdateAssetData,
-  CreateFlowData,
-  UpdateFlowData,
   ExpenseStats,
   Debt,
   DebtFilters,
@@ -26,6 +20,10 @@ import type {
   CreateRecurringScheduleData,
   UpdateRecurringScheduleData,
   ProcessRecurringResult,
+  Transaction,
+  TransactionWithDetails,
+  TransactionFilters,
+  TransactionStats,
 } from '@/types/fire';
 import { getCurrentViewMode } from '@/contexts/fire/view-mode-context';
 
@@ -174,43 +172,178 @@ export interface AssetToImport {
   market: string | null;
 }
 
-// Flow API
-export const flowApi = {
-  getAll: async (params?: FlowFilters) => {
+// =============================================================================
+// Domain-Specific Transaction APIs
+// These are the new atomic APIs that directly update balances and log to flows
+// =============================================================================
+
+// Asset Transaction API (invest, sell, transfer, add)
+export interface AssetTransactionData {
+  type: 'invest' | 'sell' | 'transfer' | 'add';
+  amount: number;
+  ticker?: string;
+  shares?: number;
+  asset_type?: 'stock' | 'etf' | 'crypto' | 'bond' | 'real_estate' | 'cash' | 'deposit';
+  from_asset_id?: string;
+  to_asset_id?: string;
+  name?: string;
+  currency?: string;
+  date?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AssetTransactionResult {
+  transaction_id: string;
+  flow_id: string;
+  asset?: Asset;
+  from_asset?: Asset;
+  to_asset?: Asset;
+}
+
+export const assetTransactionApi = {
+  create: (data: AssetTransactionData) =>
+    fetchApi<AssetTransactionResult>('/fire/assets/transaction', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// Income API
+export interface IncomeData {
+  category: string;  // Any category string (salary, bonus, dividend, interest, adjustment, deposit, etc.)
+  amount: number;
+  to_asset_id: string;
+  from_asset_id?: string;
+  currency?: string;
+  date?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface IncomeResult {
+  transaction_id: string;
+  to_asset: Asset;
+  amount_added: number;
+}
+
+export const incomeApi = {
+  create: (data: IncomeData) =>
+    fetchApi<IncomeResult>('/fire/income', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// Expense API (FIRE expenses, not ledger expenses)
+export interface FireExpenseData {
+  category: string;
+  amount: number;
+  from_asset_id: string;
+  currency?: string;
+  date?: string;
+  description?: string;
+  flow_expense_category_id?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface FireExpenseResult {
+  transaction_id: string;
+  from_asset: Asset;
+  amount_deducted: number;
+}
+
+export const fireExpenseApi = {
+  create: (data: FireExpenseData) =>
+    fetchApi<FireExpenseResult>('/fire/expense', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// Debt Transaction API (create, pay)
+export interface DebtTransactionData {
+  type: 'create' | 'pay';
+  amount: number;
+  name?: string;
+  debt_type?: 'mortgage' | 'personal_loan' | 'credit_card' | 'student_loan' | 'auto_loan' | 'other';
+  principal?: number;
+  interest_rate?: number;
+  term_months?: number;
+  start_date?: string;
+  monthly_payment?: number;
+  debt_id?: string;
+  from_asset_id?: string;
+  disburse_to_asset_id?: string;
+  recurring_frequency?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+  currency?: string;
+  date?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DebtTransactionResult {
+  transaction_id?: string;
+  debt: Debt;
+  from_asset?: Asset;
+  to_asset?: Asset;
+}
+
+export const debtTransactionApi = {
+  create: (data: DebtTransactionData) =>
+    fetchApi<DebtTransactionResult>('/fire/debts/transaction', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// =============================================================================
+// Transaction API - Unified API for all transaction operations
+// =============================================================================
+// For creating transactions, use the domain-specific APIs:
+// - incomeApi.create() for income
+// - fireExpenseApi.create() for expenses
+// - assetTransactionApi.create() for invest/sell/transfer/add
+// - debtTransactionApi.create() for debt payments
+// =============================================================================
+
+export const transactionApi = {
+  /**
+   * Get all transactions with optional filters
+   */
+  getAll: async (params?: TransactionFilters): Promise<ApiResponse<{ transactions: TransactionWithDetails[]; total: number }>> => {
     const searchParams = new URLSearchParams();
     if (params?.type) searchParams.set('type', params.type);
+    if (params?.category) searchParams.set('category', params.category);
     if (params?.start_date) searchParams.set('start_date', params.start_date);
     if (params?.end_date) searchParams.set('end_date', params.end_date);
     if (params?.asset_id) searchParams.set('asset_id', params.asset_id);
     if (params?.needs_review) searchParams.set('needs_review', 'true');
-    if (params?.exclude_category) searchParams.set('exclude_category', params.exclude_category);
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
 
     const query = searchParams.toString();
-    const url = `/fire/flows${query ? `?${query}` : ''}`;
-    return fetchApi<{ flows: FlowWithDetails[]; total: number }>(url);
+    return fetchApi<{ transactions: TransactionWithDetails[]; total: number }>(
+      `/fire/transactions${query ? `?${query}` : ''}`
+    );
   },
 
-  get: (id: string) => fetchApi<FlowWithDetails>(`/fire/flows/${id}`),
+  /**
+   * Get a single transaction by ID
+   */
+  get: (id: string) => fetchApi<TransactionWithDetails>(`/fire/transactions/${id}`),
 
-  create: (data: CreateFlowData) =>
-    fetchApi<Flow>('/fire/flows', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  update: (id: string, data: UpdateFlowData) =>
-    fetchApi<Flow>(`/fire/flows/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-
+  /**
+   * Delete a transaction (for manual cleanup only)
+   */
   delete: (id: string) =>
-    fetchApi(`/fire/flows/${id}`, {
+    fetchApi(`/fire/transactions/${id}`, {
       method: 'DELETE',
     }),
 
+  /**
+   * Get transaction statistics for a date range
+   */
   getStats: (params?: { start_date?: string; end_date?: string; currency?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.start_date) searchParams.set('start_date', params.start_date);
@@ -218,17 +351,21 @@ export const flowApi = {
     if (params?.currency) searchParams.set('currency', params.currency);
 
     const query = searchParams.toString();
-    return fetchApi<FlowStats>(`/fire/flows/stats${query ? `?${query}` : ''}`);
+    return fetchApi<TransactionStats>(`/fire/transactions/stats${query ? `?${query}` : ''}`);
   },
 
-  // Mark a flow as reviewed (sets needs_review to false)
+  /**
+   * Mark a transaction as reviewed
+   */
   markReviewed: (id: string) =>
-    fetchApi<Flow>(`/fire/flows/${id}/review`, {
+    fetchApi<Transaction>(`/fire/transactions/${id}/review`, {
       method: 'PATCH',
     }),
 
-  // Get count of flows needing review
-  getReviewCount: () => fetchApi<{ count: number }>('/fire/flows/review-count'),
+  /**
+   * Get count of transactions needing review
+   */
+  getReviewCount: () => fetchApi<{ count: number }>('/fire/transactions/review-count'),
 };
 
 // Debt API
@@ -267,7 +404,7 @@ export const debtApi = {
     }),
 
   getPayments: (id: string) =>
-    fetchApi<{ payments: Flow[]; total: number }>(`/fire/debts/${id}/payments`),
+    fetchApi<{ payments: TransactionWithDetails[]; total: number }>(`/fire/debts/${id}/payments`),
 
   getAmortization: (id: string) =>
     fetchApi<{
@@ -289,27 +426,30 @@ export const debtApi = {
     }>(`/fire/debts/${id}/amortization`),
 };
 
-// Flow Expense Category API (FIRE-specific expense categories)
-export const flowExpenseCategoryApi = {
-  getAll: () => fetchApi<FlowExpenseCategory[]>('/fire/flow-expense-categories'),
+// Expense Category API (FIRE-specific expense categories)
+export const expenseCategoryApi = {
+  getAll: () => fetchApi<ExpenseCategory[]>('/fire/expense-categories'),
 
   create: (data: { name: string; icon?: string; color?: string }) =>
-    fetchApi<FlowExpenseCategory>('/fire/flow-expense-categories', {
+    fetchApi<ExpenseCategory>('/fire/expense-categories', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   update: (id: string, data: { name?: string; icon?: string; color?: string; sort_order?: number }) =>
-    fetchApi<FlowExpenseCategory>(`/fire/flow-expense-categories/${id}`, {
+    fetchApi<ExpenseCategory>(`/fire/expense-categories/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
 
   delete: (id: string) =>
-    fetchApi(`/fire/flow-expense-categories/${id}`, {
+    fetchApi(`/fire/expense-categories/${id}`, {
       method: 'DELETE',
     }),
 };
+
+// Backward compatibility alias
+export const flowExpenseCategoryApi = expenseCategoryApi;
 
 // Helper to get all user's ledgers for linking expenses
 export async function getLedgersForLinking(): Promise<Ledger[]> {
@@ -402,20 +542,66 @@ export const flowFreedomApi = {
   get: () => fetchApi<FlowFreedomData>('/fire/flow-freedom'),
 };
 
-// Stock Symbol API (for investment flow ticker autocomplete)
+// Symbol API (for ticker autocomplete - stocks, ETFs, futures, crypto, etc.)
+export type SymbolType = 'stock' | 'etf' | 'future' | 'crypto' | 'index' | 'currency' | 'other';
+
 export interface StockSymbol {
   symbol: string;
   name: string;
+  longName?: string;
+  type?: SymbolType;
+  exchange?: string;
+  exchangeDisplay?: string;
+  sector?: string;
+  industry?: string;
+  logoUrl?: string;
+}
+
+export interface SymbolSearchOptions {
+  q: string;
+  region?: string; // 'US', 'HK', 'UK', etc.
+  type?: SymbolType | SymbolType[] | 'all'; // single type, array of types, or 'all'
+  limit?: number;
 }
 
 export const stockSymbolApi = {
-  searchUs: (search: string, limit: number = 20) => {
+  /**
+   * Search for symbols (stocks, ETFs, futures, crypto, etc.)
+   */
+  search: (options: SymbolSearchOptions) => {
     const searchParams = new URLSearchParams();
-    searchParams.set('search', search);
-    searchParams.set('limit', limit.toString());
+    searchParams.set('q', options.q);
+    if (options.region) searchParams.set('region', options.region);
+    if (options.type) {
+      // Support both single type and array of types
+      const typeValue = Array.isArray(options.type) ? options.type.join(',') : options.type;
+      searchParams.set('type', typeValue);
+    }
+    if (options.limit) searchParams.set('limit', options.limit.toString());
+
     return fetchApi<{ symbols: StockSymbol[]; total: number }>(
-      `/fire/stock-symbols/us?${searchParams.toString()}`
+      `/fire/symbols/ticker-search?${searchParams.toString()}`
     );
+  },
+
+  /**
+   * Search US stocks/ETFs (convenience method)
+   * @deprecated Use search() with region: 'US' instead
+   */
+  searchUs: (
+    search: string,
+    optionsOrLimit?: number | { limit?: number; type?: SymbolType | SymbolType[] | 'all' }
+  ) => {
+    const options: SymbolSearchOptions = { q: search, region: 'US' };
+
+    if (typeof optionsOrLimit === 'number') {
+      options.limit = optionsOrLimit;
+    } else if (optionsOrLimit) {
+      if (optionsOrLimit.limit) options.limit = optionsOrLimit.limit;
+      if (optionsOrLimit.type) options.type = optionsOrLimit.type;
+    }
+
+    return stockSymbolApi.search(options);
   },
 };
 
@@ -439,12 +625,26 @@ export const stockPriceApi = {
   },
 };
 
+// Currency Exchange API
+export interface CurrencyExchange {
+  code: string;
+  name: string;
+  rate: number; // Rate relative to USD (1 USD = X currency)
+}
+
+export const currencyExchangeApi = {
+  getRate: (code: string) =>
+    fetchApi<CurrencyExchange>(`/fire/currency-exchange/${code.toLowerCase()}`),
+};
+
 // User Tax Settings API
 export interface UserTaxSettings {
   id: string;
   user_id: string;
   us_dividend_withholding_rate: number;
   us_capital_gains_rate: number;
+  sg_dividend_withholding_rate: number;
+  sg_capital_gains_rate: number;
   created_at: string;
   updated_at: string;
 }
@@ -455,6 +655,8 @@ export const userTaxSettingsApi = {
   update: (data: {
     us_dividend_withholding_rate?: number;
     us_capital_gains_rate?: number;
+    sg_dividend_withholding_rate?: number;
+    sg_capital_gains_rate?: number;
   }) =>
     fetchApi<UserTaxSettings>('/fire/tax-settings', {
       method: 'PUT',
@@ -512,23 +714,23 @@ export const assetInterestSettingsApi = {
 };
 
 // Reconciliation utility for realized P/L
-// Use this to recalculate an asset's total_realized_pl from its sell flows if data gets out of sync
+// Use this to recalculate an asset's total_realized_pl from its sell transactions if data gets out of sync
 export async function reconcileAssetRealizedPL(assetId: string): Promise<{ success: boolean; totalPL: number }> {
   try {
-    // Fetch all sell flows for this asset
-    const flowsResponse = await flowApi.getAll({ asset_id: assetId, limit: 10000 });
-    if (!flowsResponse.success || !flowsResponse.data) {
+    // Fetch all sell transactions for this asset
+    const txnResponse = await transactionApi.getAll({ asset_id: assetId, limit: 10000 });
+    if (!txnResponse.success || !txnResponse.data) {
       return { success: false, totalPL: 0 };
     }
 
-    // Sum up realized P/L from all sell flows where this asset was sold
-    const sellFlows = flowsResponse.data.flows.filter(
-      f => f.from_asset_id === assetId && f.category === 'sell'
+    // Sum up realized P/L from all sell transactions where this asset was sold
+    const sellTxns = txnResponse.data.transactions.filter(
+      t => (t.from_asset_id === assetId || t.source_asset_id === assetId) && t.category === 'sell'
     );
 
     let totalPL = 0;
-    for (const flow of sellFlows) {
-      const realizedPL = (flow.metadata as { realized_pl?: number })?.realized_pl || 0;
+    for (const txn of sellTxns) {
+      const realizedPL = (txn.metadata as { realized_pl?: number })?.realized_pl || 0;
       totalPL += realizedPL;
     }
 
@@ -634,9 +836,9 @@ export const recurringScheduleApi = {
       method: 'POST',
     }),
 
-  // Get flows generated by a specific schedule
-  getGeneratedFlows: (id: string) =>
-    fetchApi<{ flows: FlowWithDetails[]; total: number }>(`/fire/recurring-schedules/${id}/flows`),
+  // Get transactions generated by a specific schedule
+  getGeneratedTransactions: (id: string) =>
+    fetchApi<{ transactions: TransactionWithDetails[]; total: number }>(`/fire/recurring-schedules/${id}/flows`),
 };
 
 // Runway API - Year-by-year projection of how long money will last
@@ -767,5 +969,237 @@ export const financialStatsApi = {
     return fetchApi<{ cleared: boolean }>('/fire/financial-stats/clear-cache', {
       method: 'POST',
     });
+  },
+};
+
+// Dividend Calendar types
+export interface MonthDividend {
+  ticker: string;
+  assetId: string;
+  amount: number;
+  originalAmount?: number;
+  originalCurrency?: string;
+  isForecasted: boolean;
+  date?: string;
+  frequency?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | null;
+  market?: string | null; // 'US', 'SG', etc.
+}
+
+export interface MonthData {
+  month: number;
+  name: string;
+  dividends: MonthDividend[];
+  total: number;
+}
+
+export interface TaxRates {
+  us: number; // US dividend withholding rate (e.g., 0.30)
+  sg: number; // SG dividend withholding rate (e.g., 0.00)
+}
+
+export interface DividendCalendarData {
+  year: number;
+  months: MonthData[];
+  annualTotal: number;
+  currency: string;
+  taxRate: number; // @deprecated - use taxRates instead
+  taxRates: TaxRates; // Tax rates by market
+  debug?: {
+    stockCount: number;
+    dividendCount: number;
+    historicalCount: number;
+  };
+}
+
+export const dividendCalendarApi = {
+  get: (year?: number) => {
+    const params = year ? `?year=${year}` : '';
+    return fetchApi<DividendCalendarData>(`/fire/dividend-calendar${params}`);
+  },
+};
+
+// Passive Income Stats Types
+export interface PassiveIncomeCategoryBreakdown {
+  category: string;
+  amount: number;
+  count: number;
+}
+
+export interface PassiveIncomeStats {
+  thisMonth: {
+    total: number;
+    breakdown: PassiveIncomeCategoryBreakdown[];
+  };
+  annual: {
+    total: number;
+    breakdown: PassiveIncomeCategoryBreakdown[];
+  };
+  currency: string;
+  year: number;
+  month: number;
+}
+
+export const passiveIncomeApi = {
+  get: (params?: { year?: number; month?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.year) searchParams.set('year', params.year.toString());
+    if (params?.month) searchParams.set('month', params.month.toString());
+    const query = searchParams.toString();
+    return fetchApi<PassiveIncomeStats>(`/fire/passive-income${query ? `?${query}` : ''}`);
+  },
+};
+
+// Monthly Summary Types
+export interface MonthlySummaryCategoryBreakdown {
+  category: string;
+  amount: number;
+  count: number;
+}
+
+export interface MonthlySummaryLedgerBreakdown {
+  ledger_id: string;
+  ledger_name: string;
+  amount: number;
+  count: number;
+}
+
+export interface MonthlySummaryStats {
+  income: {
+    total: number;
+    active: {
+      total: number;
+      breakdown: MonthlySummaryCategoryBreakdown[];
+    };
+    passive: {
+      total: number;
+      breakdown: MonthlySummaryCategoryBreakdown[];
+    };
+  };
+  expenses: {
+    total: number;
+    local: {
+      total: number;
+      byCategory: MonthlySummaryCategoryBreakdown[];
+    };
+    ledgers: {
+      total: number;
+      breakdown: MonthlySummaryLedgerBreakdown[];
+    };
+  };
+  debtPayments: {
+    total: number;
+    count: number;
+  };
+  net: number;
+  currency: string;
+  year: number;
+  month: number;
+}
+
+export const monthlySummaryApi = {
+  get: (params?: { year?: number; month?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.year) searchParams.set('year', params.year.toString());
+    if (params?.month) searchParams.set('month', params.month.toString());
+    const query = searchParams.toString();
+    return fetchApi<MonthlySummaryStats>(`/fire/monthly-summary${query ? `?${query}` : ''}`);
+  },
+};
+
+// Monthly Financial Snapshot Types
+export interface MonthlySnapshot {
+  id: string;
+  belong_id: string;
+  year: number;
+  month: number;
+  snapshot_date: string;
+  currency: string;
+  total_assets: number;
+  total_debts: number;
+  net_worth: number;
+  total_income: number;
+  active_income: number;
+  passive_income: number;
+  avg_passive_income_12m: number;
+  total_expenses: number;
+  assets: Array<{
+    id: string;
+    name: string;
+    type: string;
+    ticker: string | null;
+    balance: number;
+    currency: string;
+    balance_usd: number;
+  }>;
+  debts: Array<{
+    id: string;
+    name: string;
+    debt_type: string;
+    current_balance: number;
+    currency: string;
+    balance_usd: number;
+  }>;
+  assets_by_type: Record<string, number>;
+  income_by_category: Record<string, number>;
+  expenses_by_category: Record<string, number>;
+  created_at: string;
+  // Converted amounts in user's preferred currency
+  converted_currency?: string;
+  converted_total_assets?: number;
+  converted_total_debts?: number;
+  converted_net_worth?: number;
+  converted_total_income?: number;
+  converted_passive_income?: number;
+  converted_avg_passive_income_12m?: number;
+  converted_total_expenses?: number;
+}
+
+export interface SnapshotTrendPoint {
+  year: number;
+  month: number;
+  net_worth: number;
+  total_assets: number;
+  total_debts: number;
+  passive_income: number;
+}
+
+export interface SnapshotComparison {
+  from: MonthlySnapshot | null;
+  to: MonthlySnapshot | null;
+  changes: {
+    net_worth: number;
+    net_worth_pct: number;
+    total_assets: number;
+    total_debts: number;
+    total_income: number;
+    passive_income: number;
+    total_expenses: number;
+  } | null;
+}
+
+export const snapshotApi = {
+  // Get list of snapshots
+  getAll: (params?: { year?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.year) searchParams.set('year', params.year.toString());
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    const query = searchParams.toString();
+    return fetchApi<{ snapshots: MonthlySnapshot[] }>(`/fire/snapshots${query ? `?${query}` : ''}`);
+  },
+
+  // Get specific month's snapshot
+  get: (year: number, month: number) =>
+    fetchApi<MonthlySnapshot>(`/fire/snapshots/${year}/${month}`),
+
+  // Compare two months
+  compare: (from: string, to: string) =>
+    fetchApi<SnapshotComparison>(`/fire/snapshots/compare?from=${from}&to=${to}`),
+
+  // Get net worth trend
+  getTrend: (months?: number) => {
+    const searchParams = new URLSearchParams();
+    if (months) searchParams.set('months', months.toString());
+    const query = searchParams.toString();
+    return fetchApi<{ trend: SnapshotTrendPoint[] }>(`/fire/snapshots/trend${query ? `?${query}` : ''}`);
   },
 };

@@ -5,6 +5,9 @@ export { CoreMetricsRow } from './core-metrics-row';
 export { HumanInsightCard } from './human-insight-card';
 export { MonthlySnapshotCard } from './monthly-snapshot-card';
 export { NetWorthAllocationBar } from './net-worth-allocation-bar';
+export { DividendCalendar } from './dividend-calendar';
+export { PassiveIncomeCard } from './passive-income-card';
+export { MonthlySummaryCard } from './monthly-summary-card';
 
 // Existing components
 export { NetWorthCard } from './net-worth-card';

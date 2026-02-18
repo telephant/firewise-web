@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import useSWR, { mutate } from 'swr';
 import {
   assetApi,
-  flowApi,
+  transactionApi,
   debtApi,
-  flowExpenseCategoryApi,
+  expenseCategoryApi,
   fireLinkedLedgerApi,
   fireExpenseStatsApi,
   flowFreedomApi,
@@ -15,17 +15,17 @@ import {
   assetInterestSettingsApi,
   userPreferencesApi,
   recurringScheduleApi,
+  currencyExchangeApi,
   getLedgersForLinking,
 } from '@/lib/fire/api';
-import type { FlowFreedomData, RunwayData } from '@/lib/fire/api';
+import type { FlowFreedomData, RunwayData, CurrencyExchange } from '@/lib/fire/api';
 import type {
-  Asset,
   AssetWithBalance,
   AssetFilters,
-  FlowWithDetails,
-  FlowFilters,
-  FlowStats,
-  FlowExpenseCategory,
+  TransactionWithDetails,
+  TransactionFilters,
+  TransactionStats,
+  ExpenseCategory,
   ExpenseStats,
   Debt,
   DebtFilters,
@@ -48,19 +48,18 @@ const SWR_KEYS = {
     const query = params.toString();
     return `/fire/assets${query ? `?${query}` : ''}`;
   },
-  flows: (filters?: FlowFilters) => {
-    // Serialize filters to create stable cache key
+  transactions: (filters?: TransactionFilters) => {
     const params = new URLSearchParams();
     if (filters?.type) params.set('type', filters.type);
+    if (filters?.category) params.set('category', filters.category);
     if (filters?.start_date) params.set('start_date', filters.start_date);
     if (filters?.end_date) params.set('end_date', filters.end_date);
     if (filters?.asset_id) params.set('asset_id', filters.asset_id);
     if (filters?.needs_review) params.set('needs_review', 'true');
-    if (filters?.exclude_category) params.set('exclude_category', filters.exclude_category);
     if (filters?.page) params.set('page', filters.page.toString());
     if (filters?.limit) params.set('limit', filters.limit.toString());
     const query = params.toString();
-    return `/fire/flows${query ? `?${query}` : ''}`;
+    return `/fire/transactions${query ? `?${query}` : ''}`;
   },
   stats: (filters?: { start_date?: string; end_date?: string }) => {
     const params = new URLSearchParams();
@@ -140,7 +139,12 @@ export function useAssets(filters?: AssetFilters): UseAssetsReturn {
     },
     {
       revalidateOnFocus: false,
-      dedupingInterval: 5000,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      revalidateOnMount: true,
+      refreshInterval: 0,
+      errorRetryCount: 0,
+      dedupingInterval: 60000,
     }
   );
 
@@ -240,38 +244,42 @@ export function useDebts(filters?: DebtFilters): UseDebtsReturn {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Flows Hook
+// Transactions Hook
 // ═══════════════════════════════════════════════════════════════
 
-interface UseFlowsReturn {
-  flows: FlowWithDetails[];
+interface UseTransactionsReturn {
+  transactions: TransactionWithDetails[];
   total: number;
   isLoading: boolean;
   error: string | null;
   mutate: () => Promise<void>;
 }
 
-export function useFlows(filters?: FlowFilters): UseFlowsReturn {
-  // Generate stable key from filters
-  const swrKey = SWR_KEYS.flows(filters);
+export function useTransactions(filters?: TransactionFilters): UseTransactionsReturn {
+  const swrKey = SWR_KEYS.transactions(filters);
 
   const { data, error, isLoading, mutate: swrMutate } = useSWR(
     swrKey,
     async () => {
-      const response = await flowApi.getAll(filters);
+      const response = await transactionApi.getAll(filters);
       if (response.success && response.data) {
         return response.data;
       }
-      throw new Error(response.error || 'Failed to fetch flows');
+      throw new Error(response.error || 'Failed to fetch transactions');
     },
     {
       revalidateOnFocus: false,
-      dedupingInterval: 5000,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      revalidateOnMount: true,
+      refreshInterval: 0,
+      errorRetryCount: 0,
+      dedupingInterval: 60000,
     }
   );
 
   return {
-    flows: data?.flows || [],
+    transactions: data?.transactions || [],
     total: data?.total || 0,
     isLoading,
     error: error?.message || null,
@@ -282,24 +290,24 @@ export function useFlows(filters?: FlowFilters): UseFlowsReturn {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Flow Stats Hook
+// Transaction Stats Hook
 // ═══════════════════════════════════════════════════════════════
 
-interface UseFlowStatsReturn {
-  stats: FlowStats | null;
+interface UseTransactionStatsReturn {
+  stats: TransactionStats | null;
   isLoading: boolean;
   error: string | null;
   mutate: () => Promise<void>;
 }
 
-export function useFlowStats(params?: {
+export function useTransactionStats(params?: {
   start_date?: string;
   end_date?: string;
-}): UseFlowStatsReturn {
+}): UseTransactionStatsReturn {
   const { data, error, isLoading, mutate: swrMutate } = useSWR(
     SWR_KEYS.stats(params),
     async () => {
-      const response = await flowApi.getStats(params);
+      const response = await transactionApi.getStats(params);
       if (response.success && response.data) {
         return response.data;
       }
@@ -326,7 +334,7 @@ export function useFlowStats(params?: {
 // ═══════════════════════════════════════════════════════════════
 
 interface UseExpenseCategoriesReturn {
-  categories: FlowExpenseCategory[];
+  categories: ExpenseCategory[];
   isLoading: boolean;
   error: string | null;
   mutate: () => Promise<void>;
@@ -336,7 +344,7 @@ export function useExpenseCategories(): UseExpenseCategoriesReturn {
   const { data, error, isLoading, mutate: swrMutate } = useSWR(
     SWR_KEYS.expenseCategories,
     async () => {
-      const response = await flowExpenseCategoryApi.getAll();
+      const response = await expenseCategoryApi.getAll();
       if (response.success && response.data) {
         return response.data;
       }
@@ -374,9 +382,10 @@ interface UseLinkedLedgersReturn {
   mutate: () => Promise<void>;
 }
 
-export function useLinkedLedgers(): UseLinkedLedgersReturn {
+export function useLinkedLedgers(options?: { enabled?: boolean }): UseLinkedLedgersReturn {
+  const enabled = options?.enabled ?? true;
   const { data, error, isLoading, mutate: swrMutate } = useSWR(
-    SWR_KEYS.linkedLedgers,
+    enabled ? SWR_KEYS.linkedLedgers : null,
     async () => {
       const response = await fireLinkedLedgerApi.getAll();
       if (response.success && response.data) {
@@ -461,7 +470,12 @@ export function useExpenseStats(params?: { year?: number; month?: number }): Use
     },
     {
       revalidateOnFocus: false,
-      dedupingInterval: 30000,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      revalidateOnMount: true,
+      refreshInterval: 0,
+      errorRetryCount: 0,
+      dedupingInterval: 60000,
     }
   );
 
@@ -510,6 +524,54 @@ export function useStockPrices(symbols: string[]): UseStockPricesReturn {
     mutate: async () => {
       await swrMutate();
     },
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Exchange Rate Hook (for currency conversion)
+// ═══════════════════════════════════════════════════════════════
+
+interface UseExchangeRateReturn {
+  exchangeRate: number; // Rate: 1 USD = X target currency
+  isLoading: boolean;
+  error: string | null;
+}
+
+/**
+ * Fetches the exchange rate from USD to the target currency.
+ * Returns 1 if target is USD (no conversion needed).
+ */
+export function useExchangeRate(targetCurrency: string): UseExchangeRateReturn {
+  const shouldFetch = targetCurrency && targetCurrency.toUpperCase() !== 'USD';
+
+  const { data, error, isLoading } = useSWR(
+    shouldFetch ? `/fire/currency-exchange/${targetCurrency.toLowerCase()}` : null,
+    async () => {
+      const response = await currencyExchangeApi.getRate(targetCurrency);
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(response.error || 'Failed to fetch exchange rate');
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60 * 60 * 1000, // 1 hour cache
+    }
+  );
+
+  // If USD or not fetching, rate is 1 (no conversion)
+  if (!shouldFetch) {
+    return {
+      exchangeRate: 1,
+      isLoading: false,
+      error: null,
+    };
+  }
+
+  return {
+    exchangeRate: data?.rate ?? 1,
+    isLoading,
+    error: error?.message || null,
   };
 }
 
@@ -629,9 +691,14 @@ export async function mutateAssets() {
   await mutate((key) => typeof key === 'string' && key.startsWith('/fire/assets'));
 }
 
-export async function mutateFlows() {
-  // Mutate all flows queries (keys are now strings starting with /fire/flows)
-  await mutate((key) => typeof key === 'string' && key.startsWith('/fire/flows'));
+export async function mutateTransactions() {
+  // Mutate transaction queries but exclude review-specific queries to avoid unnecessary fetches
+  await mutate((key) => typeof key === 'string' && key.startsWith('/fire/transactions') && key !== '/fire/transactions/review');
+}
+
+export async function mutateReviewTransactions() {
+  // Specifically mutate review transactions
+  await mutate('/fire/transactions/review');
 }
 
 export async function mutateStats() {
@@ -671,7 +738,7 @@ export async function mutateRecurringSchedules() {
 export async function mutateAllFireData() {
   await Promise.all([
     mutateAssets(),
-    mutateFlows(),
+    mutateTransactions(),
     mutateDebts(),
     mutateStats(),
     mutateExpenseStats(),
@@ -903,4 +970,88 @@ export function useRunway(): UseRunwayReturn {
 
 export async function mutateRunway() {
   await mutate(SWR_KEYS.runway);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Monthly Financial Snapshots Hook
+// ═══════════════════════════════════════════════════════════════
+
+import { snapshotApi, MonthlySnapshot, SnapshotTrendPoint } from '@/lib/fire/api';
+
+interface UseSnapshotsReturn {
+  snapshots: MonthlySnapshot[];
+  isLoading: boolean;
+  error: string | null;
+  mutate: () => Promise<void>;
+}
+
+export function useSnapshots(params?: { year?: number; limit?: number }): UseSnapshotsReturn {
+  // Build proper query string
+  const queryParts: string[] = [];
+  if (params?.year) queryParts.push(`year=${params.year}`);
+  if (params?.limit) queryParts.push(`limit=${params.limit}`);
+  const swrKey = `/fire/snapshots${queryParts.length > 0 ? `?${queryParts.join('&')}` : ''}`;
+
+  const { data, error, isLoading, mutate: swrMutate } = useSWR(
+    swrKey,
+    async () => {
+      const response = await snapshotApi.getAll(params);
+      if (response.success && response.data) {
+        return response.data.snapshots;
+      }
+      throw new Error(response.error || 'Failed to fetch snapshots');
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000,
+    }
+  );
+
+  return {
+    snapshots: data || [],
+    isLoading,
+    error: error?.message || null,
+    mutate: async () => {
+      await swrMutate();
+    },
+  };
+}
+
+interface UseSnapshotTrendReturn {
+  trend: SnapshotTrendPoint[];
+  isLoading: boolean;
+  error: string | null;
+  mutate: () => Promise<void>;
+}
+
+export function useSnapshotTrend(months?: number): UseSnapshotTrendReturn {
+  const swrKey = `/fire/snapshots/trend${months ? `?months=${months}` : ''}`;
+
+  const { data, error, isLoading, mutate: swrMutate } = useSWR(
+    swrKey,
+    async () => {
+      const response = await snapshotApi.getTrend(months);
+      if (response.success && response.data) {
+        return response.data.trend;
+      }
+      throw new Error(response.error || 'Failed to fetch snapshot trend');
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000,
+    }
+  );
+
+  return {
+    trend: data || [],
+    isLoading,
+    error: error?.message || null,
+    mutate: async () => {
+      await swrMutate();
+    },
+  };
+}
+
+export async function mutateSnapshots() {
+  await mutate((key) => typeof key === 'string' && key.startsWith('/fire/snapshots'));
 }

@@ -15,10 +15,14 @@ import {
   DialogTitle,
   DialogFooter,
   Input,
+  DateInput,
   Select,
   CurrencyCombobox,
   Button,
 } from '@/components/fire/ui';
+import { EditDepositDialog } from './edit-deposit-dialog';
+import { EditInvestmentDialog } from './edit-investment-dialog';
+import { EditMetalDialog } from './edit-metal-dialog';
 
 interface EditAssetDialogProps {
   asset: AssetWithBalance | null;
@@ -26,6 +30,9 @@ interface EditAssetDialogProps {
   onOpenChange: (open: boolean) => void;
   onUpdated?: () => void;
 }
+
+// Investment asset types
+const INVESTMENT_TYPES: AssetType[] = ['stock', 'etf', 'bond', 'crypto'];
 
 // Fully editable asset types (can change type, name, currency)
 const FULLY_EDITABLE_TYPES: AssetType[] = ['cash', 'real_estate', 'other'];
@@ -35,15 +42,59 @@ const FULLY_EDITABLE_TYPE_OPTIONS = FULLY_EDITABLE_TYPES.map((t) => ({
   label: ASSET_TYPE_LABELS[t],
 }));
 
-// Investment asset types - only shares can be modified
-const INVESTMENT_TYPES: AssetType[] = ['stock', 'etf', 'bond', 'crypto'];
+export function EditAssetDialog({
+  asset,
+  open,
+  onOpenChange,
+  onUpdated,
+}: EditAssetDialogProps) {
+  // Route to specialized dialogs
+  if (asset?.type === 'deposit') {
+    return (
+      <EditDepositDialog
+        asset={asset}
+        open={open}
+        onOpenChange={onOpenChange}
+        onUpdated={onUpdated}
+      />
+    );
+  }
 
-// Deposit metadata interface
-interface DepositMetadata {
-  interest_rate?: number; // Annual interest rate as decimal (e.g., 0.045 for 4.5%)
+  if (asset?.type === 'metals') {
+    return (
+      <EditMetalDialog
+        asset={asset}
+        open={open}
+        onOpenChange={onOpenChange}
+        onUpdated={onUpdated}
+      />
+    );
+  }
+
+  if (asset && INVESTMENT_TYPES.includes(asset.type)) {
+    return (
+      <EditInvestmentDialog
+        asset={asset}
+        open={open}
+        onOpenChange={onOpenChange}
+        onUpdated={onUpdated}
+      />
+    );
+  }
+
+  // Generic asset editor for cash, real_estate, other
+  return (
+    <EditGenericAssetDialog
+      asset={asset}
+      open={open}
+      onOpenChange={onOpenChange}
+      onUpdated={onUpdated}
+    />
+  );
 }
 
-export function EditAssetDialog({
+// Generic asset editor (cash, real_estate, other)
+function EditGenericAssetDialog({
   asset,
   open,
   onOpenChange,
@@ -57,75 +108,17 @@ export function EditAssetDialog({
   const [assetType, setAssetType] = useState<AssetType>('cash');
   const [currency, setCurrency] = useState('USD');
 
-  // Investment type - shares only
-  const [shares, setShares] = useState('');
-
-  // Deposit specific fields
-  const [depositBalance, setDepositBalance] = useState('');
-  const [depositInterestRate, setDepositInterestRate] = useState('');
-
   // Real estate specific fields
+  const [propertyCurrentValue, setPropertyCurrentValue] = useState('');
   const [propertyCountry, setPropertyCountry] = useState('');
   const [propertyCity, setPropertyCity] = useState('');
   const [propertyPurchasePrice, setPropertyPurchasePrice] = useState('');
   const [propertyBoughtDate, setPropertyBoughtDate] = useState('');
   const [propertySqm, setPropertySqm] = useState('');
 
-  // Form errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Initialize form from asset
-  const initializeFromAsset = (assetToEdit: AssetWithBalance) => {
-    setName(assetToEdit.name);
-    setAssetType(assetToEdit.type);
-    setCurrency(assetToEdit.currency);
-    setShares(assetToEdit.balance.toString());
-
-    // Deposit metadata
-    if (assetToEdit.type === 'deposit') {
-      const metadata = assetToEdit.metadata as DepositMetadata | null;
-      setDepositBalance(assetToEdit.balance.toString());
-      setDepositInterestRate(metadata?.interest_rate ? (metadata.interest_rate * 100).toString() : '');
-    } else {
-      setDepositBalance('');
-      setDepositInterestRate('');
-    }
-
-    // Real estate metadata
-    if (assetToEdit.type === 'real_estate') {
-      const metadata = assetToEdit.metadata as RealEstateMetadata | null;
-      setPropertyCountry(metadata?.country || '');
-      setPropertyCity(metadata?.city || '');
-      setPropertyPurchasePrice(metadata?.purchase_price?.toString() || '');
-      setPropertyBoughtDate(metadata?.purchase_date || '');
-      setPropertySqm(metadata?.size_sqm?.toString() || '');
-    } else {
-      setPropertyCountry('');
-      setPropertyCity('');
-      setPropertyPurchasePrice('');
-      setPropertyBoughtDate('');
-      setPropertySqm('');
-    }
-
-    setErrors({});
-  };
-
-  // Reset form
-  const resetForm = () => {
-    setName('');
-    setAssetType('cash');
-    setCurrency('USD');
-    setShares('');
-    setDepositBalance('');
-    setDepositInterestRate('');
-    setPropertyCountry('');
-    setPropertyCity('');
-    setPropertyPurchasePrice('');
-    setPropertyBoughtDate('');
-    setPropertySqm('');
-    setErrors({});
-    setLoading(false);
-  };
+  const isRealEstate = assetType === 'real_estate';
 
   // Initialize form when dialog opens
   useEffect(() => {
@@ -133,25 +126,56 @@ export function EditAssetDialog({
     prevOpenRef.current = open;
 
     if (!wasOpen && open && asset) {
-      initializeFromAsset(asset);
+      setName(asset.name);
+      setAssetType(asset.type);
+      setCurrency(asset.currency);
+
+      if (asset.type === 'real_estate') {
+        const metadata = asset.metadata as RealEstateMetadata | null;
+        setPropertyCurrentValue(asset.balance.toString());
+        setPropertyCountry(metadata?.country || '');
+        setPropertyCity(metadata?.city || '');
+        setPropertyPurchasePrice(metadata?.purchase_price?.toString() || '');
+        setPropertyBoughtDate(metadata?.purchase_date || '');
+        setPropertySqm(metadata?.size_sqm?.toString() || '');
+      } else {
+        setPropertyCurrentValue('');
+        setPropertyCountry('');
+        setPropertyCity('');
+        setPropertyPurchasePrice('');
+        setPropertyBoughtDate('');
+        setPropertySqm('');
+      }
+
+      setErrors({});
     } else if (!open) {
-      resetForm();
+      setName('');
+      setAssetType('cash');
+      setCurrency('USD');
+      setPropertyCurrentValue('');
+      setPropertyCountry('');
+      setPropertyCity('');
+      setPropertyPurchasePrice('');
+      setPropertyBoughtDate('');
+      setPropertySqm('');
+      setErrors({});
+      setLoading(false);
     }
   }, [open, asset]);
 
-  // Check asset type category
-  const isInvestmentType = asset ? INVESTMENT_TYPES.includes(asset.type) : false;
-  const isDeposit = asset?.type === 'deposit';
-  const isRealEstate = assetType === 'real_estate';
-
-  // Handle save for non-investment assets
+  // Handle save
   const handleSave = async () => {
     if (!asset) return;
 
-    // Validate
     const newErrors: Record<string, string> = {};
     if (!name.trim()) {
       newErrors.name = 'Name is required';
+    }
+    if (assetType === 'real_estate') {
+      const currentValue = parseFloat(propertyCurrentValue);
+      if (isNaN(currentValue) || currentValue < 0) {
+        newErrors.propertyCurrentValue = 'Please enter a valid current value';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -161,8 +185,8 @@ export function EditAssetDialog({
 
     setLoading(true);
     try {
-      // Build metadata based on asset type
       let metadata: Record<string, unknown> | undefined;
+      let balance: number | undefined;
 
       if (assetType === 'real_estate') {
         const realEstateMetadata: Record<string, unknown> = {};
@@ -172,7 +196,10 @@ export function EditAssetDialog({
         if (purchasePrice > 0) realEstateMetadata.purchase_price = purchasePrice;
         if (propertyBoughtDate) realEstateMetadata.purchase_date = propertyBoughtDate;
         if (propertySqm) realEstateMetadata.size_sqm = parseFloat(propertySqm);
+        const currentValue = parseFloat(propertyCurrentValue);
+        if (currentValue > 0) realEstateMetadata.current_value = currentValue;
         metadata = Object.keys(realEstateMetadata).length > 0 ? realEstateMetadata : undefined;
+        balance = currentValue;
       }
 
       const response = await assetApi.update(asset.id, {
@@ -180,6 +207,7 @@ export function EditAssetDialog({
         type: assetType,
         currency,
         metadata,
+        ...(balance !== undefined && { balance }),
       });
 
       if (!response.success) {
@@ -188,9 +216,7 @@ export function EditAssetDialog({
         return;
       }
 
-      // Refresh assets
       await mutateAssets();
-
       toast.success(`"${name}" updated`);
       onUpdated?.();
       onOpenChange(false);
@@ -201,259 +227,8 @@ export function EditAssetDialog({
     }
   };
 
-  // Handle save for deposit assets
-  const handleSaveDeposit = async () => {
-    if (!asset) return;
-
-    // Validate
-    const newErrors: Record<string, string> = {};
-    if (!name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    const newBalance = parseFloat(depositBalance);
-    if (isNaN(newBalance) || newBalance < 0) {
-      newErrors.depositBalance = 'Please enter a valid balance';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Build metadata with interest rate
-      const interestRate = parseFloat(depositInterestRate);
-      const metadata: DepositMetadata = {};
-      if (!isNaN(interestRate) && interestRate > 0) {
-        metadata.interest_rate = interestRate / 100; // Convert percentage to decimal
-      }
-
-      const response = await assetApi.update(asset.id, {
-        name: name.trim(),
-        currency,
-        balance: newBalance,
-        metadata: Object.keys(metadata).length > 0 ? metadata as Record<string, unknown> : undefined,
-      });
-
-      if (!response.success) {
-        toast.error(response.error || 'Failed to update deposit');
-        setLoading(false);
-        return;
-      }
-
-      // Refresh assets
-      await mutateAssets();
-
-      toast.success(`"${name}" updated`);
-      onUpdated?.();
-      onOpenChange(false);
-    } catch {
-      toast.error('Failed to update deposit');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle save for investment assets (shares only)
-  const handleSaveShares = async () => {
-    if (!asset) return;
-
-    const newShares = parseFloat(shares);
-    if (isNaN(newShares) || newShares < 0) {
-      setErrors({ shares: 'Please enter a valid number of shares' });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await assetApi.update(asset.id, {
-        balance: newShares,
-      });
-
-      if (!response.success) {
-        toast.error(response.error || 'Failed to update shares');
-        setLoading(false);
-        return;
-      }
-
-      // Refresh assets
-      await mutateAssets();
-
-      toast.success(`Shares updated to ${newShares}`);
-      onUpdated?.();
-      onOpenChange(false);
-    } catch {
-      toast.error('Failed to update shares');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!asset) return null;
 
-  // Deposit assets - name, balance, currency, interest rate
-  if (isDeposit) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Edit Deposit</DialogTitle>
-          </DialogHeader>
-
-          <DialogBody>
-            <div className="space-y-4">
-              {/* Name */}
-              <Input
-                label="Name"
-                placeholder="e.g., Chase Savings"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                error={errors.name}
-              />
-
-              {/* Balance & Currency */}
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Balance"
-                  type="number"
-                  step="any"
-                  placeholder="0.00"
-                  value={depositBalance}
-                  onChange={(e) => setDepositBalance(e.target.value)}
-                  error={errors.depositBalance}
-                />
-                <CurrencyCombobox
-                  label="Currency"
-                  value={currency}
-                  onChange={setCurrency}
-                />
-              </div>
-
-              {/* Interest Rate */}
-              <Input
-                label="Interest Rate (%)"
-                type="number"
-                step="any"
-                placeholder="4.5"
-                value={depositInterestRate}
-                onChange={(e) => setDepositInterestRate(e.target.value)}
-                hint="Annual percentage yield (APY)"
-              />
-            </div>
-          </DialogBody>
-
-          <DialogFooter>
-            <div className="flex gap-2 w-full">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSaveDeposit}
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Investment assets - only show shares editor
-  if (isInvestmentType) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Edit Shares</DialogTitle>
-          </DialogHeader>
-
-          <DialogBody>
-            <div className="space-y-4">
-              {/* Asset info (read-only) */}
-              <div
-                className="p-3 rounded-md"
-                style={{
-                  backgroundColor: colors.surfaceLight,
-                  border: `1px solid ${colors.surfaceLight}`,
-                }}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium" style={{ color: colors.text }}>
-                    {asset.name}
-                  </span>
-                  <span
-                    className="text-xs px-1.5 py-0.5 rounded-md"
-                    style={{
-                      backgroundColor: colors.surfaceLight,
-                      color: colors.text,
-                    }}
-                  >
-                    {asset.ticker}
-                  </span>
-                </div>
-                <div className="text-xs" style={{ color: colors.muted }}>
-                  {ASSET_TYPE_LABELS[asset.type]} {asset.market && `· ${asset.market}`}
-                </div>
-              </div>
-
-              {/* Shares input */}
-              <Input
-                label="Number of Shares"
-                type="number"
-                step="any"
-                placeholder="0"
-                value={shares}
-                onChange={(e) => setShares(e.target.value)}
-                error={errors.shares}
-              />
-
-              <div
-                className="p-3 rounded-md text-xs"
-                style={{
-                  backgroundColor: colors.surfaceLight,
-                  border: `1px solid ${colors.surfaceLight}`,
-                  color: colors.muted,
-                }}
-              >
-                Investment details (ticker, market) cannot be changed. To track a different investment, create a new asset.
-              </div>
-            </div>
-          </DialogBody>
-
-          <DialogFooter>
-            <div className="flex gap-2 w-full">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSaveShares}
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Non-investment assets - full editor
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -490,6 +265,16 @@ export function EditAssetDialog({
             {/* Real estate fields */}
             {isRealEstate && (
               <>
+                <Input
+                  label="Current Value"
+                  type="number"
+                  step="any"
+                  placeholder="0.00"
+                  value={propertyCurrentValue}
+                  onChange={(e) => setPropertyCurrentValue(e.target.value)}
+                  error={errors.propertyCurrentValue}
+                />
+
                 <div className="grid grid-cols-2 gap-3">
                   <Input
                     label="Country"
@@ -514,11 +299,10 @@ export function EditAssetDialog({
                     onChange={(e) => setPropertyPurchasePrice(e.target.value)}
                     hint="For tracking gains"
                   />
-                  <Input
+                  <DateInput
                     label="Purchase Date"
-                    type="date"
                     value={propertyBoughtDate}
-                    onChange={(e) => setPropertyBoughtDate(e.target.value)}
+                    onChange={setPropertyBoughtDate}
                   />
                 </div>
 
@@ -533,17 +317,19 @@ export function EditAssetDialog({
               </>
             )}
 
-            {/* Info about balance */}
-            <div
-              className="p-3 rounded-md text-xs"
-              style={{
-                backgroundColor: colors.surfaceLight,
-                border: `1px solid ${colors.surfaceLight}`,
-                color: colors.muted,
-              }}
-            >
-              To adjust the balance, use the &quot;Adjust Balance&quot; option from the asset menu.
-            </div>
+            {/* Info about balance - only show for non-real-estate */}
+            {!isRealEstate && (
+              <div
+                className="p-3 rounded-md text-xs"
+                style={{
+                  backgroundColor: colors.surfaceLight,
+                  border: `1px solid ${colors.surfaceLight}`,
+                  color: colors.muted,
+                }}
+              >
+                To adjust the balance, use the &quot;Adjust Balance&quot; option from the asset menu.
+              </div>
+            )}
           </div>
         </DialogBody>
 

@@ -28,7 +28,7 @@ import { TaxSettingsDialog } from '@/components/fire/tax-settings-dialog';
 import { CurrencyPreferencesDialog } from '@/components/fire/currency-preferences-dialog';
 import { FamilySettingsDialog } from '@/components/fire/family/family-settings-dialog';
 import { ViewModeSwitcher } from '@/components/fire/family/view-mode-switcher';
-import { flowApi } from '@/lib/fire/api';
+import { transactionApi } from '@/lib/fire/api';
 
 const navItems = [
   {
@@ -37,8 +37,8 @@ const navItems = [
     icon: IconHome,
   },
   {
-    title: 'Flows',
-    href: '/fire/flows',
+    title: 'Transactions',
+    href: '/fire/transactions',
     icon: IconTransfer,
   },
   {
@@ -73,9 +73,9 @@ export function FireSidebar() {
 
   // Fetch review count for badge
   const { data: reviewCount } = useSWR(
-    '/fire/flows/review-count',
+    '/fire/transactions/review-count',
     async () => {
-      const res = await flowApi.getReviewCount();
+      const res = await transactionApi.getReviewCount();
       return res.success ? res.data?.count || 0 : 0;
     },
     {

@@ -12,11 +12,19 @@ import {
   IconBond,
   IconRealEstate,
   IconCrypto,
+  IconMetals,
+  IconChart,
   IconBox,
 } from '@/components/fire/ui';
 import { formatCurrency, formatPercent } from '@/lib/fire/utils';
 import type { AssetWithBalance, AssetType } from '@/types/fire';
 import type { StockPrice } from '@/lib/fire/api';
+import {
+  METAL_OPTIONS,
+  convertMetalPrice,
+  type MetalType,
+  type MetalUnit,
+} from '@/components/fire/add-transaction/metals-selector';
 
 interface AssetTypeStatsProps {
   assets: AssetWithBalance[];
@@ -39,10 +47,11 @@ const ASSET_TYPE_CONFIG: Record<AssetType, {
   bond: { label: 'Bonds', icon: IconBond, countLabel: 'holdings' },
   real_estate: { label: 'Real Estate', icon: IconRealEstate, countLabel: 'properties' },
   crypto: { label: 'Crypto', icon: IconCrypto, countLabel: 'coins' },
+  metals: { label: 'Metals', icon: IconMetals, countLabel: 'holdings' },
   other: { label: 'Other', icon: IconBox, countLabel: 'items' },
 };
 
-const SHARE_BASED_TYPES: AssetType[] = ['stock', 'etf', 'crypto'];
+const SHARE_BASED_TYPES: AssetType[] = ['stock', 'etf', 'crypto', 'metals'];
 
 export function AssetTypeStats({
   assets,
@@ -67,6 +76,7 @@ export function AssetTypeStats({
       bond: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
       real_estate: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
       crypto: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
+      metals: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
       other: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
     };
 
@@ -74,9 +84,26 @@ export function AssetTypeStats({
       const type = asset.type;
       stats[type].count += 1;
 
-      // Use converted_balance if available (backend handles currency conversion for all types)
+      // Use converted_balance if available (backend handles currency conversion)
       const value = asset.converted_balance ?? asset.balance;
       stats[type].totalValue += value;
+
+      // For metals, get day change from Yahoo price
+      if (type === 'metals' && asset.metadata?.metal_type) {
+        const metalType = asset.metadata.metal_type as MetalType;
+        const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
+        if (metalConfig) {
+          const yahooPrice = stockPrices[metalConfig.symbol];
+          if (yahooPrice && yahooPrice.changePercent != null) {
+            // Use change percent to calculate previous value
+            const prevValue = value / (1 + yahooPrice.changePercent / 100);
+            stats[type].totalPrevValue += prevValue;
+          } else {
+            stats[type].totalPrevValue += value;
+          }
+        }
+        return;
+      }
 
       // For share-based assets, calculate previous value using stock's change percent
       // This keeps everything in the same currency (preferred currency)
@@ -93,7 +120,7 @@ export function AssetTypeStats({
     });
 
     // Calculate weighted average day change percent for investment types
-    (['stock', 'etf', 'crypto'] as AssetType[]).forEach((type) => {
+    (['stock', 'etf', 'crypto', 'metals'] as AssetType[]).forEach((type) => {
       if (stats[type].totalPrevValue > 0) {
         stats[type].dayChangePercent =
           ((stats[type].totalValue - stats[type].totalPrevValue) / stats[type].totalPrevValue) * 100;

@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  DateInput,
   Select,
   CurrencyCombobox,
   Button,
@@ -279,11 +280,10 @@ export function EditDebtDialog({ debt, open, onOpenChange, onMakePayment }: Edit
             </div>
 
             {/* Start Date */}
-            <Input
+            <DateInput
               label="Start Date"
-              type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={setStartDate}
             />
 
             {/* Monthly Payment Preview */}

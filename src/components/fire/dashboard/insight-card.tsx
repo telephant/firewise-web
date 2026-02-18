@@ -3,12 +3,12 @@
 import { useMemo } from 'react';
 import { colors, Loader, IconDollar, IconChart, IconCoin, IconArrow } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
-import { useFlows, useExpenseStats } from '@/hooks/fire/use-fire-data';
-import type { FlowWithDetails } from '@/types/fire';
+import { useTransactions, useExpenseStats } from '@/hooks/fire/use-fire-data';
+import type { TransactionWithDetails } from '@/types/fire';
 
 // Helper to get effective amount for stats (use converted amount when available)
-function getEffectiveAmount(flow: FlowWithDetails): number {
-  return flow.converted_amount ?? flow.amount;
+function getEffectiveAmount(txn: TransactionWithDetails): number {
+  return txn.converted_amount ?? txn.amount;
 }
 
 interface InsightCardProps {
@@ -39,15 +39,19 @@ export function InsightCard({ currency = 'USD' }: InsightCardProps) {
   const monthRange = useMemo(() => getCurrentMonthRange(), []);
 
   // Memoize filters to ensure stable reference
-  const flowFilters = useMemo(() => ({
+  const txnFilters = useMemo(() => ({
     start_date: formatDateForApi(monthRange.start),
     end_date: formatDateForApi(monthRange.end),
-    exclude_category: 'adjustment' as const,
     limit: 500,
   }), [monthRange.start, monthRange.end]);
 
-  // Fetch current month flows (excluding adjustments at SQL level)
-  const { flows: currentMonthFlows, isLoading: flowsLoading } = useFlows(flowFilters);
+  // Fetch current month transactions
+  const { transactions, isLoading: flowsLoading } = useTransactions(txnFilters);
+  // Filter out adjustments client-side
+  const currentMonthFlows = useMemo(() =>
+    transactions.filter((t: TransactionWithDetails) => t.category !== 'adjustment'),
+    [transactions]
+  );
 
   // Fetch expense stats (includes linked ledger expenses + historical average)
   const { stats: expenseStats, isLoading: expenseLoading } = useExpenseStats();
@@ -56,20 +60,20 @@ export function InsightCard({ currency = 'USD' }: InsightCardProps) {
 
   // Calculate metrics
   const metrics = useMemo(() => {
-    // Current month stats (adjustments already filtered at SQL level)
+    // Current month stats (adjustments already filtered)
     const salary = currentMonthFlows
-      .filter(f => f.type === 'income' && ['salary', 'bonus'].includes(f.category || ''))
-      .reduce((sum, f) => sum + getEffectiveAmount(f), 0);
+      .filter((t: TransactionWithDetails) => t.type === 'income' && ['salary', 'bonus'].includes(t.category || ''))
+      .reduce((sum: number, t: TransactionWithDetails) => sum + getEffectiveAmount(t), 0);
 
-    // Passive income: income flows where from_asset_id is not null
+    // Passive income: income transactions where source_asset_id is not null
     // (money coming from an owned asset - dividends, rental, etc.)
     const passiveIncome = currentMonthFlows
-      .filter(f => f.type === 'income' && f.from_asset_id !== null)
-      .reduce((sum, f) => sum + getEffectiveAmount(f), 0);
+      .filter((t: TransactionWithDetails) => t.type === 'income' && (t.from_asset_id !== null || t.source_asset_id !== null))
+      .reduce((sum: number, t: TransactionWithDetails) => sum + getEffectiveAmount(t), 0);
 
     const invested = currentMonthFlows
-      .filter(f => f.category === 'invest')
-      .reduce((sum, f) => sum + getEffectiveAmount(f), 0);
+      .filter((t: TransactionWithDetails) => t.category === 'invest' || t.type === 'buy')
+      .reduce((sum: number, t: TransactionWithDetails) => sum + getEffectiveAmount(t), 0);
 
     // Use expense stats for spending data (includes linked ledger expenses)
     const currentExpense = expenseStats?.current_month?.total ?? 0;

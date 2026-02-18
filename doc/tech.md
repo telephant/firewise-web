@@ -132,8 +132,8 @@ const segments: PieSegment[] = [
 
 | Component | Chart Type | Location |
 |-----------|------------|----------|
-| TopIncomeSources | StackedBarChart | `src/components/fire/flows/top-income-sources.tsx` |
-| MostActiveAssets | BarChart (dual bars) | `src/components/fire/flows/most-active-assets.tsx` |
+| TopIncomeSources | StackedBarChart | `src/components/fire/transactions/top-income-sources.tsx` |
+| MostActiveAssets | BarChart (dual bars) | `src/components/fire/transactions/most-active-assets.tsx` |
 
 ## Authentication
 

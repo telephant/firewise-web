@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   colors,
   Button,
@@ -13,9 +13,22 @@ import {
   DialogBody,
   DialogFooter,
 } from '@/components/fire/ui';
-import { useFlowData } from '@/contexts/fire/flow-data-context';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/fire/utils';
+import {
+  assetApi,
+  incomeApi,
+  fireExpenseApi,
+  assetTransactionApi,
+  debtTransactionApi,
+} from '@/lib/fire/api';
+import {
+  mutateAssets,
+  mutateTransactions,
+  mutateStats,
+  mutateExpenseStats,
+} from '@/hooks/fire/use-fire-data';
+import type { CreateFlowData } from '@/types/fire';
 
 interface Asset {
   id: string;
@@ -36,8 +49,116 @@ export function AdjustBalanceDialog({
   open,
   onOpenChange,
 }: AdjustBalanceDialogProps) {
-  const { createFlow, refetchAssets } = useFlowData();
   const [newBalance, setNewBalance] = useState('');
+
+  // Inline mutation: Create flow (routes to domain-specific APIs)
+  const createFlow = useCallback(async (data: CreateFlowData): Promise<boolean> => {
+    const { type, amount, currency, from_asset_id, to_asset_id, category, date, description, metadata } = data;
+    try {
+      let success = false;
+      if (type === 'income') {
+        const result = await incomeApi.create({
+          category: category || 'other',
+          amount,
+          to_asset_id: to_asset_id!,
+          from_asset_id: from_asset_id || undefined,
+          currency,
+          date,
+          description,
+          metadata,
+        });
+        success = result.success;
+      } else if (type === 'expense') {
+        if (category === 'pay_debt' && data.debt_id) {
+          const result = await debtTransactionApi.create({
+            type: 'pay',
+            amount,
+            debt_id: data.debt_id,
+            from_asset_id: from_asset_id || undefined,
+            currency,
+            date,
+            description,
+            metadata,
+          });
+          success = result.success;
+        } else {
+          const result = await fireExpenseApi.create({
+            category: category || 'other',
+            amount,
+            from_asset_id: from_asset_id!,
+            currency,
+            date,
+            description,
+            flow_expense_category_id: data.flow_expense_category_id || undefined,
+            metadata,
+          });
+          success = result.success;
+        }
+      } else if (type === 'transfer') {
+        const flowMetadata = metadata as { shares?: number; action?: string; ticker?: string } | undefined;
+        const shares = flowMetadata?.shares;
+        const action = flowMetadata?.action;
+        if (action === 'buy' || category === 'invest') {
+          const result = await assetTransactionApi.create({
+            type: 'invest',
+            amount,
+            ticker: flowMetadata?.ticker,
+            shares: shares || 0,
+            from_asset_id: from_asset_id || undefined,
+            currency,
+            date,
+            description,
+            metadata,
+          });
+          success = result.success;
+        } else if (action === 'sell' || category === 'sell') {
+          const result = await assetTransactionApi.create({
+            type: 'sell',
+            amount,
+            ticker: flowMetadata?.ticker,
+            shares: Math.abs(shares || 0),
+            from_asset_id: from_asset_id || undefined,
+            to_asset_id: to_asset_id || undefined,
+            currency,
+            date,
+            description,
+            metadata,
+          });
+          success = result.success;
+        } else {
+          const result = await assetTransactionApi.create({
+            type: 'transfer',
+            amount,
+            from_asset_id: from_asset_id || undefined,
+            to_asset_id: to_asset_id || undefined,
+            currency,
+            date,
+            description,
+            metadata,
+          });
+          success = result.success;
+        }
+      } else {
+        const result = await incomeApi.create({
+          category: 'other',
+          amount,
+          to_asset_id: to_asset_id || from_asset_id || '',
+          currency,
+          date,
+          description,
+          metadata,
+        });
+        success = result.success;
+      }
+      if (success) {
+        await Promise.all([mutateTransactions(), mutateAssets(), mutateStats(), mutateExpenseStats()]);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
 
   // Track previous open state to detect transitions
@@ -99,11 +220,10 @@ export function AdjustBalanceDialog({
 
       if (success) {
         // Update asset balance
-        const { assetApi } = await import('@/lib/fire/api');
         await assetApi.update(asset.id, { balance: targetBalance });
 
         // Refresh assets list
-        await refetchAssets();
+        await mutateAssets();
 
         toast.success('Balance adjusted');
         onOpenChange(false);

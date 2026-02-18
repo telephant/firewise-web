@@ -14,21 +14,25 @@ import {
   IconTrash,
 } from '@/components/fire/ui';
 import { TaxSettingsDialog } from '@/components/fire/tax-settings-dialog';
-import { flowApi, userTaxSettingsApi } from '@/lib/fire/api';
+import { transactionApi, userTaxSettingsApi } from '@/lib/fire/api';
 import { formatCurrency, formatDate } from '@/lib/fire/utils';
-import type { FlowWithDetails } from '@/types/fire';
+import type { TransactionWithDetails } from '@/types/fire';
 
 export default function ReviewPage() {
   const [processing, setProcessing] = useState<string | null>(null);
   const [taxSettingsOpen, setTaxSettingsOpen] = useState(false);
 
-  // Fetch flows needing review
+  // Fetch transactions needing review
   const { data, isLoading, error } = useSWR(
-    '/fire/flows/review',
+    '/fire/transactions/review',
     async () => {
-      const res = await flowApi.getAll({ needs_review: true, limit: 100 });
+      const res = await transactionApi.getAll({ needs_review: true, limit: 100 });
       if (!res.success) throw new Error(res.error || 'Failed to fetch');
-      return res.data?.flows || [];
+      return res.data?.transactions || [];
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
     }
   );
 
@@ -39,53 +43,65 @@ export default function ReviewPage() {
       const res = await userTaxSettingsApi.get();
       if (!res.success) return null;
       return res.data;
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
     }
   );
 
-  const flows = data || [];
+  const transactions = data || [];
   const taxSettings = taxSettingsData;
 
 
-  const handleApprove = async (flow: FlowWithDetails) => {
-    setProcessing(flow.id);
+  const handleApprove = async (transaction: TransactionWithDetails) => {
+    setProcessing(transaction.id);
     try {
-      const res = await flowApi.markReviewed(flow.id);
+      const res = await transactionApi.markReviewed(transaction.id);
       if (res.success) {
-        toast.success('Flow approved');
+        toast.success('Transaction approved');
         // Refresh the list
-        mutate('/fire/flows/review');
+        mutate('/fire/transactions/review');
         // Also refresh the review count in sidebar
-        mutate('/fire/flows/review-count');
+        mutate('/fire/transactions/review-count');
       } else {
         toast.error(res.error || 'Failed to approve');
       }
     } catch {
-      toast.error('Failed to approve flow');
+      toast.error('Failed to approve transaction');
     } finally {
       setProcessing(null);
     }
   };
 
-  const handleDelete = async (flow: FlowWithDetails) => {
-    setProcessing(flow.id);
+  const handleDelete = async (transaction: TransactionWithDetails) => {
+    setProcessing(transaction.id);
     try {
-      const res = await flowApi.delete(flow.id);
+      const res = await transactionApi.delete(transaction.id);
       if (res.success) {
-        toast.success('Flow deleted');
-        mutate('/fire/flows/review');
-        mutate('/fire/flows/review-count');
+        toast.success('Transaction deleted');
+        mutate('/fire/transactions/review');
+        mutate('/fire/transactions/review-count');
       } else {
         toast.error(res.error || 'Failed to delete');
       }
     } catch {
-      toast.error('Failed to delete flow');
+      toast.error('Failed to delete transaction');
     } finally {
       setProcessing(null);
     }
   };
 
-  const getDividendInfo = (flow: FlowWithDetails) => {
-    const metadata = flow.metadata as {
+  // Helper to get tax rate based on market
+  const getTaxRateForMarket = (market: string | null | undefined): number => {
+    if (market === 'SG') {
+      return taxSettings?.sg_dividend_withholding_rate ?? 0.00;
+    }
+    return taxSettings?.us_dividend_withholding_rate ?? 0.30;
+  };
+
+  const getDividendInfo = (transaction: TransactionWithDetails) => {
+    const metadata = transaction.metadata as {
       dividend_per_share?: number;
       shares?: number; // Legacy field name
       share_count?: number; // New field name (avoids triggering balance recalculation)
@@ -94,12 +110,17 @@ export default function ReviewPage() {
       tax_withheld?: number;
     } | null;
 
-    if (!metadata || flow.category !== 'dividend') return null;
+    if (!metadata || transaction.category !== 'dividend') return null;
 
-    // flow.amount is NET amount (after tax)
-    const netAmount = flow.amount;
+    // Get market from source asset (the stock that paid the dividend)
+    const sourceAsset = transaction.from_asset || transaction.source_asset;
+    const market = sourceAsset?.market;
+
+    // transaction.amount is NET amount (after tax)
+    const netAmount = transaction.amount;
     // Use tax info from metadata (calculated at creation time using user's settings)
-    const taxRate = metadata.tax_rate ?? taxSettings?.us_dividend_withholding_rate ?? 0.30;
+    // Fall back to market-specific rate if not in metadata
+    const taxRate = metadata.tax_rate ?? getTaxRateForMarket(market);
     const taxWithheld = metadata.tax_withheld ?? 0;
     // Calculate gross from net + tax withheld
     const grossAmount = netAmount + taxWithheld;
@@ -112,6 +133,7 @@ export default function ReviewPage() {
       taxRate,
       taxWithheld,
       netAmount,
+      market,
     };
   };
 
@@ -131,12 +153,12 @@ export default function ReviewPage() {
             Review Flows
           </h1>
         </div>
-        {flows.length > 0 && (
+        {transactions.length > 0 && (
           <span
             className="text-xs px-2 py-0.5 rounded"
             style={{ backgroundColor: colors.warning, color: colors.text }}
           >
-            {flows.length} pending
+            {transactions.length} pending
           </span>
         )}
       </header>
@@ -156,27 +178,27 @@ export default function ReviewPage() {
                 className="h-40 flex items-center justify-center text-sm"
                 style={{ color: colors.negative }}
               >
-                Failed to load flows
+                Failed to load transactions
               </div>
             </Card>
-          ) : flows.length === 0 ? (
+          ) : transactions.length === 0 ? (
             <Card>
               <div className="h-40 flex flex-col items-center justify-center gap-2">
                 <span style={{ color: colors.positive }}>
                   <IconCheck size={32} />
                 </span>
                 <p className="text-sm" style={{ color: colors.muted }}>
-                  All caught up! No flows need review.
+                  All caught up! No transactions need review.
                 </p>
               </div>
             </Card>
           ) : (
-            flows.map((flow) => {
-              const dividendInfo = getDividendInfo(flow);
-              const isProcessing = processing === flow.id;
+            transactions.map((txn) => {
+              const dividendInfo = getDividendInfo(txn);
+              const isProcessing = processing === txn.id;
 
               return (
-                <Card key={flow.id}>
+                <Card key={txn.id}>
                   <div className="p-4 space-y-3">
                     {/* Header row */}
                     <div className="flex items-start justify-between">
@@ -195,10 +217,10 @@ export default function ReviewPage() {
                             className="text-sm font-medium capitalize"
                             style={{ color: colors.text }}
                           >
-                            {flow.category || flow.type}
+                            {txn.category || txn.type}
                           </p>
                           <p className="text-xs" style={{ color: colors.muted }}>
-                            {formatDate(flow.date)}
+                            {formatDate(txn.date)}
                           </p>
                         </div>
                       </div>
@@ -208,24 +230,24 @@ export default function ReviewPage() {
                           style={{ color: colors.positive }}
                         >
                           +{formatCurrency(
-                            flow.converted_amount ?? flow.amount,
-                            { currency: flow.converted_currency ?? flow.currency }
+                            txn.converted_amount ?? txn.amount,
+                            { currency: txn.converted_currency ?? txn.currency }
                           )}
                         </p>
-                        {flow.converted_amount !== undefined &&
-                          flow.converted_currency &&
-                          flow.converted_currency !== flow.currency && (
+                        {txn.converted_amount !== undefined &&
+                          txn.converted_currency &&
+                          txn.converted_currency !== txn.currency && (
                           <p className="text-[10px] tabular-nums" style={{ color: colors.muted }}>
-                            ({formatCurrency(flow.amount, { currency: flow.currency })})
+                            ({formatCurrency(txn.amount, { currency: txn.currency })})
                           </p>
                         )}
                       </div>
                     </div>
 
                     {/* Details */}
-                    {flow.description && (
+                    {txn.description && (
                       <p className="text-xs" style={{ color: colors.muted }}>
-                        {flow.description}
+                        {txn.description}
                       </p>
                     )}
 
@@ -238,7 +260,7 @@ export default function ReviewPage() {
                         <div className="flex justify-between">
                           <span style={{ color: colors.muted }}>Stock:</span>
                           <span style={{ color: colors.text }}>
-                            {flow.from_asset?.name || dividendInfo.ticker}
+                            {txn.from_asset?.name || txn.source_asset?.name || dividendInfo.ticker}
                           </span>
                         </div>
                         {dividendInfo.shares && (
@@ -260,21 +282,21 @@ export default function ReviewPage() {
                         <div className="flex justify-between">
                           <span style={{ color: colors.muted }}>Gross Amount:</span>
                           <span style={{ color: colors.text }}>
-                            {formatCurrency(dividendInfo.grossAmount, { currency: flow.currency })}
+                            {formatCurrency(dividendInfo.grossAmount, { currency: txn.currency })}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span style={{ color: colors.muted }}>
-                            Tax Withheld ({(dividendInfo.taxRate * 100).toFixed(0)}%):
+                            {dividendInfo.market === 'SG' ? '🇸🇬' : '🇺🇸'} Tax ({(dividendInfo.taxRate * 100).toFixed(0)}%):
                           </span>
                           <span style={{ color: colors.negative }}>
-                            -{formatCurrency(dividendInfo.taxWithheld, { currency: flow.currency })}
+                            -{formatCurrency(dividendInfo.taxWithheld, { currency: txn.currency })}
                           </span>
                         </div>
                         <div className="flex justify-between pt-1 border-t" style={{ borderColor: colors.border }}>
                           <span style={{ color: colors.muted }}>Net Amount:</span>
                           <span style={{ color: colors.positive, fontWeight: 'bold' }}>
-                            {formatCurrency(dividendInfo.netAmount, { currency: flow.currency })}
+                            {formatCurrency(dividendInfo.netAmount, { currency: txn.currency })}
                           </span>
                         </div>
                       </div>
@@ -298,7 +320,7 @@ export default function ReviewPage() {
                       <Button
                         size="sm"
                         variant="primary"
-                        onClick={() => handleApprove(flow)}
+                        onClick={() => handleApprove(txn)}
                         disabled={isProcessing}
                         className="gap-1.5"
                       >
@@ -308,7 +330,7 @@ export default function ReviewPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleDelete(flow)}
+                        onClick={() => handleDelete(txn)}
                         disabled={isProcessing}
                         className="gap-1.5"
                         style={{ color: colors.negative, borderColor: colors.negative }}

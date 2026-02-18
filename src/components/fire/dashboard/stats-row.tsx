@@ -3,19 +3,19 @@
 import { useMemo } from 'react';
 import { StatCard } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
-import { useAssets, useFlows, useFlowStats } from '@/hooks/fire/use-fire-data';
-import type { FlowWithDetails } from '@/types/fire';
+import { useAssets, useTransactions, useTransactionStats } from '@/hooks/fire/use-fire-data';
+import type { TransactionWithDetails } from '@/types/fire';
 
 // Helper to get effective amount for stats (use converted amount when available)
-function getEffectiveAmount(flow: FlowWithDetails): number {
-  return flow.converted_amount ?? flow.amount;
+function getEffectiveAmount(txn: TransactionWithDetails): number {
+  return txn.converted_amount ?? txn.amount;
 }
 
 export function StatsRow() {
   // Use SWR hooks for data fetching
   const { assets, isLoading: assetsLoading } = useAssets();
-  const { flows, isLoading: flowsLoading } = useFlows();
-  const { stats, isLoading: statsLoading } = useFlowStats();
+  const { transactions: flows, isLoading: flowsLoading } = useTransactions();
+  const { stats, isLoading: statsLoading } = useTransactionStats();
 
   // Calculate net worth from assets (use converted balance when available)
   const netWorth = useMemo(() => {
@@ -55,11 +55,11 @@ export function StatsRow() {
   const passiveIncome = useMemo(() => {
     return flows
       .filter(
-        (f) =>
-          f.type === 'income' &&
-          ['dividend', 'rental', 'interest'].includes(f.category || '')
+        (txn: TransactionWithDetails) =>
+          txn.type === 'income' &&
+          ['dividend', 'rental', 'interest'].includes(txn.category || '')
       )
-      .reduce((sum, f) => sum + getEffectiveAmount(f), 0);
+      .reduce((sum: number, txn: TransactionWithDetails) => sum + getEffectiveAmount(txn), 0);
   }, [flows]);
 
   // Safe Withdrawal Rate (4% rule)

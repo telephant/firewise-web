@@ -297,9 +297,9 @@ interface FlowsPageData {
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /flows` | List flows with filters & pagination |
-| `GET /flows/summary` | Money movement & insights data |
-| `GET /flows/export` | CSV export |
+| `GET /transactions` | List flows with filters & pagination |
+| `GET /transactions/summary` | Money movement & insights data |
+| `GET /transactions/export` | CSV export |
 
 ---
 

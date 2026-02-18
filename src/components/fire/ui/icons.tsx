@@ -20,6 +20,8 @@ import {
   ArrowRight,
   TrendingUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Banknote,
   LineChart,
   BarChart2,
@@ -42,6 +44,7 @@ import {
   Mail,
   Maximize2,
   Minimize2,
+  Gem,
 } from 'lucide-react';
 
 // Common icon props interface
@@ -77,6 +80,8 @@ export const IconArrow = wrap(ArrowRight);
 export const IconTriangleUp = wrap(TrendingUp);
 export const IconTriangleDown = wrap(TrendingDown);
 export const IconChevronDown = wrap(ChevronDown);
+export const IconChevronLeft = wrap(ChevronLeft);
+export const IconChevronRight = wrap(ChevronRight);
 export const IconEdit = wrap(Pencil);
 export const IconCheck = wrap(Check);
 export const IconTrash = wrap(Trash2);
@@ -99,5 +104,6 @@ export const IconEtf = wrap(BarChart2);
 export const IconBond = wrap(FileText);
 export const IconRealEstate = wrap(Building2);
 export const IconCrypto = wrap(Bitcoin);
+export const IconMetals = wrap(Gem);
 export const IconDebt = wrap(Receipt);
 export const IconBox = wrap(Box);
