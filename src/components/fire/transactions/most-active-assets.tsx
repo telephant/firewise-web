@@ -9,8 +9,8 @@ import {
   LabelList,
   Legend,
 } from 'recharts';
-import { colors, Card, Loader, BarShape } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { colors, Card, Loader, BarShape, Amount } from '@/components/fire/ui';
+import { formatCurrency } from '@/lib/fire/utils'; // Keep for chart formatters
 
 interface AssetActivity {
   name: string;
@@ -175,7 +175,7 @@ export function MostActiveAssets({
                 Net Receiver:
               </span>
               <span className="text-xs font-medium" style={{ color: colors.positive }}>
-                {netReceiver.name} +{formatCurrency(netReceiver.net, { currency })}
+                {netReceiver.name} +<Amount value={netReceiver.net} currency={currency} size="xs" color="positive" />
               </span>
             </div>
           )}
@@ -185,7 +185,7 @@ export function MostActiveAssets({
                 Net Sender:
               </span>
               <span className="text-xs font-medium" style={{ color: colors.negative }}>
-                {netSender.name} {formatCurrency(netSender.net, { currency })}
+                {netSender.name} <Amount value={netSender.net} currency={currency} size="xs" color="negative" />
               </span>
             </div>
           )}

@@ -45,6 +45,8 @@ import {
   Maximize2,
   Minimize2,
   Gem,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 // Common icon props interface
@@ -107,3 +109,7 @@ export const IconCrypto = wrap(Bitcoin);
 export const IconMetals = wrap(Gem);
 export const IconDebt = wrap(Receipt);
 export const IconBox = wrap(Box);
+
+// Privacy icons
+export const IconEye = wrap(Eye);
+export const IconEyeOff = wrap(EyeOff);

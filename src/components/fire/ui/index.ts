@@ -81,3 +81,5 @@ export { Tag } from './tag';
 export type { TagProps } from './tag';
 export { Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell, TableActionButton } from './table';
 export { Pagination } from './pagination';
+export { Amount, Balance, Change } from './amount';
+export type { AmountProps, AmountSize, AmountSizePreset, AmountColor, AmountColorPreset } from './amount';

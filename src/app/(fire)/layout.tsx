@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset, Celebration } from '@/components/fire/ui
 import { FireSidebar } from '@/components/fire/fire-sidebar';
 import { FinancialStatsProvider } from '@/contexts/fire/financial-stats-context';
 import { ViewModeProvider } from '@/contexts/fire/view-mode-context';
+import { PrivacyProvider } from '@/contexts/fire/privacy-context';
 import { ChatProvider, useChat } from '@/contexts/fire/chat-context';
 import { ChatSidePanel, ChatToggleButton, PreviewPanel } from '@/components/fire/chat';
 import { Toaster } from '@/components/ui/sonner';
@@ -65,11 +66,13 @@ export default function FireLayout({
 }) {
   return (
     <ViewModeProvider>
-      <FinancialStatsProvider>
-        <ChatProvider>
-          <FireLayoutInner>{children}</FireLayoutInner>
-        </ChatProvider>
-      </FinancialStatsProvider>
+      <PrivacyProvider>
+        <FinancialStatsProvider>
+          <ChatProvider>
+            <FireLayoutInner>{children}</FireLayoutInner>
+          </ChatProvider>
+        </FinancialStatsProvider>
+      </PrivacyProvider>
     </ViewModeProvider>
   );
 }

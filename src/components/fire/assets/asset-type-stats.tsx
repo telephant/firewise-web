@@ -5,6 +5,7 @@ import {
   colors,
   Card,
   Loader,
+  Amount,
   IconCash,
   IconBank,
   IconStock,
@@ -16,7 +17,7 @@ import {
   IconChart,
   IconBox,
 } from '@/components/fire/ui';
-import { formatCurrency, formatPercent } from '@/lib/fire/utils';
+import { formatPercent } from '@/lib/fire/utils';
 import type { AssetWithBalance, AssetType } from '@/types/fire';
 import type { StockPrice } from '@/lib/fire/api';
 import {
@@ -182,7 +183,7 @@ export function AssetTypeStats({
           className="text-sm font-bold tabular-nums"
           style={{ color: colors.text }}
         >
-          {formatCurrency(grandTotal, { currency })}
+          <Amount value={grandTotal} currency={currency} size="sm" weight="bold" />
         </div>
         <div className="text-[10px]" style={{ color: colors.muted }}>
           {assets.length} total
@@ -218,7 +219,7 @@ export function AssetTypeStats({
               className="text-sm font-bold tabular-nums"
               style={{ color: colors.text }}
             >
-              {formatCurrency(stats.totalValue, { currency })}
+              <Amount value={stats.totalValue} currency={currency} size="sm" weight="bold" />
             </div>
             <div className="flex items-center gap-2 text-[10px]">
               <span style={{ color: colors.muted }}>

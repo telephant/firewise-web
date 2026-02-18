@@ -14,8 +14,8 @@ import {
   TableCell,
   TableActionButton,
   Pagination,
+  Amount,
 } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
 import { getCategoryIcon } from '@/components/fire/ui/category-icons';
 import type { TransactionWithDetails, TransactionType } from '@/types/fire';
 
@@ -204,14 +204,13 @@ export function FlowsTable({
                           className="font-bold tabular-nums"
                           style={{ color: isProfit ? colors.positive : colors.negative }}
                         >
-                          {isProfit ? '+' : ''}
-                          {formatCurrency(profit, { currency: flow.currency })}
+                          {isProfit ? '+' : ''}<Amount value={profit} currency={flow.currency} size="xs" weight="bold" color={isProfit ? 'positive' : 'negative'} />
                         </div>
                         <div
                           className="text-[10px] tabular-nums"
                           style={{ color: colors.muted }}
                         >
-                          Sold: {formatCurrency(sellAmount, { currency: flow.currency })}
+                          Sold: <Amount value={sellAmount} currency={flow.currency} size={10} color="muted" />
                         </div>
                       </>
                     );
@@ -225,15 +224,14 @@ export function FlowsTable({
                           className="font-bold tabular-nums"
                           style={{ color: getFlowColor(flow.type, flow.category) }}
                         >
-                          {getFlowSign(flow.type, flow.category)}
-                          {formatCurrency(flow.converted_amount, { currency: flow.converted_currency })}
+                          {getFlowSign(flow.type, flow.category)}<Amount value={flow.converted_amount} currency={flow.converted_currency} size="xs" weight="bold" color={getFlowColor(flow.type, flow.category)} />
                         </div>
                         {flow.converted_currency !== flow.currency && (
                           <div
                             className="text-[10px] tabular-nums"
                             style={{ color: colors.muted }}
                           >
-                            ({formatCurrency(flow.amount, { currency: flow.currency })})
+                            (<Amount value={flow.amount} currency={flow.currency} size={10} color="muted" />)
                           </div>
                         )}
                       </>
@@ -246,8 +244,7 @@ export function FlowsTable({
                       className="font-bold tabular-nums"
                       style={{ color: getFlowColor(flow.type, flow.category) }}
                     >
-                      {getFlowSign(flow.type, flow.category)}
-                      {formatCurrency(flow.amount, { currency: flow.currency })}
+                      {getFlowSign(flow.type, flow.category)}<Amount value={flow.amount} currency={flow.currency} size="xs" weight="bold" color={getFlowColor(flow.type, flow.category)} />
                     </div>
                   );
                 })()}

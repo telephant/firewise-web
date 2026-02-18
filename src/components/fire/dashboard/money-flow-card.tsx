@@ -1,8 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { colors, Card, Loader } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { colors, Card, Loader, Amount } from '@/components/fire/ui';
 import { useTransactions, useAssets } from '@/hooks/fire/use-fire-data';
 import type { TransactionWithDetails } from '@/types/fire';
 
@@ -322,7 +321,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                   backgroundColor: layer.color,
                   borderTop: idx > 0 ? `1px solid rgba(0,0,0,0.2)` : undefined,
                 }}
-                title={`${layer.label}: ${formatCurrency(layer.amount, { currency, compact: true })}`}
+                title={layer.label}
               />
             );
           })}
@@ -331,7 +330,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
           {title}
         </p>
         <p className="text-[9px]" style={{ color: colors.muted }}>
-          {formatCurrency(total, { currency, compact: true })}
+          <Amount value={total} currency={currency} size={9} compact />
         </p>
       </div>
     );
@@ -354,7 +353,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
           {source.label}
         </p>
         <p className="text-[8px]" style={{ color: colors.muted }}>
-          {formatCurrency(source.amount, { currency, compact: true })}
+          <Amount value={source.amount} currency={currency} size={8} compact />
         </p>
       </div>
     );
@@ -420,9 +419,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                       justifyContent: 'center',
                     }}
                   >
-                    <span className="text-white text-[10px] font-bold">
-                      {formatCurrency(source.amount, { currency, compact: true })}
-                    </span>
+                    <Amount value={source.amount} currency={currency} size={10} weight="bold" compact className="text-white" />
                   </div>
                   <p className="text-[8px] mt-1 font-medium" style={{ color: colors.text }}>
                     {source.label}
@@ -471,7 +468,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
               </div>
               <p className="text-[9px] mt-1 font-bold" style={{ color: colors.text }}>ASSETS</p>
               <p className="text-[8px]" style={{ color: colors.muted }}>
-                {formatCurrency(assetLayers.reduce((s, l) => s + l.amount, 0), { currency, compact: true })}
+                <Amount value={assetLayers.reduce((s, l) => s + l.amount, 0)} currency={currency} size={8} compact />
               </p>
             </div>
           )}
@@ -484,7 +481,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                   className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[7px] font-medium"
                   style={{ backgroundColor: `${COLORS.dividend}20`, color: COLORS.dividend }}
                 >
-                  <span>{formatCurrency(totalPassiveIncome, { currency, compact: true })}</span>
+                  <Amount value={totalPassiveIncome} currency={currency} size={7} compact color={COLORS.dividend} />
                   <span>→</span>
                 </div>
               )}
@@ -494,7 +491,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                   style={{ backgroundColor: `${COLORS.invest}20`, color: COLORS.invest }}
                 >
                   <span>←</span>
-                  <span>{formatCurrency(investTotal, { currency, compact: true })}</span>
+                  <Amount value={investTotal} currency={currency} size={7} compact color={COLORS.invest} />
                 </div>
               )}
             </div>
@@ -528,7 +525,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
             </div>
             <p className="text-[9px] mt-1 font-bold" style={{ color: colors.text }}>CASH</p>
             <p className="text-[8px]" style={{ color: colors.muted }}>
-              {formatCurrency(totalIncome, { currency, compact: true })}
+              <Amount value={totalIncome} currency={currency} size={8} compact />
             </p>
           </div>
 
@@ -539,7 +536,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                 className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[7px] font-medium"
                 style={{ backgroundColor: `${COLORS.spending}20`, color: COLORS.spending }}
               >
-                <span>{formatCurrency(spendingTotal, { currency, compact: true })}</span>
+                <Amount value={spendingTotal} currency={currency} size={7} compact color={COLORS.spending} />
                 <span>→</span>
               </div>
             </div>
@@ -569,7 +566,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                           backgroundColor: exp.color,
                           minHeight: heightPercent > 0 ? 4 : 0,
                         }}
-                        title={`${exp.label}: ${formatCurrency(exp.amount, { currency, compact: true })}`}
+                        title={exp.label}
                       />
                     );
                   })}
@@ -585,14 +582,12 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                     border: `1px solid ${colors.border}`,
                   }}
                 >
-                  <span className="text-white text-[10px] font-bold">
-                    {formatCurrency(spendingTotal, { currency, compact: true })}
-                  </span>
+                  <Amount value={spendingTotal} currency={currency} size={10} weight="bold" compact className="text-white" />
                 </div>
               )}
               <p className="text-[9px] mt-1 font-bold" style={{ color: colors.text }}>SPENT</p>
               <p className="text-[8px]" style={{ color: colors.muted }}>
-                {formatCurrency(spendingTotal, { currency, compact: true })}
+                <Amount value={spendingTotal} currency={currency} size={8} compact />
               </p>
             </div>
           )}
@@ -625,9 +620,7 @@ export function MoneyFlowCard({ currency = 'USD' }: MoneyFlowCardProps) {
                       justifyContent: 'center',
                     }}
                   >
-                    <span className="text-white text-[10px] font-bold">
-                      {formatCurrency(exp.amount, { currency, compact: true })}
-                    </span>
+                    <Amount value={exp.amount} currency={currency} size={10} weight="bold" compact className="text-white" />
                   </div>
                   <p className="text-[8px] mt-1 font-medium truncate max-w-[50px]" style={{ color: colors.text }}>
                     {exp.label}

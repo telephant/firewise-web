@@ -14,8 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
   Button,
+  Amount,
 } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
 
 interface DeleteDebtDialogProps {
   debt: Debt | null;
@@ -91,7 +91,7 @@ export function DeleteDebtDialog({
                 <div>
                   <span style={{ color: colors.muted }}>Balance: </span>
                   <span style={{ color: colors.negative }}>
-                    {formatCurrency(debt.current_balance, { currency: debt.currency })}
+                    <Amount value={debt.current_balance} currency={debt.currency} size="xs" color="negative" />
                   </span>
                 </div>
               </div>

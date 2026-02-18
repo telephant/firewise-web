@@ -1,8 +1,8 @@
 'use client';
 
-import { colors, Card, Loader, StackedBarChart } from '@/components/fire/ui';
+import { colors, Card, Loader, StackedBarChart, Amount } from '@/components/fire/ui';
 import type { StackedBarItem } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { formatCurrency } from '@/lib/fire/utils'; // Keep for chart formatter
 
 interface IncomeSourceItem {
   name: string;
@@ -107,11 +107,11 @@ export function TopIncomeSources({
           <div className="flex items-center gap-3">
             <span style={{ color: colors.info }}>
               <span className="font-bold">Passive:</span>{' '}
-              {formatCurrency(passiveTotal, { currency })} ({passivePercentage}%)
+              <Amount value={passiveTotal} currency={currency} size="xs" color="info" /> ({passivePercentage}%)
             </span>
             <span style={{ color: colors.positive }}>
               <span className="font-bold">Active:</span>{' '}
-              {formatCurrency(activeTotal, { currency })} ({activePercentage}%)
+              <Amount value={activeTotal} currency={currency} size="xs" color="positive" /> ({activePercentage}%)
             </span>
           </div>
         </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { colors } from './theme';
 import { cn } from '@/lib/utils';
 import { IconTriangleUp, IconTriangleDown } from './icons';
@@ -7,7 +8,7 @@ import { Loader } from './loader';
 
 interface StatCardProps {
   label: string;
-  value: string;
+  value: ReactNode;
   trend?: {
     value: string;
     direction: 'up' | 'down' | 'neutral';

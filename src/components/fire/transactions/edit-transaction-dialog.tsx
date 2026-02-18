@@ -16,9 +16,9 @@ import {
   Select,
   Label,
   getCategoryIcon,
+  Amount,
 } from '@/components/fire/ui';
 import { mutateTransactions, mutateAssets, useRecurringSchedules } from '@/hooks/fire/use-fire-data';
-import { formatCurrency } from '@/lib/fire/utils';
 import type { TransactionWithDetails, RecurringFrequency } from '@/types/fire';
 import { RECURRING_FREQUENCY_OPTIONS } from '@/types/fire';
 
@@ -210,7 +210,7 @@ export function EditFlowDialog({
                 <div className="flex items-center justify-between">
                   <Label>Amount</Label>
                   <span className="text-xs" style={{ color: colors.muted }}>
-                    was {formatCurrency(flow.amount, { currency: flow.currency })}
+                    was <Amount value={flow.amount} currency={flow.currency} size="xs" color="muted" />
                   </span>
                 </div>
                 <Input
@@ -255,8 +255,7 @@ export function EditFlowDialog({
                                     color: adj.delta >= 0 ? colors.positive : colors.negative,
                                   }}
                                 >
-                                  {adj.delta >= 0 ? '+' : ''}
-                                  {formatCurrency(adj.delta, { currency: flow.currency })}
+                                  {adj.delta >= 0 ? '+' : ''}<Amount value={adj.delta} currency={flow.currency} size="xs" color={adj.delta >= 0 ? 'positive' : 'negative'} />
                                   {adj.needsConversion && (
                                     <span style={{ color: colors.muted }}>
                                       {' '}→ {adj.assetCurrency}

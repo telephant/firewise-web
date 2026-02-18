@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { colors, Loader, IconPlus } from '@/components/fire/ui';
-import { formatCurrency, ASSET_COLORS, ASSET_LABELS, DEBT_LABELS } from '@/lib/fire/utils';
+import { colors, Loader, IconPlus, Amount } from '@/components/fire/ui';
+import { ASSET_COLORS, ASSET_LABELS, DEBT_LABELS } from '@/lib/fire/utils';
 import { useSnapshots } from '@/hooks/fire';
 import type { AssetWithBalance, AssetType, Debt, DebtType } from '@/types/fire';
 
@@ -219,7 +219,7 @@ export function NetWorthAllocationBar({
               Net Worth
             </div>
             <div className="text-2xl font-bold tabular-nums" style={{ color: colors.muted }}>
-              {formatCurrency(0, { currency })}
+              <Amount value={0} currency={currency} size="2xl" weight="bold" color="muted" />
             </div>
           </div>
         </div>
@@ -301,7 +301,7 @@ export function NetWorthAllocationBar({
             <span className="text-sm font-medium" style={{ color: colors.text }}>{bar.label}</span>
           </div>
           <span className="text-sm font-bold tabular-nums" style={{ color: isDebt ? colors.negative : colors.positive }}>
-            {isDebt ? '−' : ''}{formatCurrency(bar.value, { currency, compact: true })}
+            {isDebt ? '−' : ''}<Amount value={bar.value} currency={currency} size="sm" weight="bold" compact />
           </span>
         </div>
         <div className="space-y-1 max-h-[140px] overflow-y-auto">
@@ -311,7 +311,7 @@ export function NetWorthAllocationBar({
               <div key={item.id} className="flex items-center justify-between gap-3">
                 <span className="text-xs truncate" style={{ color: colors.text }}>{item.name}</span>
                 <span className="text-xs tabular-nums flex-shrink-0" style={{ color: colors.muted }}>
-                  {formatCurrency(value, { currency, compact: true })}
+                  <Amount value={value} currency={currency} size="xs" compact color="muted" />
                 </span>
               </div>
             );
@@ -346,19 +346,19 @@ export function NetWorthAllocationBar({
           <div className="flex justify-between gap-4">
             <span className="text-xs" style={{ color: colors.muted }}>Assets</span>
             <span className="text-xs font-semibold tabular-nums" style={{ color: colors.positive }}>
-              {formatCurrency(totalAssets, { currency, compact: true })}
+              <Amount value={totalAssets} currency={currency} size="xs" weight="semibold" compact color="positive" />
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-xs" style={{ color: colors.muted }}>Debts</span>
             <span className="text-xs font-semibold tabular-nums" style={{ color: colors.negative }}>
-              −{formatCurrency(totalDebts, { currency, compact: true })}
+              −<Amount value={totalDebts} currency={currency} size="xs" weight="semibold" compact color="negative" />
             </span>
           </div>
           <div className="flex justify-between gap-4 pt-1.5" style={{ borderTop: `1px solid ${colors.border}` }}>
             <span className="text-xs font-medium" style={{ color: colors.text }}>Net Worth</span>
             <span className="text-xs font-bold tabular-nums" style={{ color: netWorth >= 0 ? colors.positive : colors.negative }}>
-              {formatCurrency(netWorth, { currency, compact: true })}
+              <Amount value={netWorth} currency={currency} size="xs" weight="bold" compact color={netWorth >= 0 ? 'positive' : 'negative'} />
             </span>
           </div>
         </div>
@@ -381,7 +381,7 @@ export function NetWorthAllocationBar({
             Net Worth
           </div>
           <div className="text-2xl font-bold tabular-nums" style={{ color: netWorth >= 0 ? colors.positive : colors.negative }}>
-            {formatCurrency(netWorth, { currency })}
+            <Amount value={netWorth} currency={currency} size="2xl" weight="bold" color={netWorth >= 0 ? 'positive' : 'negative'} />
           </div>
           {comparison && comparison.change !== 0 && (
             <div className="text-xs mt-0.5" style={{ color: colors.muted }}>
@@ -396,13 +396,13 @@ export function NetWorthAllocationBar({
           <div className="text-right">
             <div style={{ color: colors.muted }}>Assets</div>
             <div className="font-semibold" style={{ color: colors.positive }}>
-              {formatCurrency(totalAssets, { currency, compact: true })}
+              <Amount value={totalAssets} currency={currency} size="xs" weight="semibold" compact color="positive" />
             </div>
           </div>
           <div className="text-right">
             <div style={{ color: colors.muted }}>Debts</div>
             <div className="font-semibold" style={{ color: totalDebts > 0 ? colors.negative : colors.muted }}>
-              {formatCurrency(totalDebts, { currency, compact: true })}
+              <Amount value={totalDebts} currency={currency} size="xs" weight="semibold" compact color={totalDebts > 0 ? 'negative' : 'muted'} />
             </div>
           </div>
         </div>
@@ -489,7 +489,7 @@ export function NetWorthAllocationBar({
                         fontSize: barHeight < 30 ? 9 : 11,
                       }}
                     >
-                      {bar.isNegative ? '−' : ''}{formatCurrency(bar.value, { currency, compact: true })}
+                      {bar.isNegative ? '−' : ''}<Amount value={bar.value} currency={currency} size={barHeight < 30 ? 9 : 11} compact color="#fff" />
                     </div>
                   )}
                 </div>

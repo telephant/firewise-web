@@ -23,12 +23,15 @@ import {
   IconSettings,
   IconRepeat,
   IconDebt,
+  IconEye,
+  IconEyeOff,
 } from '@/components/fire/ui';
 import { TaxSettingsDialog } from '@/components/fire/tax-settings-dialog';
 import { CurrencyPreferencesDialog } from '@/components/fire/currency-preferences-dialog';
 import { FamilySettingsDialog } from '@/components/fire/family/family-settings-dialog';
 import { ViewModeSwitcher } from '@/components/fire/family/view-mode-switcher';
 import { transactionApi } from '@/lib/fire/api';
+import { usePrivacy } from '@/contexts/fire/privacy-context';
 
 const navItems = [
   {
@@ -66,6 +69,7 @@ const navItems = [
 
 export function FireSidebar() {
   const pathname = usePathname();
+  const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
   const [taxSettingsOpen, setTaxSettingsOpen] = useState(false);
   const [currencySettingsOpen, setCurrencySettingsOpen] = useState(false);
   const [familySettingsOpen, setFamilySettingsOpen] = useState(false);
@@ -88,16 +92,26 @@ export function FireSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/fire" className="flex items-center gap-2 px-1 transition-opacity duration-150 hover:opacity-80">
-          <div>
-            <span className="text-base font-bold tracking-tight" style={{ color: colors.text }}>
-              FIRE
-            </span>
-            <span className="block text-[10px] -mt-0.5" style={{ color: colors.muted }}>
-              Financial Independence
-            </span>
-          </div>
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/fire" className="flex items-center gap-2 px-1 transition-opacity duration-150 hover:opacity-80">
+            <div>
+              <span className="text-base font-bold tracking-tight" style={{ color: colors.text }}>
+                FIRE
+              </span>
+              <span className="block text-[10px] -mt-0.5" style={{ color: colors.muted }}>
+                Financial Independence
+              </span>
+            </div>
+          </Link>
+          <button
+            onClick={togglePrivacyMode}
+            className="p-1.5 rounded-md transition-colors hover:bg-[#252528]"
+            style={{ color: isPrivacyMode ? colors.accent : colors.muted }}
+            title={isPrivacyMode ? 'Show amounts' : 'Hide amounts'}
+          >
+            {isPrivacyMode ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+          </button>
+        </div>
         <ViewModeSwitcher className="mt-2" />
       </SidebarHeader>
 

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, colors, Loader, Button, IconChevronLeft, IconChevronRight } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { Card, colors, Loader, Button, IconChevronLeft, IconChevronRight, Amount } from '@/components/fire/ui';
 import { monthlySummaryApi, MonthlySummaryStats } from '@/lib/fire/api';
 import { useSnapshots } from '@/hooks/fire';
 
@@ -362,7 +361,7 @@ export function MonthlySummaryCard() {
                     }}
                   >
                     {bar.isNegative ? '-' : bar.isTotal ? (net >= 0 ? '+' : '-') : '+'}
-                    {formatCurrency(bar.value, { currency, compact: true })}
+                    <Amount value={bar.value} currency={currency} size={bar.isTotal ? 11 : 10} weight={bar.isTotal ? 'bold' : 'medium'} compact color={bar.color} />
                   </div>
                 </div>
               </div>
@@ -392,9 +391,9 @@ export function MonthlySummaryCard() {
             </div>
             <div className="text-right">
               <div style={{ color: colors.muted }}>
-                In <span style={{ color: colors.positive }}>+{formatCurrency(totalIncome, { currency, compact: true })}</span>
+                In <span style={{ color: colors.positive }}>+<Amount value={totalIncome} currency={currency} size="xs" compact color="positive" /></span>
                 {' · '}
-                Out <span style={{ color: colors.negative }}>-{formatCurrency(totalExpenses, { currency, compact: true })}</span>
+                Out <span style={{ color: colors.negative }}>-<Amount value={totalExpenses} currency={currency} size="xs" compact color="negative" /></span>
               </div>
               {comparison && comparison.change !== 0 && (
                 <div className="mt-0.5" style={{ color: colors.muted }}>

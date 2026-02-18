@@ -13,8 +13,9 @@ import {
   IconHome,
   IconCreditCard,
   IconBox,
+  Amount,
 } from '@/components/fire/ui';
-import { formatCurrency, formatPercent, formatDate } from '@/lib/fire/utils';
+import { formatPercent, formatDate } from '@/lib/fire/utils';
 import type { Debt, DebtType } from '@/types/fire';
 import { DEBT_TYPE_LABELS } from '@/types/fire';
 
@@ -84,11 +85,11 @@ export function DebtDetailDialog({
                 className="text-3xl font-bold tabular-nums"
                 style={{ color: colors.negative }}
               >
-                {formatCurrency(displayValue, { currency: displayCurrency })}
+                <Amount value={displayValue} currency={displayCurrency} size="2xl" weight="bold" color="negative" />
               </div>
               {hasConvertedCurrency && (
                 <div className="text-sm mt-1" style={{ color: colors.muted }}>
-                  ({formatCurrency(debt.current_balance, { currency: debt.currency })})
+                  (<Amount value={debt.current_balance} currency={debt.currency} size="sm" color="muted" />)
                 </div>
               )}
               <div className="text-xs mt-2" style={{ color: colors.muted }}>
@@ -108,8 +109,8 @@ export function DebtDetailDialog({
                 color={progress >= 100 ? colors.positive : colors.accent}
               />
               <div className="flex justify-between text-[10px] mt-1" style={{ color: colors.muted }}>
-                <span>{formatCurrency(debt.principal - debt.current_balance, { currency: debt.currency })} paid</span>
-                <span>{formatCurrency(debt.principal, { currency: debt.currency })} total</span>
+                <span><Amount value={debt.principal - debt.current_balance} currency={debt.currency} size={10} color="muted" /> paid</span>
+                <span><Amount value={debt.principal} currency={debt.currency} size={10} color="muted" /> total</span>
               </div>
             </div>
 
@@ -128,12 +129,12 @@ export function DebtDetailDialog({
               />
               <DetailItem
                 label="Original Loan"
-                value={formatCurrency(debt.principal, { currency: debt.currency })}
+                value={<Amount value={debt.principal} currency={debt.currency} size="xs" />}
               />
               <DetailItem
                 label="Monthly Payment"
                 value={debt.monthly_payment
-                  ? formatCurrency(debt.monthly_payment, { currency: debt.currency })
+                  ? <Amount value={debt.monthly_payment} currency={debt.currency} size="xs" />
                   : '—'
                 }
               />

@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { colors, Card, ProgressBar, Loader } from '@/components/fire/ui';
-import { formatCurrency, calculateNetWorth } from '@/lib/fire/utils';
+import { colors, Card, ProgressBar, Loader, Amount } from '@/components/fire/ui';
+import { calculateNetWorth } from '@/lib/fire/utils';
 import { useAssets, useTransactionStats } from '@/hooks/fire/use-fire-data';
 
 interface FireProgressCardProps {
@@ -100,7 +100,7 @@ export function FireProgressCard({
           style={{ borderTop: `1px solid ${colors.surfaceLight}` }}
         >
           <span style={{ color: colors.muted }}>
-            {formatCurrency(netWorth, { currency, compact: true })} / {formatCurrency(fireTarget, { currency, compact: true })}
+            <Amount value={netWorth} currency={currency} size={12} compact /> / <Amount value={fireTarget} currency={currency} size={12} compact />
           </span>
 
           {yearsToFire !== null && (

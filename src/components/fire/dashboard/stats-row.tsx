@@ -1,8 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { StatCard } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { StatCard, Amount } from '@/components/fire/ui';
 import { useAssets, useTransactions, useTransactionStats } from '@/hooks/fire/use-fire-data';
 import type { TransactionWithDetails } from '@/types/fire';
 
@@ -71,8 +70,7 @@ export function StatsRow() {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <StatCard
         label="Savings Rate"
-        value={`${savingsRate}%`}
-        valueColor={savingsRate >= 20 ? 'positive' : 'default'}
+        value={<Amount value={savingsRate} size={20} weight="bold" decimals={0} color={savingsRate >= 20 ? 'positive' : 'default'} className="after:content-['%']" />}
         trend={
           savingsRate > 0
             ? { value: 'of income saved', direction: 'neutral' }
@@ -82,15 +80,13 @@ export function StatsRow() {
       />
       <StatCard
         label="Passive Income"
-        value={formatCurrency(passiveIncome)}
-        valueColor={passiveIncome > 0 ? 'positive' : 'default'}
+        value={<Amount value={passiveIncome} size={20} weight="bold" color={passiveIncome > 0 ? 'positive' : 'default'} />}
         trend={{ value: 'per month', direction: 'neutral' }}
         isLoading={flowsLoading}
       />
       <StatCard
         label="Monthly Flow"
-        value={formatCurrency(monthlyCashflow)}
-        valueColor={monthlyCashflow >= 0 ? 'positive' : 'negative'}
+        value={<Amount value={monthlyCashflow} size={20} weight="bold" color={monthlyCashflow >= 0 ? 'positive' : 'negative'} />}
         trend={{
           value: monthlyCashflow >= 0 ? 'surplus' : 'deficit',
           direction: monthlyCashflow >= 0 ? 'up' : 'down',
@@ -99,7 +95,7 @@ export function StatsRow() {
       />
       <StatCard
         label="SWR Amount"
-        value={formatCurrency(swrMonthly)}
+        value={<Amount value={swrMonthly} size={20} weight="bold" />}
         trend={{ value: '4% rule / month', direction: 'neutral' }}
         isLoading={assetsLoading}
       />

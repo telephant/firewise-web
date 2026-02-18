@@ -8,6 +8,7 @@ import {
   IconTriangleUp,
   IconTriangleDown,
   IconPlus,
+  Amount,
 } from '@/components/fire/ui';
 import { formatCurrency } from '@/lib/fire/utils';
 import { useNetWorthStats, useTransactionStats, useSnapshots } from '@/hooks/fire/use-fire-data';
@@ -92,21 +93,16 @@ export function NetWorthCard({ currency: _currency, onAddAsset }: NetWorthCardPr
     <Card title="Net Worth" contentHeight={CARD_HEIGHT}>
       <div className="h-full flex flex-col justify-center text-center">
         {/* Main Value */}
-        <p
-          className="text-4xl font-bold tabular-nums"
-          style={{ color: colors.text }}
-        >
-          {formatCurrency(netWorth, { currency })}
+        <p className="tabular-nums">
+          <Amount value={netWorth} currency={currency} size={36} weight="bold" />
         </p>
 
         {/* Monthly Change */}
         {monthlyChange !== undefined && monthlyChange !== 0 && (
-          <p
-            className="text-xs font-medium mt-1 inline-flex items-center justify-center gap-1"
-            style={{ color: changeColor }}
-          >
+          <p className="mt-1 inline-flex items-center justify-center gap-1" style={{ color: changeColor }}>
             <ChangeIcon size={10} />
-            {formatCurrency(Math.abs(monthlyChange), { currency })} this month
+            <Amount value={Math.abs(monthlyChange)} currency={currency} size={12} color={changeColor} weight="medium" />
+            <span className="text-xs"> this month</span>
           </p>
         )}
 
@@ -127,16 +123,12 @@ export function NetWorthCard({ currency: _currency, onAddAsset }: NetWorthCardPr
         >
           <span style={{ color: colors.muted }}>
             Assets:{' '}
-            <span className="font-bold" style={{ color: colors.text }}>
-              {formatCurrency(totalAssets, { currency, compact: true })}
-            </span>
+            <Amount value={totalAssets} currency={currency} size={12} weight="bold" compact />
           </span>
           <span style={{ color: colors.surfaceLight }}>|</span>
           <span style={{ color: colors.muted }}>
             Debts:{' '}
-            <span className="font-bold" style={{ color: colors.negative }}>
-              {formatCurrency(totalDebts, { currency, compact: true })}
-            </span>
+            <Amount value={totalDebts} currency={currency} size={12} weight="bold" color="negative" compact />
           </span>
         </div>
       </div>

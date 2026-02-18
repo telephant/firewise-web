@@ -5,6 +5,7 @@ import {
   Card,
   FilterDropdown,
   Input,
+  Amount,
   IconCash,
   IconBank,
   IconStock,
@@ -264,7 +265,7 @@ export function AssetsTable({
               Total:{' '}
             </span>
             <span className="text-sm font-bold tabular-nums" style={{ color: colors.text }}>
-              {formatCurrency(totalValue, { currency })}
+              <Amount value={totalValue} currency={currency} size="sm" weight="bold" />
             </span>
           </div>
 
@@ -381,7 +382,7 @@ export function AssetsTable({
                     className="text-xs font-bold tabular-nums"
                     style={{ color: colors.text }}
                   >
-                    {formatCurrency(value, { currency: valueCurrency })}
+                    <Amount value={value} currency={valueCurrency} size="xs" weight="bold" />
                   </div>
                   {asset.converted_balance !== undefined &&
                     asset.converted_currency &&
@@ -391,7 +392,7 @@ export function AssetsTable({
                         className="text-[10px] tabular-nums"
                         style={{ color: colors.muted }}
                       >
-                        ({formatCurrency(asset.balance, { currency: asset.currency })})
+                        (<Amount value={asset.balance} currency={asset.currency} size={10} color="muted" />)
                       </div>
                     )}
                 </TableCell>

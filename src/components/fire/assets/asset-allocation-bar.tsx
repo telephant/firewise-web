@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState, useRef } from 'react';
-import { colors, Loader } from '@/components/fire/ui';
-import { formatCurrency, ASSET_COLORS } from '@/lib/fire/utils';
+import { colors, Loader, Amount } from '@/components/fire/ui';
+import { ASSET_COLORS } from '@/lib/fire/utils';
 import type { AssetWithBalance, AssetType } from '@/types/fire';
 
 interface AssetAllocationBarProps {
@@ -145,7 +145,7 @@ export function AssetAllocationBar({
           Total Assets
         </span>
         <span className="text-lg font-bold tabular-nums" style={{ color: colors.text }}>
-          {formatCurrency(totalValue, { currency })}
+          <Amount value={totalValue} currency={currency} size="lg" weight="bold" />
         </span>
       </div>
 
@@ -213,7 +213,7 @@ export function AssetAllocationBar({
               </div>
               <div className="text-right">
                 <span className="text-sm font-bold tabular-nums" style={{ color: colors.text }}>
-                  {formatCurrency(hoveredData.value, { currency, compact: true })}
+                  <Amount value={hoveredData.value} currency={currency} size="sm" weight="bold" compact />
                 </span>
                 <span className="text-xs ml-1.5" style={{ color: colors.muted }}>
                   {hoveredData.percent.toFixed(1)}%
@@ -243,7 +243,7 @@ export function AssetAllocationBar({
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                       <span className="text-xs tabular-nums" style={{ color: colors.text }}>
-                        {formatCurrency(assetValue, { currency, compact: true })}
+                        <Amount value={assetValue} currency={currency} size="xs" compact />
                       </span>
                       <span className="text-[10px] tabular-nums w-10 text-right" style={{ color: colors.muted }}>
                         {assetPercent.toFixed(1)}%

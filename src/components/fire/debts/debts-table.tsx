@@ -13,9 +13,10 @@ import {
   IconBox,
   IconEdit,
   IconTrash,
+  Amount,
 } from '@/components/fire/ui';
 import type { FilterOption } from '@/components/fire/ui';
-import { formatCurrency, formatPercent } from '@/lib/fire/utils';
+import { formatPercent } from '@/lib/fire/utils';
 import type { Debt, DebtType, DebtStatus } from '@/types/fire';
 
 type StatusFilter = DebtStatus | 'all';
@@ -160,7 +161,7 @@ export function DebtsTable({
             Total Owed:{' '}
           </span>
           <span className="text-sm font-bold tabular-nums" style={{ color: colors.negative }}>
-            {formatCurrency(totalValue, { currency })}
+            <Amount value={totalValue} currency={currency} size="sm" weight="bold" color="negative" />
           </span>
         </div>
       </div>
@@ -263,7 +264,7 @@ export function DebtsTable({
                       className="text-xs font-bold tabular-nums"
                       style={{ color: colors.negative }}
                     >
-                      {formatCurrency(value, { currency: valueCurrency })}
+                      <Amount value={value} currency={valueCurrency} size="xs" weight="bold" color="negative" />
                     </div>
                     {/* Show original amount if displaying converted */}
                     {debt.converted_balance !== undefined &&
@@ -273,7 +274,7 @@ export function DebtsTable({
                           className="text-[10px] tabular-nums"
                           style={{ color: colors.muted }}
                         >
-                          ({formatCurrency(debt.current_balance, { currency: debt.currency })})
+                          (<Amount value={debt.current_balance} currency={debt.currency} size={10} color="muted" />)
                         </div>
                       )}
                   </div>
@@ -285,7 +286,7 @@ export function DebtsTable({
                         className="text-xs tabular-nums"
                         style={{ color: colors.text }}
                       >
-                        {formatCurrency(debt.monthly_payment, { currency: debt.currency })}/mo
+                        <Amount value={debt.monthly_payment} currency={debt.currency} size="xs" />/mo
                       </span>
                     ) : (
                       <span className="text-xs" style={{ color: colors.muted }}>

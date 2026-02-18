@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, colors, Button, Loader, IconChevronDown } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { Card, colors, Button, Loader, IconChevronDown, Amount } from '@/components/fire/ui';
 import { dividendCalendarApi, MonthDividend, MonthData, DividendCalendarData, TaxRates } from '@/lib/fire/api';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -245,7 +244,7 @@ export function DividendCalendar() {
                 Annual Total:{' '}
               </span>
               <span className="text-sm font-medium" style={{ color: colors.positive }}>
-                {formatCurrency(annualTotal, { currency })}
+                <Amount value={annualTotal} currency={currency} size="sm" weight="medium" color="positive" />
               </span>
             </div>
           </div>
@@ -330,7 +329,7 @@ function DividendRow({ dividend, currency }: DividendRowProps) {
         style={{ color: dividend.isForecasted ? colors.muted : colors.positive }}
       >
         {dividend.isForecasted ? '*' : ''}
-        {formatCurrency(dividend.amount, { currency, compact: true })}
+        <Amount value={dividend.amount} currency={currency} size={10} compact color={dividend.isForecasted ? 'muted' : 'positive'} />
       </span>
 
       {/* Tooltip */}

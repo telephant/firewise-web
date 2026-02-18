@@ -20,8 +20,8 @@ import {
   IconMetals,
   IconChart,
   IconBox,
+  Amount,
 } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
 import { assetApi } from '@/lib/fire/api';
 import type { AssetWithBalance, AssetType } from '@/types/fire';
 
@@ -121,7 +121,7 @@ export function DeleteAssetDialog({
                 className="text-lg font-bold tabular-nums"
                 style={{ color: colors.text }}
               >
-                {formatCurrency(asset.balance, { currency: asset.currency })}
+                <Amount value={asset.balance} currency={asset.currency} size="lg" weight="bold" />
               </div>
 
               <div className="text-xs" style={{ color: colors.muted }}>

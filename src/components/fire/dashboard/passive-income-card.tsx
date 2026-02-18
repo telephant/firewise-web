@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, colors, Loader } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { Card, colors, Loader, Amount } from '@/components/fire/ui';
 import { passiveIncomeApi, PassiveIncomeStats } from '@/lib/fire/api';
 import { useSnapshots } from '@/hooks/fire';
 
@@ -90,7 +89,7 @@ export function PassiveIncomeCard() {
               Monthly Avg
             </div>
             <span className="text-3xl font-bold" style={{ color: colors.positive }}>
-              {formatCurrency(monthlyAvg, { currency, decimals: 2 })}
+              <Amount value={monthlyAvg} currency={currency} size="2xl" weight="bold" color="positive" decimals={2} />
             </span>
             {comparison && comparison.change !== 0 && (
               <div className="text-xs mt-0.5" style={{ color: colors.muted }}>
@@ -116,7 +115,7 @@ export function PassiveIncomeCard() {
                 Last 12 Months
               </span>
               <span className="text-sm font-bold" style={{ color: colors.text }}>
-                {formatCurrency(annualTotal, { currency, decimals: 2 })}
+                <Amount value={annualTotal} currency={currency} size="sm" weight="bold" decimals={2} />
               </span>
             </div>
 
@@ -133,7 +132,7 @@ export function PassiveIncomeCard() {
                           {config.label}
                         </span>
                         <span className="text-[11px] font-medium" style={{ color: colors.text }}>
-                          {formatCurrency(item.amount, { currency, decimals: 2 })}
+                          <Amount value={item.amount} currency={currency} size={11} weight="medium" decimals={2} />
                         </span>
                       </div>
                       <div

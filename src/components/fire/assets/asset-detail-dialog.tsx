@@ -19,6 +19,7 @@ import {
   IconMetals,
   IconChart,
   IconBox,
+  Amount,
 } from '@/components/fire/ui';
 import { formatCurrency, formatShares, formatPercent } from '@/lib/fire/utils';
 import type { AssetWithBalance, AssetType, RealEstateMetadata } from '@/types/fire';
@@ -164,7 +165,7 @@ export function AssetDetailDialog({
                 className="text-2xl font-bold tabular-nums"
                 style={{ color: colors.text }}
               >
-                {formatCurrency(displayValue, { currency: displayCurrency })}
+                <Amount value={displayValue} currency={displayCurrency} size="2xl" weight="bold" />
               </p>
 
               {/* Show original currency value if different from display */}
@@ -172,7 +173,7 @@ export function AssetDetailDialog({
                 asset.converted_currency &&
                 displayCurrency !== originalCurrency && (
                   <p className="text-xs mt-1" style={{ color: colors.muted }}>
-                    ({formatCurrency(originalValue, { currency: originalCurrency })})
+                    (<Amount value={originalValue} currency={originalCurrency} size="xs" color="muted" />)
                   </p>
                 )}
 

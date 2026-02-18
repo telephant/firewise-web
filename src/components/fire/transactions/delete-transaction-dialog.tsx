@@ -11,8 +11,8 @@ import {
   DialogFooter,
   Button,
   getCategoryIcon,
+  Amount,
 } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
 import { transactionApi } from '@/lib/fire/api';
 import type { TransactionWithDetails } from '@/types/fire';
 
@@ -127,17 +127,13 @@ export function DeleteFlowDialog({
                 className="text-lg font-bold tabular-nums"
                 style={{ color: getFlowTypeColor(flow.type) }}
               >
-                {flow.type === 'income' ? '+' : flow.type === 'expense' ? '−' : ''}
-                {formatCurrency(
-                  flow.converted_amount ?? flow.amount,
-                  { currency: flow.converted_currency ?? flow.currency }
-                )}
+                {flow.type === 'income' ? '+' : flow.type === 'expense' ? '−' : ''}<Amount value={flow.converted_amount ?? flow.amount} currency={flow.converted_currency ?? flow.currency} size="lg" weight="bold" color={getFlowTypeColor(flow.type)} />
               </div>
               {flow.converted_amount !== undefined &&
                 flow.converted_currency &&
                 flow.converted_currency !== flow.currency && (
                 <div className="text-xs tabular-nums" style={{ color: colors.muted }}>
-                  ({formatCurrency(flow.amount, { currency: flow.currency })})
+                  (<Amount value={flow.amount} currency={flow.currency} size="xs" color="muted" />)
                 </div>
               )}
 

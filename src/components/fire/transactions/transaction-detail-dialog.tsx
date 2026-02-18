@@ -11,8 +11,8 @@ import {
   Button,
   getCategoryIcon,
   IconRepeat,
+  Amount,
 } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
 import { useRecurringSchedules } from '@/hooks/fire/use-fire-data';
 import type { TransactionWithDetails } from '@/types/fire';
 
@@ -161,11 +161,10 @@ export function FlowDetailDialog({
                     className="text-2xl font-bold tabular-nums"
                     style={{ color: isProfit ? colors.positive : colors.negative }}
                   >
-                    {isProfit ? '+' : ''}
-                    {formatCurrency(profit, { currency: flow.currency })}
+                    {isProfit ? '+' : ''}<Amount value={profit} currency={flow.currency} size="2xl" weight="bold" color={isProfit ? 'positive' : 'negative'} />
                   </p>
                   <p className="text-xs mt-1" style={{ color: colors.muted }}>
-                    Sold: {formatCurrency(flow.amount, { currency: flow.currency })}
+                    Sold: <Amount value={flow.amount} currency={flow.currency} size="xs" color="muted" />
                   </p>
                 </>
               ) : flow.converted_amount !== undefined && flow.converted_currency ? (
@@ -174,12 +173,11 @@ export function FlowDetailDialog({
                     className="text-2xl font-bold tabular-nums"
                     style={{ color: getFlowTypeColor(flow.type) }}
                   >
-                    {flow.type === 'income' ? '+' : flow.type === 'expense' ? '−' : ''}
-                    {formatCurrency(flow.converted_amount, { currency: flow.converted_currency })}
+                    {flow.type === 'income' ? '+' : flow.type === 'expense' ? '−' : ''}<Amount value={flow.converted_amount} currency={flow.converted_currency} size="2xl" weight="bold" color={getFlowTypeColor(flow.type)} />
                   </p>
                   {flow.converted_currency !== flow.currency && (
                     <p className="text-xs mt-1" style={{ color: colors.muted }}>
-                      ({formatCurrency(flow.amount, { currency: flow.currency })})
+                      (<Amount value={flow.amount} currency={flow.currency} size="xs" color="muted" />)
                     </p>
                   )}
                 </>
@@ -188,8 +186,7 @@ export function FlowDetailDialog({
                   className="text-2xl font-bold tabular-nums"
                   style={{ color: getFlowTypeColor(flow.type) }}
                 >
-                  {flow.type === 'income' ? '+' : flow.type === 'expense' ? '−' : ''}
-                  {formatCurrency(flow.amount, { currency: flow.currency })}
+                  {flow.type === 'income' ? '+' : flow.type === 'expense' ? '−' : ''}<Amount value={flow.amount} currency={flow.currency} size="2xl" weight="bold" color={getFlowTypeColor(flow.type)} />
                 </p>
               )}
               <p
@@ -227,7 +224,7 @@ export function FlowDetailDialog({
               {pricePerShare !== undefined && (
                 <DetailRow
                   label="Price/Share"
-                  value={formatCurrency(pricePerShare, { currency: flow.currency })}
+                  value={<Amount value={pricePerShare} currency={flow.currency} size="sm" />}
                 />
               )}
 
@@ -235,7 +232,7 @@ export function FlowDetailDialog({
               {costBasis !== undefined && (
                 <DetailRow
                   label="Cost Basis/Share"
-                  value={formatCurrency(costBasis, { currency: flow.currency })}
+                  value={<Amount value={costBasis} currency={flow.currency} size="sm" />}
                 />
               )}
 
@@ -249,7 +246,7 @@ export function FlowDetailDialog({
               {taxWithheld !== undefined && (
                 <DetailRow
                   label="Tax Withheld"
-                  value={formatCurrency(taxWithheld, { currency: flow.currency })}
+                  value={<Amount value={taxWithheld} currency={flow.currency} size="sm" />}
                 />
               )}
 
@@ -331,7 +328,7 @@ function DetailRow({
   valueColor,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   valueColor?: string;
 }) {
   return (

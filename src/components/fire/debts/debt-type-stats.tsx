@@ -8,8 +8,8 @@ import {
   IconHome,
   IconCreditCard,
   IconBox,
+  Amount,
 } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
 import type { Debt, DebtType } from '@/types/fire';
 
 interface DebtTypeStatsProps {
@@ -122,7 +122,7 @@ export function DebtTypeStats({
           className="text-sm font-bold tabular-nums"
           style={{ color: colors.negative }}
         >
-          {formatCurrency(grandTotal, { currency })}
+          <Amount value={grandTotal} currency={currency} size="sm" weight="bold" color="negative" />
         </div>
         <div className="text-[10px]" style={{ color: colors.muted }}>
           {debts.length} total
@@ -157,7 +157,7 @@ export function DebtTypeStats({
               className="text-sm font-bold tabular-nums"
               style={{ color: colors.negative }}
             >
-              {formatCurrency(stats.totalBalance, { currency })}
+              <Amount value={stats.totalBalance} currency={currency} size="sm" weight="bold" color="negative" />
             </div>
             <div className="text-[10px]" style={{ color: colors.muted }}>
               {stats.count} {stats.count === 1 ? config.countLabel.slice(0, -1) : config.countLabel}

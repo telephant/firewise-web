@@ -1,7 +1,6 @@
 'use client';
 
-import { colors, Card, Loader, SimpleProgressBar, Tag } from '@/components/fire/ui';
-import { formatCurrency } from '@/lib/fire/utils';
+import { colors, Card, Loader, SimpleProgressBar, Tag, Amount } from '@/components/fire/ui';
 
 interface MoneySource {
   name: string;
@@ -83,7 +82,7 @@ export function MoneyMovement({
                     className="text-sm font-medium tabular-nums"
                     style={{ color: colors.positive }}
                   >
-                    {formatCurrency(source.amount, { currency })}
+                    <Amount value={source.amount} currency={currency} size="sm" weight="medium" color="positive" />
                   </span>
                 </div>
               ))
@@ -147,7 +146,7 @@ export function MoneyMovement({
                       className="text-xs font-medium tabular-nums min-w-[70px] text-right"
                       style={{ color: colors.text }}
                     >
-                      {formatCurrency(dest.amount, { currency })}
+                      <Amount value={dest.amount} currency={currency} size="xs" weight="medium" />
                     </span>
                   </div>
                 </div>
@@ -171,7 +170,7 @@ export function MoneyMovement({
               className="text-sm font-bold tabular-nums"
               style={{ color: colors.positive }}
             >
-              {formatCurrency(totalIn, { currency })}
+              <Amount value={totalIn} currency={currency} size="sm" weight="bold" color="positive" />
             </span>
           </div>
           <div>
@@ -182,7 +181,7 @@ export function MoneyMovement({
               className="text-sm font-bold tabular-nums"
               style={{ color: colors.info }}
             >
-              {formatCurrency(totalAllocated, { currency })}
+              <Amount value={totalAllocated} currency={currency} size="sm" weight="bold" color="info" />
             </span>
           </div>
           <div>
@@ -193,7 +192,7 @@ export function MoneyMovement({
               className="text-sm font-bold tabular-nums"
               style={{ color: colors.negative }}
             >
-              {formatCurrency(totalSpent, { currency })}
+              <Amount value={totalSpent} currency={currency} size="sm" weight="bold" color="negative" />
             </span>
           </div>
         </div>
@@ -205,8 +204,7 @@ export function MoneyMovement({
             className="text-sm font-bold tabular-nums"
             style={{ color: netSaved >= 0 ? colors.positive : colors.negative }}
           >
-            {netSaved >= 0 ? '+' : ''}
-            {formatCurrency(netSaved, { currency })}
+            {netSaved >= 0 ? '+' : ''}<Amount value={netSaved} currency={currency} size="sm" weight="bold" color={netSaved >= 0 ? 'positive' : 'negative'} />
           </span>
         </div>
       </div>

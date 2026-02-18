@@ -17,6 +17,7 @@ import {
   IconBox,
   IconEdit,
   IconPlus,
+  Amount,
 } from '@/components/fire/ui';
 import { AdjustBalanceDialog } from './adjust-balance-dialog';
 import { AddAssetDialog } from './add-asset-dialog';
@@ -251,11 +252,8 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
                       {isMetal && metalDisplayInfo ? (
                         // Show weight, price per unit, and total value for metals (in preferred currency)
                         <div className="text-right">
-                          <p
-                            className="text-xs font-bold tabular-nums"
-                            style={{ color: colors.text }}
-                          >
-                            {formatCurrency(asset.converted_balance ?? asset.balance, { currency: displayCurrency })}
+                          <p className="tabular-nums">
+                            <Amount value={asset.converted_balance ?? asset.balance} currency={displayCurrency} size={12} weight="bold" />
                           </p>
                           <div className="text-[10px]" style={{ color: colors.muted }}>
                             {formatShares(asset.balance)}{metalDisplayInfo.unit} × {formatCurrency(metalDisplayInfo.pricePerUnit, { currency: 'USD', decimals: 2 })}/{metalDisplayInfo.unit}
@@ -281,11 +279,8 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
                       ) : isShareBased && stockPrice ? (
                         // Show shares, price, and total value for stocks/ETFs
                         <div className="text-right">
-                          <p
-                            className="text-xs font-bold tabular-nums"
-                            style={{ color: colors.text }}
-                          >
-                            {formatCurrency(asset.converted_balance ?? (asset.balance * stockPrice.price), { currency: asset.converted_currency ?? stockPrice.currency })}
+                          <p className="tabular-nums">
+                            <Amount value={asset.converted_balance ?? (asset.balance * stockPrice.price)} currency={asset.converted_currency ?? stockPrice.currency} size={12} weight="bold" />
                           </p>
                           <div className="flex items-center gap-1 text-[10px]">
                             <span style={{ color: colors.muted }}>
@@ -322,23 +317,15 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
                       ) : (
                         // Show currency amount for non-share assets
                         <div className="text-right">
-                          <p
-                            className="text-xs font-bold tabular-nums"
-                            style={{ color: colors.text }}
-                          >
-                            {formatCurrency(asset.balance, { currency: asset.currency })}
+                          <p className="tabular-nums">
+                            <Amount value={asset.balance} currency={asset.currency} size={12} weight="bold" />
                           </p>
                           {/* Show converted balance when available and different currency */}
                           {(asset as AssetWithBalance).converted_balance !== undefined &&
                            (asset as AssetWithBalance).converted_currency &&
                            (asset as AssetWithBalance).converted_currency !== asset.currency && (
-                            <p
-                              className="text-[10px] tabular-nums"
-                              style={{ color: colors.muted }}
-                            >
-                              ≈ {formatCurrency((asset as AssetWithBalance).converted_balance!, {
-                                currency: (asset as AssetWithBalance).converted_currency!,
-                              })}
+                            <p className="tabular-nums" style={{ color: colors.muted }}>
+                              ≈ <Amount value={(asset as AssetWithBalance).converted_balance!} currency={(asset as AssetWithBalance).converted_currency!} size={10} color="muted" />
                             </p>
                           )}
                         </div>
@@ -381,11 +368,8 @@ export function AssetList({ maxItems = 6 }: AssetListProps) {
               >
                 Total
               </span>
-              <span
-                className="text-sm font-bold tabular-nums"
-                style={{ color: colors.text }}
-              >
-                {formatCurrency(totalValue)}
+              <span className="tabular-nums">
+                <Amount value={totalValue} currency={displayCurrency} size={14} weight="bold" />
               </span>
             </div>
           </>
