@@ -138,7 +138,7 @@ function AssetsPageContent() {
     return [...new Set([...stockTickers, ...metalSymbols])];
   }, [assets]);
 
-  const { prices: stockPrices } = useStockPrices(tickers);
+  const { prices: stockPrices, isLoading: isPricesLoading } = useStockPrices(tickers);
 
   // Filter and sort assets
   const filteredAssets = useMemo(() => {
@@ -272,6 +272,7 @@ function AssetsPageContent() {
             assets={paginatedAssets}
             stockPrices={stockPrices}
             isLoading={isLoading}
+            isPricesLoading={isPricesLoading}
             currentPage={currentPage}
             totalPages={totalPages}
             totalCount={filteredAssets.length}

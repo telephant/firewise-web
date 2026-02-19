@@ -45,6 +45,7 @@ interface AssetsTableProps {
   assets: AssetWithBalance[];
   stockPrices: Record<string, StockPrice>;
   isLoading?: boolean;
+  isPricesLoading?: boolean;
   // Pagination
   currentPage: number;
   totalPages: number;
@@ -99,6 +100,21 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 const SHARE_BASED_TYPES: AssetType[] = ['stock', 'etf', 'crypto', 'metals'];
 const ADJUSTABLE_TYPES: AssetType[] = ['cash', 'deposit', 'real_estate', 'bond', 'other'];
 
+// Loading shimmer for price-dependent values
+function ValueSkeleton({ width = 60 }: { width?: number }) {
+  return (
+    <div
+      className="animate-pulse rounded"
+      style={{
+        width,
+        height: 14,
+        backgroundColor: colors.border,
+        opacity: 0.5,
+      }}
+    />
+  );
+}
+
 const TYPE_OPTIONS: FilterOption[] = [
   { id: 'cash', label: 'Cash', icon: <IconCash size={14} /> },
   { id: 'deposit', label: 'Deposit', icon: <IconBank size={14} /> },
@@ -117,6 +133,7 @@ export function AssetsTable({
   assets,
   stockPrices,
   isLoading = false,
+  isPricesLoading = false,
   currentPage,
   totalPages,
   totalCount,
@@ -138,6 +155,29 @@ export function AssetsTable({
   onAdjust,
   onDelete,
 }: AssetsTableProps) {
+  // Helper to check if an asset needs price data (stock/ETF/crypto/metals)
+  const needsPriceData = (asset: AssetWithBalance): boolean => {
+    if (asset.type === 'metals') {
+      const metalType = asset.metadata?.metal_type as MetalType;
+      const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
+      return !!metalConfig;
+    }
+    return SHARE_BASED_TYPES.includes(asset.type) && !!asset.ticker;
+  };
+
+  // Helper to check if price is loaded for an asset
+  const hasPriceLoaded = (asset: AssetWithBalance): boolean => {
+    if (asset.type === 'metals') {
+      const metalType = asset.metadata?.metal_type as MetalType;
+      const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
+      return metalConfig ? !!stockPrices[metalConfig.symbol] : false;
+    }
+    if (asset.ticker) {
+      return !!stockPrices[asset.ticker.toUpperCase()];
+    }
+    return true;
+  };
+
   // Helper to get metal display info (for showing weight × price details)
   const getMetalDisplayInfo = (asset: AssetWithBalance): { pricePerUnit: number; unit: string } | null => {
     if (asset.type !== 'metals' || !asset.metadata) return null;
@@ -328,6 +368,11 @@ export function AssetsTable({
         >
           {assets.map((asset, index) => {
             const IconComponent = ASSET_ICONS[asset.type] || ASSET_ICONS.other;
+            // Check if this asset needs price data and if it's still loading
+            const needsPrice = needsPriceData(asset);
+            const priceLoaded = hasPriceLoaded(asset);
+            const showPriceLoading = isPricesLoading && needsPrice && !priceLoaded;
+
             const { value, currency: valueCurrency } = getAssetValue(asset);
             const details = getAssetDetails(asset);
             const dayChange = getDayChange(asset);
@@ -371,42 +416,64 @@ export function AssetsTable({
 
                 {/* Details */}
                 <TableCell>
-                  <span className="text-xs truncate" style={{ color: colors.muted }}>
-                    {details}
-                  </span>
+                  {showPriceLoading ? (
+                    <ValueSkeleton width={100} />
+                  ) : (
+                    <span className="text-xs truncate" style={{ color: colors.muted }}>
+                      {details}
+                    </span>
+                  )}
                 </TableCell>
 
                 {/* Value */}
                 <TableCell align="right">
-                  <div
-                    className="text-xs font-bold tabular-nums"
-                    style={{ color: colors.text }}
-                  >
-                    <Amount value={value} currency={valueCurrency} size="xs" weight="bold" />
-                  </div>
-                  {asset.converted_balance !== undefined &&
-                    asset.converted_currency &&
-                    asset.converted_currency !== asset.currency &&
-                    !SHARE_BASED_TYPES.includes(asset.type) && (
+                  {showPriceLoading ? (
+                    <div className="flex justify-end">
+                      <ValueSkeleton width={70} />
+                    </div>
+                  ) : (
+                    <>
                       <div
-                        className="text-[10px] tabular-nums"
-                        style={{ color: colors.muted }}
+                        className="text-xs font-bold tabular-nums"
+                        style={{ color: colors.text }}
                       >
-                        (<Amount value={asset.balance} currency={asset.currency} size={10} color="muted" />)
+                        <Amount value={value} currency={valueCurrency} size="xs" weight="bold" />
                       </div>
-                    )}
+                      {asset.converted_balance !== undefined &&
+                        asset.converted_currency &&
+                        asset.converted_currency !== asset.currency &&
+                        !SHARE_BASED_TYPES.includes(asset.type) && (
+                          <div
+                            className="text-[10px] tabular-nums"
+                            style={{ color: colors.muted }}
+                          >
+                            (<Amount value={asset.balance} currency={asset.currency} size={10} color="muted" />)
+                          </div>
+                        )}
+                    </>
+                  )}
                 </TableCell>
 
                 {/* Percentage */}
                 <TableCell align="right">
-                  <span className="text-xs tabular-nums" style={{ color: colors.muted }}>
-                    {percentOfTotal.toFixed(1)}%
-                  </span>
+                  {showPriceLoading ? (
+                    <div className="flex justify-end">
+                      <ValueSkeleton width={35} />
+                    </div>
+                  ) : (
+                    <span className="text-xs tabular-nums" style={{ color: colors.muted }}>
+                      {percentOfTotal.toFixed(1)}%
+                    </span>
+                  )}
                 </TableCell>
 
                 {/* Day Change */}
                 <TableCell align="right">
-                  {dayChange ? (
+                  {showPriceLoading ? (
+                    <div className="flex justify-end">
+                      <ValueSkeleton width={45} />
+                    </div>
+                  ) : dayChange ? (
                     <span
                       className="text-xs tabular-nums"
                       style={{
