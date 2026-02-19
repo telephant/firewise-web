@@ -2,6 +2,7 @@
 export {
   useAssets,
   useNetWorthStats,
+  useAssetTypeStats,
   useTransactions,
   useTransactionStats,
   mutateTransactions,

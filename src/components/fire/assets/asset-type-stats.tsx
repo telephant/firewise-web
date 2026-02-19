@@ -18,6 +18,7 @@ import {
   IconBox,
 } from '@/components/fire/ui';
 import { formatPercent } from '@/lib/fire/utils';
+import { useAssetTypeStats } from '@/hooks/fire';
 import type { AssetWithBalance, AssetType } from '@/types/fire';
 import type { StockPrice } from '@/lib/fire/api';
 import {
@@ -28,8 +29,9 @@ import {
 } from '@/components/fire/add-transaction/metals-selector';
 
 interface AssetTypeStatsProps {
-  assets: AssetWithBalance[];
-  stockPrices: Record<string, StockPrice>;
+  // Optional - only used for day change calculation
+  assets?: AssetWithBalance[];
+  stockPrices?: Record<string, StockPrice>;
   isLoading?: boolean;
   onTypeClick?: (type: AssetType | 'all') => void;
   selectedType?: AssetType | 'all';
@@ -55,90 +57,106 @@ const ASSET_TYPE_CONFIG: Record<AssetType, {
 const SHARE_BASED_TYPES: AssetType[] = ['stock', 'etf', 'crypto', 'metals'];
 
 export function AssetTypeStats({
-  assets,
-  stockPrices,
-  isLoading = false,
+  assets = [],
+  stockPrices = {},
+  isLoading: externalLoading = false,
   onTypeClick,
   selectedType = 'all',
-  currency = 'USD',
+  currency: propCurrency,
 }: AssetTypeStatsProps) {
-  // Calculate stats per asset type
+  // Use the stats API for aggregated totals
+  const { stats: apiStats, grandTotal, currency: apiCurrency, isLoading: statsLoading } = useAssetTypeStats();
+
+  const isLoading = externalLoading || statsLoading;
+  const currency = propCurrency || apiCurrency || 'USD';
+
+  // Convert API stats to a map for easier access
   const typeStats = useMemo(() => {
     const stats: Record<AssetType, {
       count: number;
       totalValue: number;
-      totalPrevValue: number; // For weighted average day change calculation
       dayChangePercent: number;
     }> = {
-      cash: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
-      deposit: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
-      stock: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
-      etf: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
-      bond: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
-      real_estate: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
-      crypto: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
-      metals: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
-      other: { count: 0, totalValue: 0, totalPrevValue: 0, dayChangePercent: 0 },
+      cash: { count: 0, totalValue: 0, dayChangePercent: 0 },
+      deposit: { count: 0, totalValue: 0, dayChangePercent: 0 },
+      stock: { count: 0, totalValue: 0, dayChangePercent: 0 },
+      etf: { count: 0, totalValue: 0, dayChangePercent: 0 },
+      bond: { count: 0, totalValue: 0, dayChangePercent: 0 },
+      real_estate: { count: 0, totalValue: 0, dayChangePercent: 0 },
+      crypto: { count: 0, totalValue: 0, dayChangePercent: 0 },
+      metals: { count: 0, totalValue: 0, dayChangePercent: 0 },
+      other: { count: 0, totalValue: 0, dayChangePercent: 0 },
     };
 
-    assets.forEach((asset) => {
-      const type = asset.type;
-      stats[type].count += 1;
+    // Populate from API stats
+    apiStats.forEach((stat) => {
+      const type = stat.type as AssetType;
+      if (stats[type]) {
+        stats[type].count = stat.count;
+        stats[type].totalValue = stat.total;
+      }
+    });
 
-      // Use converted_balance if available (backend handles currency conversion)
-      const value = asset.converted_balance ?? asset.balance;
-      stats[type].totalValue += value;
+    // Calculate day change from assets + stockPrices if provided
+    if (assets.length > 0 && Object.keys(stockPrices).length > 0) {
+      // Group assets by type for day change calculation
+      const typeAssets: Record<AssetType, { value: number; prevValue: number }[]> = {
+        cash: [], deposit: [], stock: [], etf: [], bond: [],
+        real_estate: [], crypto: [], metals: [], other: [],
+      };
 
-      // For metals, get day change from Yahoo price
-      if (type === 'metals' && asset.metadata?.metal_type) {
-        const metalType = asset.metadata.metal_type as MetalType;
-        const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
-        if (metalConfig) {
-          const yahooPrice = stockPrices[metalConfig.symbol];
-          if (yahooPrice && yahooPrice.changePercent != null) {
-            // Use change percent to calculate previous value
-            const prevValue = value / (1 + yahooPrice.changePercent / 100);
-            stats[type].totalPrevValue += prevValue;
-          } else {
-            stats[type].totalPrevValue += value;
+      assets.forEach((asset) => {
+        const type = asset.type;
+        const value = asset.converted_balance ?? asset.balance;
+
+        // For metals, get day change from Yahoo price
+        if (type === 'metals' && asset.metadata?.metal_type) {
+          const metalType = asset.metadata.metal_type as MetalType;
+          const metalConfig = METAL_OPTIONS.find(m => m.id === metalType);
+          if (metalConfig) {
+            const yahooPrice = stockPrices[metalConfig.symbol];
+            if (yahooPrice && yahooPrice.changePercent != null) {
+              const prevValue = value / (1 + yahooPrice.changePercent / 100);
+              typeAssets[type].push({ value, prevValue });
+            }
+          }
+          return;
+        }
+
+        // For share-based assets, calculate previous value using stock's change percent
+        if (SHARE_BASED_TYPES.includes(type) && asset.ticker) {
+          const price = stockPrices[asset.ticker.toUpperCase()];
+          if (price && price.changePercent != null) {
+            const prevValue = value / (1 + price.changePercent / 100);
+            typeAssets[type].push({ value, prevValue });
           }
         }
-        return;
-      }
+      });
 
-      // For share-based assets, calculate previous value using stock's change percent
-      // This keeps everything in the same currency (preferred currency)
-      if (SHARE_BASED_TYPES.includes(type) && asset.ticker) {
-        const price = stockPrices[asset.ticker.toUpperCase()];
-        if (price && price.changePercent != null) {
-          // prevValue = currentValue / (1 + changePercent/100)
-          const prevValue = value / (1 + price.changePercent / 100);
-          stats[type].totalPrevValue += prevValue;
-        } else {
-          stats[type].totalPrevValue += value; // No change
+      // Calculate weighted average day change percent for investment types
+      (['stock', 'etf', 'crypto', 'metals'] as AssetType[]).forEach((type) => {
+        const items = typeAssets[type];
+        if (items.length > 0) {
+          const totalValue = items.reduce((sum, item) => sum + item.value, 0);
+          const totalPrevValue = items.reduce((sum, item) => sum + item.prevValue, 0);
+          if (totalPrevValue > 0) {
+            stats[type].dayChangePercent = ((totalValue - totalPrevValue) / totalPrevValue) * 100;
+          }
         }
-      }
-    });
-
-    // Calculate weighted average day change percent for investment types
-    (['stock', 'etf', 'crypto', 'metals'] as AssetType[]).forEach((type) => {
-      if (stats[type].totalPrevValue > 0) {
-        stats[type].dayChangePercent =
-          ((stats[type].totalValue - stats[type].totalPrevValue) / stats[type].totalPrevValue) * 100;
-      }
-    });
+      });
+    }
 
     return stats;
-  }, [assets, stockPrices]);
+  }, [apiStats, assets, stockPrices]);
 
   // Only show types that have assets
   const activeTypes = (Object.keys(typeStats) as AssetType[]).filter(
     (type) => typeStats[type].count > 0
   );
 
-  // Calculate grand total
-  const grandTotal = useMemo(() => {
-    return activeTypes.reduce((sum, type) => sum + typeStats[type].totalValue, 0);
+  // Total asset count
+  const totalCount = useMemo(() => {
+    return activeTypes.reduce((sum, type) => sum + typeStats[type].count, 0);
   }, [activeTypes, typeStats]);
 
   if (isLoading) {
@@ -186,7 +204,7 @@ export function AssetTypeStats({
           <Amount value={grandTotal} currency={currency} size="sm" weight="bold" />
         </div>
         <div className="text-[10px]" style={{ color: colors.muted }}>
-          {assets.length} total
+          {totalCount} total
         </div>
       </button>
 

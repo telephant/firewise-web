@@ -1,7 +1,7 @@
 import type { AssetType, RecurringFrequency, LinkedLedger, DebtType } from '@/types/fire';
 import type { InvestmentType } from './investment-type-selector';
 import type { MetalType, MetalUnit } from './metals-selector';
-import type { PaymentPeriod } from '@/lib/fire/api';
+import type { PaymentPeriod, SymbolType } from '@/lib/fire/api';
 
 // Form state for the add flow dialog
 export interface FlowFormState {
@@ -25,6 +25,8 @@ export interface FlowFormState {
   investmentType: InvestmentType;
   selectedTicker: string;
   selectedTickerName: string;
+  selectedTickerType: SymbolType | null; // Type from Yahoo Finance (stock, etf, etc.)
+  selectedTickerCurrency: string | null; // Currency from Yahoo Finance price API
   currentValue: string; // Current market value for real estate/other investments
   // Metals-specific fields
   metalType: MetalType;
@@ -105,6 +107,8 @@ export const getInitialFormState = (): FlowFormState => ({
   investmentType: 'us_stock',
   selectedTicker: '',
   selectedTickerName: '',
+  selectedTickerType: null,
+  selectedTickerCurrency: null,
   currentValue: '',
   metalType: 'gold',
   metalUnit: 'gram',

@@ -3,10 +3,12 @@
 import { useMemo, useState, useRef } from 'react';
 import { colors, Loader, Amount } from '@/components/fire/ui';
 import { ASSET_COLORS } from '@/lib/fire/utils';
+import { useAssetTypeStats } from '@/hooks/fire';
 import type { AssetWithBalance, AssetType } from '@/types/fire';
 
 interface AssetAllocationBarProps {
-  assets: AssetWithBalance[];
+  // Optional - no longer required, uses stats API
+  assets?: AssetWithBalance[];
   isLoading?: boolean;
   currency?: string;
 }
@@ -30,62 +32,43 @@ interface Segment {
   percent: number;
   color: string;
   label: string;
-  assets: AssetWithBalance[];
+  count: number;
 }
 
 export function AssetAllocationBar({
-  assets,
-  isLoading = false,
-  currency = 'USD',
+  assets = [],
+  isLoading: externalLoading = false,
+  currency: propCurrency,
 }: AssetAllocationBarProps) {
   const [hoveredSegment, setHoveredSegment] = useState<AssetType | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; alignRight: boolean } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Calculate totals per type
-  const { segments, totalValue } = useMemo(() => {
-    const typeAssets: Record<AssetType, AssetWithBalance[]> = {
-      cash: [],
-      deposit: [],
-      stock: [],
-      etf: [],
-      bond: [],
-      real_estate: [],
-      crypto: [],
-      metals: [],
-      other: [],
-    };
+  // Use stats API for aggregated totals
+  const { stats: apiStats, grandTotal: totalValue, currency: apiCurrency, isLoading: statsLoading } = useAssetTypeStats();
 
-    let total = 0;
-    assets.forEach((asset) => {
-      const value = asset.converted_balance ?? asset.balance;
-      typeAssets[asset.type].push(asset);
-      total += value;
-    });
+  const isLoading = externalLoading || statsLoading;
+  const currency = propCurrency || apiCurrency || 'USD';
 
-    // Build segments array (only include types with value > 0)
-    const segs: Segment[] = (Object.keys(typeAssets) as AssetType[])
-      .filter((type) => typeAssets[type].length > 0)
-      .map((type) => {
-        const typeValue = typeAssets[type].reduce(
-          (sum, a) => sum + (a.converted_balance ?? a.balance),
-          0
-        );
+  // Build segments from API stats
+  const segments = useMemo(() => {
+    const segs: Segment[] = apiStats
+      .filter((stat) => stat.total > 0)
+      .map((stat) => {
+        const type = stat.type as AssetType;
         return {
           type,
-          value: typeValue,
-          percent: total > 0 ? (typeValue / total) * 100 : 0,
+          value: stat.total,
+          percent: totalValue > 0 ? (stat.total / totalValue) * 100 : 0,
           color: ASSET_COLORS[type],
           label: CATEGORY_LABELS[type],
-          assets: typeAssets[type].sort(
-            (a, b) => (b.converted_balance ?? b.balance) - (a.converted_balance ?? a.balance)
-          ),
+          count: stat.count,
         };
       })
       .sort((a, b) => b.value - a.value);
 
-    return { segments: segs, totalValue: total };
-  }, [assets]);
+    return segs;
+  }, [apiStats, totalValue]);
 
   const handleSegmentHover = (type: AssetType, e: React.MouseEvent<HTMLDivElement>) => {
     setHoveredSegment(type);
@@ -116,7 +99,7 @@ export function AssetAllocationBar({
     );
   }
 
-  if (assets.length === 0) {
+  if (segments.length === 0 && !isLoading) {
     return (
       <div
         className="p-4 rounded-lg"
@@ -194,14 +177,14 @@ export function AssetAllocationBar({
             onMouseLeave={handleMouseLeave}
           >
           <div
-            className="p-3 rounded-lg shadow-xl min-w-[240px] max-w-[300px]"
+            className="p-3 rounded-lg shadow-xl min-w-[180px]"
             style={{
               backgroundColor: colors.surface,
               border: `1px solid ${colors.border}`,
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-2 pb-2" style={{ borderBottom: `1px solid ${colors.border}` }}>
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-sm"
@@ -211,52 +194,21 @@ export function AssetAllocationBar({
                   {hoveredData.label}
                 </span>
               </div>
-              <div className="text-right">
+              <div className="text-right ml-4">
                 <span className="text-sm font-bold tabular-nums" style={{ color: colors.text }}>
                   <Amount value={hoveredData.value} currency={currency} size="sm" weight="bold" compact />
-                </span>
-                <span className="text-xs ml-1.5" style={{ color: colors.muted }}>
-                  {hoveredData.percent.toFixed(1)}%
                 </span>
               </div>
             </div>
 
-            {/* Asset list */}
-            <div className="space-y-0.5 max-h-[180px] overflow-y-auto">
-              {hoveredData.assets.map((asset) => {
-                const assetValue = asset.converted_balance ?? asset.balance;
-                const assetPercent = totalValue > 0 ? (assetValue / totalValue) * 100 : 0;
-                return (
-                  <div
-                    key={asset.id}
-                    className="flex items-center justify-between py-1.5 px-1 rounded hover:bg-white/[0.04]"
-                  >
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                      <span className="text-xs truncate" style={{ color: colors.text }}>
-                        {asset.name}
-                      </span>
-                      {asset.ticker && (
-                        <span className="text-[10px] flex-shrink-0" style={{ color: colors.muted }}>
-                          {asset.ticker}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                      <span className="text-xs tabular-nums" style={{ color: colors.text }}>
-                        <Amount value={assetValue} currency={currency} size="xs" compact />
-                      </span>
-                      <span className="text-[10px] tabular-nums w-10 text-right" style={{ color: colors.muted }}>
-                        {assetPercent.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Footer */}
-            <div className="mt-2 pt-2 text-[10px] text-center" style={{ borderTop: `1px solid ${colors.border}`, color: colors.muted }}>
-              {hoveredData.assets.length} {hoveredData.assets.length === 1 ? 'item' : 'items'}
+            {/* Stats */}
+            <div className="mt-2 pt-2 flex items-center justify-between text-xs" style={{ borderTop: `1px solid ${colors.border}` }}>
+              <span style={{ color: colors.muted }}>
+                {hoveredData.count} {hoveredData.count === 1 ? 'item' : 'items'}
+              </span>
+              <span style={{ color: colors.accent }}>
+                {hoveredData.percent.toFixed(1)}%
+              </span>
             </div>
           </div>
           </div>

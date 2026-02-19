@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { colors, Loader } from '@/components/fire/ui';
-import { stockSymbolApi, stockPriceApi, StockSymbol, StockPrice } from '@/lib/fire/api';
+import { stockSymbolApi, stockPriceApi, StockSymbol, StockPrice, SymbolType } from '@/lib/fire/api';
 import { MissingStockFeedbackDialog } from '@/components/fire/feedback-dialog';
 import { formatCurrency } from '@/lib/fire/utils';
 import { cn } from '@/lib/utils';
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 export interface StockTickerInputProps {
   value: string;
   selectedName?: string;
-  onChange: (ticker: string, name: string) => void;
+  onChange: (ticker: string, name: string, type?: SymbolType) => void;
   onPriceChange?: (price: StockPrice | null) => void;
   placeholder?: string;
   disabled?: boolean;
@@ -112,7 +112,7 @@ export function StockTickerInput({
   const handleSelect = async (symbol: StockSymbol) => {
     setIsTyping(false); // Stop typing mode - show controlled value
     setLocalInput('');
-    onChange(symbol.symbol, symbol.name);
+    onChange(symbol.symbol, symbol.name, symbol.type);
     setIsOpen(false);
     setResults([]);
     inputRef.current?.blur();

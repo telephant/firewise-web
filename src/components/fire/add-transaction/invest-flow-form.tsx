@@ -5,6 +5,7 @@ import { colors, Input, DateInput, Select, Label, Button, IconArrow } from '@/co
 import { InvestmentTypeSelector, type InvestmentType, getInvestmentTypeConfig } from './investment-type-selector';
 import { StockTickerInput } from './stock-ticker-input';
 import { MetalsSelector, type MetalType, type MetalUnit, getUnitConfig } from './metals-selector';
+import type { StockPrice } from '@/lib/fire/api';
 import { NewAssetForm } from './new-asset-form';
 import { FormActions } from './form-actions';
 import { ASSET_TYPE_OPTIONS, getFieldLabels } from './constants';
@@ -26,7 +27,8 @@ interface InvestFlowFormProps {
   updateForm: <K extends keyof FlowFormState>(field: K, value: FlowFormState[K]) => void;
   updateNewAsset: <K extends keyof NewAssetState>(field: K, value: NewAssetState[K]) => void;
   handleInvestmentTypeChange: (type: InvestmentType) => void;
-  handleTickerSelect: (ticker: string, name: string) => void;
+  handleTickerSelect: (ticker: string, name: string, type?: import('@/lib/fire/api').SymbolType) => void;
+  handlePriceChange?: (price: StockPrice | null) => void;
   handleSubmit: () => void;
   onCancel: () => void;
 }
@@ -48,6 +50,7 @@ export function InvestFlowForm({
   updateNewAsset,
   handleInvestmentTypeChange,
   handleTickerSelect,
+  handlePriceChange,
   handleSubmit,
   onCancel,
 }: InvestFlowFormProps) {
@@ -73,6 +76,7 @@ export function InvestFlowForm({
           value={form.selectedTicker}
           selectedName={form.selectedTickerName}
           onChange={handleTickerSelect}
+          onPriceChange={handlePriceChange}
           placeholder={stockMarket === 'SG' ? 'Search ticker (e.g. D05)' : 'Search ticker (e.g. AAPL)'}
           error={formErrors.ticker}
           region={stockMarket}

@@ -78,6 +78,7 @@ export const assetApi = {
   getAll: (params?: AssetFilters) => {
     const searchParams = new URLSearchParams();
     if (params?.type) searchParams.set('type', params.type);
+    if (params?.search) searchParams.set('search', params.search);
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
@@ -115,6 +116,13 @@ export const assetApi = {
       netWorth: number;
       currency: string;
     }>('/fire/assets/stats/net-worth'),
+
+  getTypeStats: () =>
+    fetchApi<{
+      stats: Array<{ type: string; total: number; count: number }>;
+      grandTotal: number;
+      currency: string;
+    }>('/fire/assets/stats/by-type'),
 
   // Import endpoints
   analyzeImport: (data: { file: string; fileType: 'pdf' | 'csv' | 'xlsx'; fileName?: string }) =>

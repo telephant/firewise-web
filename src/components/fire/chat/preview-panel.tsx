@@ -76,6 +76,7 @@ export function PreviewPanel({ previewData, onConfirm, onCancel }: PreviewPanelP
     handleSubmit: originalHandleSubmit,
     handleInvestmentTypeChange,
     handleTickerSelect,
+    handlePriceChange,
     handleSaveLinkedLedgers,
   } = useAddTransactionForm({
     open: true,
@@ -235,6 +236,7 @@ export function PreviewPanel({ previewData, onConfirm, onCancel }: PreviewPanelP
             handleSubmit={originalHandleSubmit}
             handleInvestmentTypeChange={handleInvestmentTypeChange}
             handleTickerSelect={handleTickerSelect}
+            handlePriceChange={handlePriceChange}
             handleSaveLinkedLedgers={handleSaveLinkedLedgers}
             onCancel={onCancel}
           />

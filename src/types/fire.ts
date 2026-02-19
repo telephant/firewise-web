@@ -261,6 +261,7 @@ export type SortOrder = 'asc' | 'desc';
 
 export interface AssetFilters {
   type?: AssetType;
+  search?: string; // Search by name or ticker
   page?: number;
   limit?: number;
   sortBy?: AssetSortField;

@@ -848,13 +848,16 @@ export function useAddTransactionForm({ open, onOpenChange, initialCategory, ini
         if (existingAsset) {
           finalToAssetId = existingAsset.id;
         } else {
-          // Determine currency and market based on investment type
-          const stockCurrency = form.investmentType === 'sgx_stock' ? 'SGD' : 'USD';
+          // Use currency from Yahoo Finance API, or fall back to market-based default
+          const stockCurrency = form.selectedTickerCurrency
+            || (form.investmentType === 'sgx_stock' ? 'SGD' : 'USD');
           const stockMarket = form.investmentType === 'sgx_stock' ? 'SG' : 'US';
+          // Use the type from Yahoo Finance (etf, stock, etc.) or default to stock
+          const assetType = form.selectedTickerType === 'etf' ? 'etf' : 'stock';
 
           const stockAsset = await createAsset({
             name: form.selectedTickerName || form.selectedTicker,
-            type: 'stock',
+            type: assetType,
             ticker: form.selectedTicker,
             currency: stockCurrency,
             market: stockMarket,
@@ -1675,6 +1678,10 @@ export function useAddTransactionForm({ open, onOpenChange, initialCategory, ini
         const sharesAcquired = isMetalsInvestment ? metalWeightToAdd : (parseFloat(form.shares) || 0);
         const amount = parseFloat(form.amount) || 0;
 
+        // Determine the correct currency for the transaction
+        // Use currency from Yahoo Finance API if available, otherwise fall back to user's preference
+        const transactionCurrency = form.selectedTickerCurrency || form.currency;
+
         // Check if this is a real estate or value-based investment (no shares)
         const isValueBasedInvestment = form.investmentType === 'real_estate' || form.investmentType === 'other';
         const currentValue = parseFloat(form.currentValue) || 0;
@@ -1718,7 +1725,7 @@ export function useAddTransactionForm({ open, onOpenChange, initialCategory, ini
           shares: sharesAcquired,
           from_asset_id: finalFromAssetId || undefined,
           to_asset_id: finalToAssetId || undefined,
-          currency: form.currency,
+          currency: transactionCurrency,
           date: form.date,
           description: form.description || `Investment in ${form.selectedTickerName || form.selectedTicker || 'asset'}`,
           metadata,
@@ -2007,15 +2014,27 @@ export function useAddTransactionForm({ open, onOpenChange, initialCategory, ini
     // Clear all form fields when switching market/type
     updateForm('selectedTicker', '');
     updateForm('selectedTickerName', '');
+    updateForm('selectedTickerType', null);
+    updateForm('selectedTickerCurrency', null);
     updateForm('amount', '');
     updateForm('shares', '');
     updateForm('currentValue', '');
   }, [updateForm]);
 
   // Handle stock ticker selection
-  const handleTickerSelect = useCallback((ticker: string, name: string) => {
+  const handleTickerSelect = useCallback((ticker: string, name: string, type?: import('@/lib/fire/api').SymbolType) => {
     updateForm('selectedTicker', ticker);
     updateForm('selectedTickerName', name);
+    updateForm('selectedTickerType', type || null);
+    // Clear currency when ticker changes - will be set by price callback
+    if (!ticker) {
+      updateForm('selectedTickerCurrency', null);
+    }
+  }, [updateForm]);
+
+  // Handle price change from stock ticker input - captures currency from Yahoo Finance
+  const handlePriceChange = useCallback((price: import('@/lib/fire/api').StockPrice | null) => {
+    updateForm('selectedTickerCurrency', price?.currency || null);
   }, [updateForm]);
 
   return {
@@ -2054,6 +2073,7 @@ export function useAddTransactionForm({ open, onOpenChange, initialCategory, ini
     handleSubmit,
     handleInvestmentTypeChange,
     handleTickerSelect,
+    handlePriceChange,
     resetForm,
     initializeWithCategory,
     handleStartToday,

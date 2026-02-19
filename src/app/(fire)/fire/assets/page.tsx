@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import {
   colors,
   Button,
@@ -63,8 +63,33 @@ function AssetsPageContent() {
   });
 
   const selectedType = filters.type;
-  const searchQuery = filters.search;
   const currentPage = filters.page;
+
+  // Local search state for smooth typing (no URL update lag)
+  const [localSearch, setLocalSearch] = useState(filters.search);
+  const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
+
+  // Sync local search from URL when it changes externally (e.g., back button)
+  useEffect(() => {
+    setLocalSearch(filters.search);
+  }, [filters.search]);
+
+  // Debounce: update URL and API after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(localSearch);
+      // Also update URL (debounced) for bookmarking/sharing
+      if (localSearch !== filters.search) {
+        setSearch(localSearch);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localSearch, filters.search, setSearch]);
+
+  // Handler for search input - updates local state immediately
+  const handleSearchChange = (query: string) => {
+    setLocalSearch(query);
+  };
 
   const [isAddAssetOpen, setIsAddAssetOpen] = useState(false);
   const [isAddDepositOpen, setIsAddDepositOpen] = useState(false);
@@ -84,8 +109,11 @@ function AssetsPageContent() {
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Fetch assets
-  const { assets, isLoading, mutate } = useAssets();
+  // Fetch filtered assets for table (with search)
+  // Stats row now uses its own API via useAssetTypeStats hook
+  const { assets, isLoading, mutate } = useAssets({
+    search: debouncedSearch || undefined,
+  });
 
   // Get user preferences for currency
   const { preferences } = useUserPreferences();
@@ -115,21 +143,10 @@ function AssetsPageContent() {
   // Filter and sort assets
   const filteredAssets = useMemo(() => {
     const filtered = assets.filter((asset) => {
-      // Type filter
+      // Type filter (also applied via API, but keep for consistency)
       if (selectedType !== 'all' && asset.type !== selectedType) {
         return false;
       }
-
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesName = asset.name.toLowerCase().includes(query);
-        const matchesTicker = asset.ticker?.toLowerCase().includes(query);
-        if (!matchesName && !matchesTicker) {
-          return false;
-        }
-      }
-
       return true;
     });
 
@@ -158,7 +175,7 @@ function AssetsPageContent() {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [assets, selectedType, searchQuery, sortBy, sortOrder]);
+  }, [assets, selectedType, sortBy, sortOrder]);
 
   // Paginate
   const paginatedAssets = useMemo(() => {
@@ -171,10 +188,6 @@ function AssetsPageContent() {
   // Filter handlers - update URL
   const handleTypeChange = (type: AssetType | 'all') => {
     setType(type);
-  };
-
-  const handleSearchChange = (query: string) => {
-    setSearch(query);
   };
 
   const handleSort = (field: AssetSortField) => {
@@ -240,8 +253,6 @@ function AssetsPageContent() {
           {/* Row 1: Allocation Bar - hidden in fullscreen */}
           {!isFullscreen && (
             <AssetAllocationBar
-              assets={assets}
-              isLoading={isLoading}
               currency={displayCurrency}
             />
           )}
@@ -249,9 +260,7 @@ function AssetsPageContent() {
           {/* Row 2: Quick Filter Buttons - hidden in fullscreen */}
           {!isFullscreen && (
             <AssetTypeStats
-              assets={assets}
               stockPrices={stockPrices}
-              isLoading={isLoading}
               onTypeClick={handleTypeChange}
               selectedType={selectedType}
               currency={displayCurrency}
@@ -271,7 +280,7 @@ function AssetsPageContent() {
             onPageChange={setPage}
             selectedType={selectedType}
             onTypeChange={handleTypeChange}
-            searchQuery={searchQuery}
+            searchQuery={localSearch}
             onSearchChange={handleSearchChange}
             currency={displayCurrency}
             sortBy={sortBy}

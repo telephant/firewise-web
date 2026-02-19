@@ -41,6 +41,7 @@ const SWR_KEYS = {
   assets: (filters?: AssetFilters) => {
     const params = new URLSearchParams();
     if (filters?.type) params.set('type', filters.type);
+    if (filters?.search) params.set('search', filters.search);
     if (filters?.page) params.set('page', filters.page.toString());
     if (filters?.limit) params.set('limit', filters.limit.toString());
     if (filters?.sortBy) params.set('sortBy', filters.sortBy);
@@ -105,6 +106,7 @@ const SWR_KEYS = {
   flowFreedom: '/fire/flow-freedom',
   runway: '/fire/runway',
   netWorthStats: '/fire/assets/stats/net-worth',
+  assetTypeStats: '/fire/assets/stats/by-type',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -193,6 +195,53 @@ export function useNetWorthStats(): UseNetWorthStatsReturn {
     totalAssets: data?.totalAssets || 0,
     totalDebts: data?.totalDebts || 0,
     netWorth: data?.netWorth || 0,
+    currency: data?.currency || 'USD',
+    isLoading,
+    error: error?.message || null,
+    mutate: async () => {
+      await swrMutate();
+    },
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Asset Type Stats Hook (aggregated stats by asset type)
+// ═══════════════════════════════════════════════════════════════
+
+interface AssetTypeStat {
+  type: string;
+  total: number;
+  count: number;
+}
+
+interface UseAssetTypeStatsReturn {
+  stats: AssetTypeStat[];
+  grandTotal: number;
+  currency: string;
+  isLoading: boolean;
+  error: string | null;
+  mutate: () => Promise<void>;
+}
+
+export function useAssetTypeStats(): UseAssetTypeStatsReturn {
+  const { data, error, isLoading, mutate: swrMutate } = useSWR(
+    SWR_KEYS.assetTypeStats,
+    async () => {
+      const response = await assetApi.getTypeStats();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(response.error || 'Failed to fetch asset type stats');
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+    }
+  );
+
+  return {
+    stats: data?.stats || [],
+    grandTotal: data?.grandTotal || 0,
     currency: data?.currency || 'USD',
     isLoading,
     error: error?.message || null,

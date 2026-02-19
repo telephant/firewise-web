@@ -2,7 +2,7 @@
 
 import type { FlowCategoryPreset, AssetWithBalance } from '@/types/fire';
 import type { FlowFormState, FlowFormErrors, NewAssetState, ExpenseTab } from './types';
-import type { AssetInterestSettings } from '@/lib/fire/api';
+import type { AssetInterestSettings, StockPrice } from '@/lib/fire/api';
 import { InvestFlowForm } from './invest-flow-form';
 import { IncomeFlowForm } from './income-flow-form';
 import { DividendFlowForm } from './dividend-flow-form';
@@ -61,7 +61,8 @@ export interface TransactionFormContentProps {
   updateNewAsset: <K extends keyof NewAssetState>(field: K, value: NewAssetState[K]) => void;
   handleSubmit: () => Promise<void>;
   handleInvestmentTypeChange: (type: InvestmentType) => void;
-  handleTickerSelect: (ticker: string, name: string) => void;
+  handleTickerSelect: (ticker: string, name: string, type?: import('@/lib/fire/api').SymbolType) => void;
+  handlePriceChange?: (price: StockPrice | null) => void;
   handleSaveLinkedLedgers: () => Promise<void>;
   onCancel: () => void;
 }
@@ -98,6 +99,7 @@ export function TransactionFormContent({
   handleSubmit,
   handleInvestmentTypeChange,
   handleTickerSelect,
+  handlePriceChange,
   handleSaveLinkedLedgers,
   onCancel,
 }: TransactionFormContentProps) {
@@ -146,6 +148,7 @@ export function TransactionFormContent({
         stockMarket={stockMarket}
         handleInvestmentTypeChange={handleInvestmentTypeChange}
         handleTickerSelect={handleTickerSelect}
+        handlePriceChange={handlePriceChange}
       />
     );
   }

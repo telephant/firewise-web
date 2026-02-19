@@ -74,6 +74,7 @@ export function AddTransactionDialog({ open, onOpenChange, initialCategory, init
     handleSubmit,
     handleInvestmentTypeChange,
     handleTickerSelect,
+    handlePriceChange,
     resetForm,
     initializeWithCategory,
     handleStartToday,
@@ -145,6 +146,7 @@ export function AddTransactionDialog({ open, onOpenChange, initialCategory, init
         handleSubmit={handleSubmit}
         handleInvestmentTypeChange={handleInvestmentTypeChange}
         handleTickerSelect={handleTickerSelect}
+        handlePriceChange={handlePriceChange}
         handleSaveLinkedLedgers={handleSaveLinkedLedgers}
         onCancel={() => onOpenChange(false)}
       />
