@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { familyApi } from '@/lib/fire/api';
 
 export default function AuthRedirectPage() {
   useEffect(() => {
@@ -8,8 +9,17 @@ export default function AuthRedirectPage() {
     const returnUrl = sessionStorage.getItem('auth_return_url');
     sessionStorage.removeItem('auth_return_url');
 
-    // Full page navigation to ensure auth state is fresh
-    window.location.href = returnUrl || '/dashboard';
+    familyApi.ensurePersonal().then(res => {
+      if (res.success && res.data) {
+        if (!localStorage.getItem('fire_selected_family_id')) {
+          localStorage.setItem('fire_selected_family_id', res.data.id);
+        }
+      }
+    }).catch(() => {
+      // non-blocking
+    }).finally(() => {
+      window.location.href = returnUrl || '/dashboard';
+    });
   }, []);
 
   return (
