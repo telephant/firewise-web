@@ -1,348 +1,102 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
-import { usePublicInvitation } from '@/hooks/fire/use-family';
-import { familyApi } from '@/lib/fire/family-api';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  Button,
-  Loader,
-  colors,
-} from '@/components/fire/ui';
-import type { Family } from '@/types/family';
+import { invitationApi, FamilyInvitation, Family } from '@/lib/fire/api';
 
-export default function AcceptInvitationPage() {
+export default function InviteAcceptPage() {
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
 
-  const { user, loading: authLoading } = useAuth();
-  const { invitation, isLoading, error, isAccepting, accept } = usePublicInvitation(token);
-  const [migrateData, setMigrateData] = useState(true);
-  const [acceptError, setAcceptError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [accepting, setAccepting] = useState(false);
+  const [invitation, setInvitation] = useState<FamilyInvitation | null>(null);
+  const [family, setFamily] = useState<Family | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Fetch user's family separately (not using ViewModeProvider)
-  const [userFamily, setUserFamily] = useState<Family | null>(null);
-  const [familyLoading, setFamilyLoading] = useState(false);
-
   useEffect(() => {
-    if (user && !authLoading) {
-      setFamilyLoading(true);
-      familyApi.getMyFamily()
-        .then((response) => {
-          if (response.success && response.data) {
-            setUserFamily(response.data);
-          }
-        })
-        .finally(() => setFamilyLoading(false));
-    }
-  }, [user, authLoading]);
+    invitationApi.get(token).then(res => {
+      if (res.success && res.data) {
+        setInvitation(res.data.invitation);
+        setFamily(res.data.family);
+      } else {
+        setError(res.error || 'Invalid invitation');
+      }
+      setLoading(false);
+    });
+  }, [token]);
 
-  const handleAccept = async () => {
-    setAcceptError(null);
-    const result = await accept({ migrate_data: migrateData });
-
-    if (result.success) {
+  async function handleAccept() {
+    setAccepting(true);
+    const res = await invitationApi.accept(token);
+    if (res.success) {
+      localStorage.removeItem('fire_selected_family_id');
       setSuccess(true);
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        router.push('/fire');
-      }, 2000);
+      setTimeout(() => router.push('/fire'), 2000);
     } else {
-      setAcceptError(result.error || 'Failed to accept invitation');
+      setError(res.error || 'Failed to accept invitation');
+      setAccepting(false);
     }
-  };
+  }
 
-  const handleLogin = () => {
-    // Redirect to login with return URL to come back here
-    const returnUrl = encodeURIComponent(`/fire/invite/${token}`);
-    router.push(`/login?returnUrl=${returnUrl}`);
-  };
-
-  if (isLoading || authLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-        <Loader size="lg" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
 
-  if (error || !invitation) {
+  if (success && family) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>Invalid Invitation</CardTitle>
-          </CardHeader>
-          <div className="p-6 text-center">
-            <div className="text-4xl mb-4">:(</div>
-            <p style={{ color: colors.muted }}>
-              This invitation link is invalid or has expired.
-            </p>
-            <Button
-              className="mt-6"
-              onClick={() => router.push('/fire')}
-            >
-              Go to Dashboard
-            </Button>
-          </div>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-2">You&apos;ve joined {family.name}!</div>
+          <p className="text-muted-foreground">Redirecting you now...</p>
+        </div>
       </div>
     );
   }
 
-  // Check if already accepted
+  if (error || !invitation || !family) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xl font-semibold mb-2">Invalid Invitation</div>
+          <p className="text-muted-foreground">{error || 'This invitation is invalid or has expired.'}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (invitation.accepted_at) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>Already Accepted</CardTitle>
-          </CardHeader>
-          <div className="p-6 text-center">
-            <div className="text-4xl mb-4">:)</div>
-            <p style={{ color: colors.muted }}>
-              This invitation has already been accepted.
-            </p>
-            <Button
-              className="mt-6"
-              onClick={() => router.push('/fire')}
-            >
-              Go to Dashboard
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Check if expired
-  const isExpired = new Date(invitation.expires_at) < new Date();
-  if (isExpired) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>Invitation Expired</CardTitle>
-          </CardHeader>
-          <div className="p-6 text-center">
-            <div className="text-4xl mb-4">:(</div>
-            <p style={{ color: colors.muted }}>
-              This invitation has expired. Please ask for a new invitation.
-            </p>
-            <Button
-              className="mt-6"
-              onClick={() => router.push('/fire')}
-            >
-              Go to Dashboard
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Check if user is logged in
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>Family Invitation</CardTitle>
-          </CardHeader>
-          <div className="p-6 space-y-6">
-            <div className="text-center">
-              <div className="text-xl font-bold mb-2" style={{ color: colors.text }}>
-                You&apos;ve been invited to join
-              </div>
-              <div
-                className="text-2xl font-bold py-4 px-6 rounded-sm"
-                style={{
-                  backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
-                  color: colors.accent,
-                }}
-              >
-                {invitation.family?.name || 'A Family'}
-              </div>
-              {invitation.inviter?.full_name && (
-                <p className="mt-3 text-sm" style={{ color: colors.muted }}>
-                  Invited by {invitation.inviter.full_name}
-                </p>
-              )}
-            </div>
-
-            <div
-              className="p-4 rounded-sm text-center"
-              style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
-            >
-              <p style={{ color: colors.muted }}>
-                Please log in or create an account to accept this invitation.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                className="flex-1"
-                onClick={handleLogin}
-              >
-                Log In / Sign Up
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Still loading family info
-  if (familyLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-        <Loader size="lg" />
-      </div>
-    );
-  }
-
-  // Check if user is already in a family
-  if (userFamily) {
-    const isSameFamily = userFamily.id === invitation.family_id;
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>
-              {isSameFamily ? 'Already a Member' : 'Already in a Family'}
-            </CardTitle>
-          </CardHeader>
-          <div className="p-6 text-center">
-            <div className="text-4xl mb-4">
-              {isSameFamily ? ':)' : ':/'}
-            </div>
-            <p style={{ color: colors.muted }}>
-              {isSameFamily
-                ? `You're already a member of ${userFamily.name}.`
-                : `You're already a member of "${userFamily.name}". You need to leave your current family before joining another one.`}
-            </p>
-            <Button
-              className="mt-6"
-              onClick={() => router.push('/fire')}
-            >
-              Go to Dashboard
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>Welcome to the Family!</CardTitle>
-          </CardHeader>
-          <div className="p-6 text-center">
-            <div className="text-4xl mb-4" style={{ color: colors.positive }}>
-              :D
-            </div>
-            <p style={{ color: colors.muted }}>
-              You&apos;ve successfully joined {invitation.family?.name || 'the family'}.
-            </p>
-            <p className="text-sm mt-2" style={{ color: colors.muted }}>
-              Redirecting to dashboard...
-            </p>
-          </div>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xl font-semibold mb-2">Already Accepted</div>
+          <p className="text-muted-foreground">This invitation has already been accepted.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
-      <Card className="max-w-md w-full">
-        <CardHeader>
-          <CardTitle>Family Invitation</CardTitle>
-        </CardHeader>
-        <div className="p-6 space-y-6">
-          <div className="text-center">
-            <div className="text-xl font-bold mb-2" style={{ color: colors.text }}>
-              You&apos;ve been invited to join
-            </div>
-            <div
-              className="text-2xl font-bold py-4 px-6 rounded-sm"
-              style={{
-                backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px',
-                color: colors.accent,
-              }}
-            >
-              {invitation.family?.name || 'A Family'}
-            </div>
-            {invitation.inviter?.full_name && (
-              <p className="mt-3 text-sm" style={{ color: colors.muted }}>
-                Invited by {invitation.inviter.full_name}
-              </p>
-            )}
-          </div>
-
-          <div
-            className="flex items-start gap-3 p-3 rounded-sm"
-            style={{ backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: '6px' }}
-          >
-            <input
-              type="checkbox"
-              id="migrate-data"
-              checked={migrateData}
-              onChange={(e) => setMigrateData(e.target.checked)}
-              disabled={isAccepting}
-              className="mt-1"
-            />
-            <div>
-              <label htmlFor="migrate-data" className="cursor-pointer text-xs uppercase tracking-wide font-medium" style={{ color: colors.text }}>
-                Share my existing data with the family
-              </label>
-              <p className="text-xs mt-1" style={{ color: colors.muted }}>
-                Your current assets, flows, and debts will be moved to the family.
-              </p>
-            </div>
-          </div>
-
-          {acceptError && (
-            <div
-              className="text-sm p-2 rounded"
-              style={{
-                backgroundColor: `${colors.negative}20`,
-                color: colors.negative,
-              }}
-            >
-              {acceptError}
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <Button
-              variant="ghost"
-              className="flex-1"
-              onClick={() => router.push('/fire')}
-              disabled={isAccepting}
-            >
-              Decline
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleAccept}
-              disabled={isAccepting}
-            >
-              {isAccepting ? 'Joining...' : 'Accept & Join'}
-            </Button>
-          </div>
-        </div>
-      </Card>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="max-w-md w-full mx-auto p-8 border rounded-lg shadow-sm">
+        <h1 className="text-2xl font-bold mb-4">Family Invitation</h1>
+        <p className="mb-2">You&apos;ve been invited to join:</p>
+        <p className="text-xl font-semibold mb-4">{family.name}</p>
+        <p className="text-sm text-muted-foreground mb-6">Invitation sent to: {invitation.email}</p>
+        <button
+          onClick={handleAccept}
+          disabled={accepting}
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2 px-4 rounded-md font-medium disabled:opacity-50"
+        >
+          {accepting ? 'Accepting...' : 'Accept Invitation'}
+        </button>
+      </div>
     </div>
   );
 }
