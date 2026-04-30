@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { familyApi } from '@/lib/fire/api';
-import type { Family, FamilyInvitation } from '@/lib/fire/api';
+import type { FamilyInvitation } from '@/lib/fire/api';
 import { colors, Button, Input, Card, Label, Loader } from '@/components/fire/ui';
 import { useAuth } from '@/hooks/use-auth';
 import { useFamilies } from '@/hooks/fire/use-families';
 
 export default function FamilyPage() {
   const { user } = useAuth();
-  const { families, selectedFamily, setSelectedFamily, loading: familiesLoading } = useFamilies();
+  const { families, selectedFamilyId, setSelectedFamily, loading: familiesLoading } = useFamilies();
+  const [activeFamilyId, setActiveFamilyId] = useState<string | null>(null);
 
-  const [activeFamily, setActiveFamily] = useState<Family | null>(null);
+  // Derive activeFamily — always reflects the latest families data
+  const activeFamily = families.find(f => f.id === (activeFamilyId ?? selectedFamilyId)) ?? null;
   const [invitations, setInvitations] = useState<FamilyInvitation[]>([]);
   const [invitationsLoading, setInvitationsLoading] = useState(false);
 
@@ -27,13 +29,6 @@ export default function FamilyPage() {
   // Invitation actions
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
-
-  // When families load, set activeFamily to selectedFamily
-  useEffect(() => {
-    if (!familiesLoading && selectedFamily && !activeFamily) {
-      setActiveFamily(selectedFamily);
-    }
-  }, [familiesLoading, selectedFamily, activeFamily]);
 
   // Load invitations when activeFamily changes
   useEffect(() => {
@@ -52,9 +47,9 @@ export default function FamilyPage() {
     });
   }, [activeFamily, user?.id]);
 
-  function handleSelectFamily(family: Family) {
-    setActiveFamily(family);
-    setSelectedFamily(family.id);
+  function handleSelectFamily(familyId: string) {
+    setActiveFamilyId(familyId);
+    setSelectedFamily(familyId);
     setInviteEmail('');
     setInviteMessage(null);
   }
@@ -84,10 +79,7 @@ export default function FamilyPage() {
     const result = await familyApi.removeMember(activeFamily.id, userId);
     setRemovingId(null);
     if (result.success) {
-      setActiveFamily({
-        ...activeFamily,
-        members: activeFamily.members?.filter(m => m.user_id !== userId),
-      });
+      window.location.reload();
     }
   };
 
@@ -97,7 +89,6 @@ export default function FamilyPage() {
     const result = await familyApi.leave(activeFamily.id);
     setLeaving(false);
     if (result.success) {
-      localStorage.removeItem('fire_selected_family_id');
       window.location.reload();
     }
   };
@@ -148,7 +139,7 @@ export default function FamilyPage() {
             {families.map(fam => (
               <button
                 key={fam.id}
-                onClick={() => handleSelectFamily(fam)}
+                onClick={() => handleSelectFamily(fam.id)}
                 style={{
                   padding: '8px 16px',
                   background: 'none',
