@@ -2,8 +2,9 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFamilies } from '@/hooks/fire/use-families';
+import { dcaApi } from '@/lib/fire/api';
 
 const colors = {
   bg: '#0A0A0B',
@@ -46,12 +47,27 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    label: 'DCA',
+    href: '/fire/dca',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+    ),
+  },
 ];
 
 export function PortfolioSidebar() {
   const pathname = usePathname();
   const { families, selectedFamily, setSelectedFamily } = useFamilies();
   const [familyOpen, setFamilyOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  useEffect(() => {
+    dcaApi.listPending().then(res => {
+      if (res.success && res.data) setPendingCount(res.data.length);
+    });
+  }, []);
 
   return (
     <aside style={{
@@ -203,6 +219,21 @@ export function PortfolioSidebar() {
             >
               <span style={{ color: isActive ? colors.accent : colors.muted }}>{item.icon}</span>
               {item.label}
+              {item.href === '/fire/dca' && pendingCount > 0 && (
+                <span style={{
+                  marginLeft: 'auto',
+                  backgroundColor: colors.accent,
+                  color: '#fff',
+                  borderRadius: 10,
+                  padding: '1px 6px',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  minWidth: 16,
+                  textAlign: 'center',
+                }}>
+                  {pendingCount}
+                </span>
+              )}
             </Link>
           );
         })}
