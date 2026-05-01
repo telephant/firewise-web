@@ -94,12 +94,12 @@ export default function PortfoliosPage() {
             });
             setStatsMap(map);
             setStatsLoading(false);
-          });
+          }).catch(() => setStatsLoading(false));
         }
       } else {
         setLoading(false);
       }
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function PortfoliosPage() {
       if (r.success && r.data) {
         setRates(r.data.rates);
       }
-    });
+    }).catch(() => {});
   }, [portfolios, baseCurrency]);
 
   function getCellValue(
@@ -130,7 +130,7 @@ export default function PortfoliosPage() {
     return { display: fmtNumber(rawVal), raw: rawVal, approximate: false };
   }
 
-  function getReturnPct(portfolioId: string, portfolioCurrency: string): number | null {
+  function getReturnPct(portfolioId: string): number | null {
     if (statsLoading) return null;
     const stats = statsMap[portfolioId];
     if (!stats || !stats.total_cost || stats.total_cost === 0) return null;
@@ -212,7 +212,7 @@ export default function PortfoliosPage() {
                 const unrealized = getCellValue(p.id, currency, 'unrealized_pl');
                 const realized = getCellValue(p.id, currency, 'realized_pl');
                 const ytdDiv = getCellValue(p.id, currency, 'dividend_ytd');
-                const returnPct = getReturnPct(p.id, currency);
+                const returnPct = getReturnPct(p.id);
 
                 return (
                   <tr
@@ -225,19 +225,19 @@ export default function PortfoliosPage() {
                     <td style={{ ...tdStyle, fontWeight: 600 }}>{p.name}</td>
                     <td style={{ ...tdStyle, color: colors.muted }}>{currency}</td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
-                      {statsLoading || netVal.display === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: colors.text }}>{netVal.approximate ? '~' : ''}{netVal.display}</span>}
+                      {statsLoading || netVal.display === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: colors.text }}>{netVal.display}</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
-                      {statsLoading || totalCost.display === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: colors.text }}>{totalCost.approximate ? '~' : ''}{totalCost.display}</span>}
+                      {statsLoading || totalCost.display === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: colors.text }}>{totalCost.display}</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
-                      {statsLoading || unrealized.raw === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: unrealized.raw >= 0 ? colors.positive : colors.negative }}>{unrealized.approximate ? '~' : ''}{unrealized.display}</span>}
+                      {statsLoading || unrealized.raw === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: unrealized.raw >= 0 ? colors.positive : colors.negative }}>{unrealized.display}</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
-                      {statsLoading || realized.raw === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: realized.raw >= 0 ? colors.positive : colors.negative }}>{realized.approximate ? '~' : ''}{realized.display}</span>}
+                      {statsLoading || realized.raw === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: realized.raw >= 0 ? colors.positive : colors.negative }}>{realized.display}</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
-                      {statsLoading || ytdDiv.raw === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: ytdDiv.raw >= 0 ? colors.positive : colors.negative }}>{ytdDiv.approximate ? '~' : ''}{ytdDiv.display}</span>}
+                      {statsLoading || ytdDiv.raw === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: ytdDiv.raw >= 0 ? colors.positive : colors.negative }}>{ytdDiv.display}</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
                       {statsLoading || returnPct === null ? <span style={{ color: colors.muted }}>—</span> : <span style={{ color: returnPct >= 0 ? colors.positive : colors.negative }}>{returnPct >= 0 ? '+' : ''}{fmtNumber(returnPct)}%</span>}
