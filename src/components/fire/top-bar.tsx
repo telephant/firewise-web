@@ -1,0 +1,226 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import { colors } from '@/components/fire/ui';
+
+function getPageTitle(pathname: string): string {
+  if (pathname === '/fire') return 'Dashboard';
+  if (pathname.startsWith('/fire/portfolios/') && pathname.split('/').length === 4) return 'Portfolio';
+  if (pathname.startsWith('/fire/portfolios')) return 'Portfolios';
+  if (pathname.startsWith('/fire/dca')) return 'DCA';
+  if (pathname.startsWith('/fire/family')) return 'Family';
+  return 'Firewise';
+}
+
+function getInitials(name?: string | null, email?: string | null): string {
+  if (name) return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  return (email?.charAt(0) ?? 'U').toUpperCase();
+}
+
+export function FireTopBar() {
+  const pathname = usePathname();
+  const { user, signOut } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [signOutHover, setSignOutHover] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const title = getPageTitle(pathname);
+  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+  const fullName = user?.user_metadata?.full_name as string | undefined;
+  const email = user?.email;
+  const initials = getInitials(fullName, email);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [open]);
+
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        height: 52,
+        backgroundColor: colors.bg,
+        backdropFilter: 'blur(8px)',
+        borderBottom: `1px solid ${colors.border}`,
+        padding: '0 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
+      {/* Left: page title */}
+      <span style={{ color: colors.text, fontSize: 14, fontWeight: 600 }}>
+        {title}
+      </span>
+
+      {/* Right: avatar + dropdown */}
+      <div ref={dropdownRef} style={{ position: 'relative' }}>
+        {/* Avatar button */}
+        <button
+          onClick={() => setOpen(prev => !prev)}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 999,
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.surfaceLight,
+          }}
+        >
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={fullName ?? email ?? 'User'}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 999 }}
+            />
+          ) : (
+            <span style={{ color: colors.accent, fontSize: 12, fontWeight: 600 }}>
+              {initials}
+            </span>
+          )}
+        </button>
+
+        {/* Dropdown panel */}
+        {open && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              minWidth: 220,
+              backgroundColor: colors.surface,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 8,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              fontSize: 13,
+              overflow: 'hidden',
+            }}
+          >
+            {/* User info */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '12px 16px',
+              }}
+            >
+              {/* Avatar 36px */}
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 999,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colors.surfaceLight,
+                }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={fullName ?? email ?? 'User'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <span style={{ color: colors.accent, fontSize: 13, fontWeight: 600 }}>
+                    {initials}
+                  </span>
+                )}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                {fullName && (
+                  <div
+                    style={{
+                      color: colors.text,
+                      fontWeight: 600,
+                      fontSize: 13,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {fullName}
+                  </div>
+                )}
+                {email && (
+                  <div
+                    style={{
+                      color: colors.muted,
+                      fontSize: 12,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {email}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, backgroundColor: colors.border }} />
+
+            {/* Sign out */}
+            <button
+              onClick={() => { setOpen(false); signOut(); }}
+              onMouseEnter={() => setSignOutHover(true)}
+              onMouseLeave={() => setSignOutHover(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                width: '100%',
+                padding: '10px 16px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: signOutHover ? colors.negative : colors.muted,
+                cursor: 'pointer',
+                textAlign: 'left',
+                fontSize: 13,
+                transition: 'color 0.15s',
+              }}
+            >
+              {/* Logout icon */}
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Sign out
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
