@@ -365,3 +365,77 @@ export const stockPriceApi = {
     );
   },
 };
+
+// ── DCA ────────────────────────────────────────────────────────────────────
+
+export type DcaFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+export type DcaMode = 'amount' | 'shares';
+
+export interface DcaPlan {
+  id: string;
+  portfolio_id: string;
+  ticker: string;
+  market: string;
+  currency: string;
+  frequency: DcaFrequency;
+  mode: DcaMode;
+  amount: number | null;
+  shares: number | null;
+  next_run_date: string;
+  last_run_date: string | null;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DcaPending {
+  id: string;
+  dca_plan_id: string;
+  portfolio_id: string;
+  ticker: string;
+  market: string;
+  currency: string;
+  scheduled_date: string;
+  mode: DcaMode;
+  amount: number | null;
+  shares: number | null;
+  suggested_price: number | null;
+  suggested_shares: number | null;
+  status: 'pending' | 'confirmed' | 'skipped';
+  confirmed_price: number | null;
+  confirmed_shares: number | null;
+  trade_id: string | null;
+  created_at: string;
+}
+
+export interface CreateDcaPlanData {
+  portfolio_id: string;
+  ticker: string;
+  market: string;
+  currency: string;
+  frequency: DcaFrequency;
+  mode: DcaMode;
+  amount?: number;
+  shares?: number;
+  start_date: string;
+  notes?: string;
+}
+
+export const dcaApi = {
+  listPlans: () => fetchApi<DcaPlan[]>('/fire/dca/plans'),
+  createPlan: (data: CreateDcaPlanData) =>
+    fetchApi<DcaPlan>('/fire/dca/plans', { method: 'POST', body: JSON.stringify(data) }),
+  updatePlan: (id: string, data: Partial<CreateDcaPlanData & { is_active: boolean; next_run_date: string }>) =>
+    fetchApi<DcaPlan>(`/fire/dca/plans/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePlan: (id: string) =>
+    fetchApi(`/fire/dca/plans/${id}`, { method: 'DELETE' }),
+  listPending: (portfolioId?: string) => {
+    const q = portfolioId ? `?portfolio_id=${portfolioId}` : '';
+    return fetchApi<DcaPending[]>(`/fire/dca/pending${q}`);
+  },
+  confirmPending: (id: string, data: { confirmed_price: number; confirmed_shares: number }) =>
+    fetchApi<DcaPending>(`/fire/dca/pending/${id}/confirm`, { method: 'POST', body: JSON.stringify(data) }),
+  skipPending: (id: string) =>
+    fetchApi<DcaPending>(`/fire/dca/pending/${id}/skip`, { method: 'POST' }),
+};
