@@ -8,7 +8,7 @@ import { colors } from '@/components/fire/ui';
 function getPageTitle(pathname: string): string {
   if (pathname === '/fire') return 'Dashboard';
   if (pathname.startsWith('/fire/portfolios/') && pathname.split('/').length === 4) return 'Portfolio';
-  if (pathname.startsWith('/fire/portfolios')) return 'Portfolios';
+  if (pathname === '/fire/portfolios') return 'Portfolios';
   if (pathname.startsWith('/fire/dca')) return 'DCA';
   if (pathname.startsWith('/fire/family')) return 'Family';
   return 'Firewise';
@@ -183,7 +183,7 @@ export function FireTopBar() {
 
             {/* Sign out */}
             <button
-              onClick={() => { setOpen(false); signOut(); }}
+              onClick={() => { setOpen(false); signOut().catch(console.error); }}
               onMouseEnter={() => setSignOutHover(true)}
               onMouseLeave={() => setSignOutHover(false)}
               style={{
