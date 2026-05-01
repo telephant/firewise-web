@@ -12,6 +12,7 @@ import {
   dcaApi,
 } from '@/lib/fire/api';
 import type { Holding, Dividend, PortfolioStats, Portfolio, PortfolioSnapshot, RealizedPLItem, DcaPlan, DcaPending } from '@/lib/fire/api';
+import { Breadcrumb } from '@/components/fire/breadcrumb';
 import { RecordTradeDialog } from '@/components/fire/record-trade-dialog';
 import { AddDividendDialog } from '@/components/fire/add-dividend-dialog';
 import { HoldingTradesPanel } from '@/components/fire/holding-trades-panel';
@@ -150,6 +151,7 @@ export default function PortfolioDetail() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
+          <Breadcrumb items={[{ label: 'Portfolios', href: '/fire/portfolios' }, { label: portfolio?.name || '...' }]} />
           <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>{portfolio?.name || 'Portfolio'}</h1>
           {portfolio?.description && (
             <p style={{ color: colors.muted, fontSize: 13, marginTop: 4 }}>{portfolio.description}</p>

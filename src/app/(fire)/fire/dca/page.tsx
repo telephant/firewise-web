@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { colors, Button, Loader } from '@/components/fire/ui';
 import { dcaApi, DcaPlan, DcaPending, portfolioApi, Portfolio } from '@/lib/fire/api';
+import { Breadcrumb } from '@/components/fire/breadcrumb';
 import { DcaPlanDialog } from '@/components/fire/dca-plan-dialog';
 import { DcaPendingCard } from '@/components/fire/dca-pending-card';
 
@@ -86,6 +87,7 @@ export default function DcaPage() {
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <Breadcrumb items={[{ label: 'DCA' }]} />
           <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>DCA Plans</h1>
           <Button onClick={() => { setEditPlan(undefined); setDialogOpen(true); }}>+ New Plan</Button>
         </div>
