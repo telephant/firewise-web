@@ -168,12 +168,12 @@ export default function FireDashboard() {
             });
             setStatsMap(map);
             setStatsLoading(false);
-          });
+          }).catch(() => setStatsLoading(false));
         }
       } else {
         setLoading(false);
       }
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   // Load exchange rates when portfolios or baseCurrency changes
@@ -184,7 +184,7 @@ export default function FireDashboard() {
       if (r.success && r.data) {
         setRates(r.data.rates);
       }
-    });
+    }).catch(() => {});
   }, [portfolios, baseCurrency]);
 
   // ── aggregate stat calculation ──────────────────────────────────────────
@@ -301,7 +301,7 @@ export default function FireDashboard() {
   // ── aggregate stat card display ─────────────────────────────────────────
 
   const statsReady = !statsLoading && portfolios.every(p => statsMap[p.id]);
-  const currencyLabel = convertMode ? baseCurrency : (aggregated.hasMixedCurrencies && !convertMode ? 'Mixed' : (portfolios[0]?.currency ?? ''));
+  const currencyLabel = convertMode ? baseCurrency : (aggregated.hasMixedCurrencies ? 'Mixed' : (portfolios[0]?.currency ?? ''));
   const approxPrefix = aggregated.approximate ? '~' : '';
 
   function statValue(val: number, signed = false): string {
