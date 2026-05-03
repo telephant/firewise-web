@@ -199,35 +199,12 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
       style={{ display: 'block', flex: 1, borderRadius: 8, overflow: 'hidden' }}
     >
       <defs>
-        {/* Glow filter for hovered positive tile */}
-        <filter id="glow-positive" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feFlood floodColor={colors.positive} floodOpacity="0.4" result="color" />
-          <feComposite in="color" in2="blur" operator="in" result="glow" />
-          <feMerge>
-            <feMergeNode in="glow" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        {/* Glow filter for hovered negative tile */}
-        <filter id="glow-negative" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feFlood floodColor={colors.negative} floodOpacity="0.4" result="color" />
-          <feComposite in="color" in2="blur" operator="in" result="glow" />
-          <feMerge>
-            <feMergeNode in="glow" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        {/* Glow filter for hovered neutral tile */}
-        <filter id="glow-neutral" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feFlood floodColor="rgba(255,255,255,0.3)" floodOpacity="0.4" result="color" />
-          <feComposite in="color" in2="blur" operator="in" result="glow" />
-          <feMerge>
-            <feMergeNode in="glow" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
+        {/* Subtle noise texture for depth */}
+        <filter id="tile-noise">
+          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" result="noise" />
+          <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
+          <feBlend in="SourceGraphic" in2="grayNoise" mode="soft-light" result="blended" />
+          <feComposite in="blended" in2="SourceGraphic" operator="in" />
         </filter>
       </defs>
       {tiles.map((tile, idx) => {
@@ -286,52 +263,61 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         // Sub-line font size: fit value/weight/pct strings into tile width
         const subFontSize = Math.min(11, Math.max(8, (w - 8) / 8));
 
-        // P&L fill: pct% of tile width, left-to-right for gain, right-to-left for loss
+        // Per-tile gradient IDs
+        const gradId = `grad-${idx}`;
+        const clipId = `clip-${idx}`;
+
+        // P&L fill proportion
         const absPct = pctVal !== null ? Math.min(Math.abs(pctVal) / 100, 1) : 0;
-        const fillW = w * absPct;
-        const fillX = pctVal !== null && pctVal < 0 ? x + w - fillW : x;
-        const fillColor = pctVal !== null && pctVal < 0 ? `${colors.negative}60` : `${colors.positive}60`;
-        const clipId = `clip-${tile.ticker}-${tile.market}-${idx}`;
+        // Gradient stop position = absPct, gradient goes from vivid color → transparent
+        const isPositive = pctVal !== null && pctVal > 0;
+        const isNegative = pctVal !== null && pctVal < 0;
 
         const isHovered = hoveredIdx === idx;
-        const glowFilter = isHovered
-          ? pctVal !== null && pctVal > 0 ? 'url(#glow-positive)'
-          : pctVal !== null && pctVal < 0 ? 'url(#glow-negative)'
-          : 'url(#glow-neutral)'
-          : undefined;
+
+        // Gradient: left-to-right for gain (vivid green → dark bg), right-to-left for loss
+        // We always define gradient left→right and flip with gradientTransform for loss
+        const gradColor = isNegative ? colors.negative : isPositive ? colors.positive : 'transparent';
+        const stopOpacity = isHovered ? 0.55 : 0.38;
 
         return (
           <g
             key={`${tile.ticker}-${tile.market}-${idx}`}
             onMouseEnter={() => setHoveredIdx(idx)}
             onMouseLeave={() => setHoveredIdx(null)}
-            style={{ cursor: 'default', transition: 'filter 0.15s ease' }}
-            filter={glowFilter}
+            style={{ cursor: 'default' }}
           >
             <defs>
               <clipPath id={clipId}>
                 <rect x={x} y={y} width={w} height={h} rx={4} />
               </clipPath>
+              {(isPositive || isNegative) && (
+                <linearGradient
+                  id={gradId}
+                  x1="0%" y1="0%" x2="100%" y2="0%"
+                  gradientTransform={isNegative ? 'rotate(180, 0.5, 0.5)' : undefined}
+                >
+                  {/* Vivid color at the fill edge, fades to transparent */}
+                  <stop offset="0%" stopColor={gradColor} stopOpacity={stopOpacity} />
+                  <stop offset={`${Math.round(absPct * 100)}%`} stopColor={gradColor} stopOpacity={stopOpacity * 0.6} />
+                  <stop offset={`${Math.min(Math.round(absPct * 100) + 25, 100)}%`} stopColor={gradColor} stopOpacity={0} />
+                  <stop offset="100%" stopColor={gradColor} stopOpacity={0} />
+                </linearGradient>
+              )}
             </defs>
             {/* Base background */}
             <rect
-              x={x}
-              y={y}
-              width={w}
-              height={h}
-              fill={isHovered ? (pctVal !== null && pctVal < 0 ? `${colors.negative}25` : pctVal !== null && pctVal > 0 ? `${colors.positive}25` : colors.surfaceLight) : bg}
-              stroke={isHovered ? (pctVal !== null && pctVal < 0 ? `${colors.negative}80` : pctVal !== null && pctVal > 0 ? `${colors.positive}80` : 'rgba(255,255,255,0.2)') : border}
+              x={x} y={y} width={w} height={h}
+              fill={bg}
+              stroke={isHovered ? (isNegative ? `${colors.negative}90` : isPositive ? `${colors.positive}90` : 'rgba(255,255,255,0.25)') : border}
               strokeWidth={isHovered ? 1.5 : 1}
               rx={4}
             />
-            {/* P&L fill overlay — clipped to tile shape */}
-            {pctVal !== null && pctVal !== 0 && fillW > 0 && (
+            {/* Gradient P&L overlay */}
+            {(isPositive || isNegative) && (
               <rect
-                x={fillX}
-                y={y}
-                width={fillW}
-                height={h}
-                fill={fillColor}
+                x={x} y={y} width={w} height={h}
+                fill={`url(#${gradId})`}
                 clipPath={`url(#${clipId})`}
                 style={{ pointerEvents: 'none' }}
               />
