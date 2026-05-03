@@ -167,7 +167,26 @@ export default function PortfolioDetail() {
               <p style={{ color: colors.muted, fontSize: 13, marginTop: 4 }}>{portfolio.description}</p>
             )}
           </div>
-          <Button onClick={() => setTradeDialogOpen(true)}>Record Trade</Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const lines = holdings
+                  .filter(h => h.value !== null && h.value > 0)
+                  .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+                  .map(h => {
+                    const weight = stats?.total_value ? ((h.value! / stats.total_value) * 100).toFixed(1) : '—';
+                    const value = new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(h.value!);
+                    return `${h.ticker}\t${weight}%\t${value}`;
+                  });
+                const header = `Ticker\tWeight\tValue`;
+                navigator.clipboard.writeText([header, ...lines].join('\n'));
+              }}
+            >
+              Copy Portfolio
+            </Button>
+            <Button onClick={() => setTradeDialogOpen(true)}>Record Trade</Button>
+          </div>
         </div>
       </div>
 
