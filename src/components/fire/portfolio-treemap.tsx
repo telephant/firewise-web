@@ -39,10 +39,7 @@ function squarify(
 
   const totalArea = width * height;
   const totalValue = items.reduce((s, i) => s + i.value, 0);
-
-  // Normalise values to fill the available area
   const areas = items.map(i => (i.value / totalValue) * totalArea);
-
   const result: TileRect[] = [];
 
   function layoutRow(
@@ -60,17 +57,9 @@ function squarify(
       const frac = area / rowSum;
       let tx: number, ty: number, tw: number, th: number;
       if (horizontal) {
-        tw = rw * frac;
-        th = rh;
-        tx = rx + offset;
-        ty = ry;
-        offset += tw;
+        tw = rw * frac; th = rh; tx = rx + offset; ty = ry; offset += tw;
       } else {
-        tw = rw;
-        th = rh * frac;
-        tx = rx;
-        ty = ry + offset;
-        offset += th;
+        tw = rw; th = rh * frac; tx = rx; ty = ry + offset; offset += th;
       }
       result.push({ ...rowItems[idx], x: tx, y: ty, w: tw, h: th });
     });
@@ -79,10 +68,7 @@ function squarify(
   function squarifyRecursive(
     remaining: TileInput[],
     remainingAreas: number[],
-    rx: number,
-    ry: number,
-    rw: number,
-    rh: number
+    rx: number, ry: number, rw: number, rh: number
   ) {
     if (remaining.length === 0) return;
     if (remaining.length === 1) {
@@ -112,20 +98,17 @@ function squarify(
     }
 
     const rowSum = currentRow.reduce((a, b) => a + b, 0);
-    const totalRect = rw * rh;
-    const rowFrac = rowSum / totalRect;
+    const rowFrac = rowSum / (rw * rh);
 
     let newRx = rx, newRy = ry, newRw = rw, newRh = rh;
     if (horizontal) {
       const rowWidth = rw * rowFrac;
       layoutRow(currentRow, currentItems, rx, ry, rowWidth, rh, false);
-      newRx = rx + rowWidth;
-      newRw = rw - rowWidth;
+      newRx = rx + rowWidth; newRw = rw - rowWidth;
     } else {
       const rowHeight = rh * rowFrac;
       layoutRow(currentRow, currentItems, rx, ry, rw, rowHeight, true);
-      newRy = ry + rowHeight;
-      newRh = rh - rowHeight;
+      newRy = ry + rowHeight; newRh = rh - rowHeight;
     }
 
     squarifyRecursive(remaining.slice(i), remainingAreas.slice(i), newRx, newRy, newRw, newRh);
@@ -145,7 +128,16 @@ interface Props {
 
 const W = 800;
 const H = 420;
-const GAP = 2;
+const GAP = 3;
+
+// Darker base colors — less saturated, more "terminal"
+const BG_POSITIVE = '#0d1f13';   // very dark green
+const BG_NEGATIVE = '#1f0d0d';   // very dark red
+const BG_NEUTRAL  = '#111113';   // near-black
+
+// Accent colors for gradient glow — muted versions of neon
+const ACCENT_POSITIVE = '#2d6a4f'; // deep forest green
+const ACCENT_NEGATIVE = '#7f1d1d'; // deep crimson
 
 function fmtValue(value: number, currency: string): string {
   return new Intl.NumberFormat('en-US', {
@@ -188,7 +180,7 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
   }));
 
   const tiles = squarify(inputs, 0, 0, W, H);
-  const CHAR_W = 7; // approximate px width per character at 13px font size
+  const CHAR_W = 7;
 
   return (
     <svg
@@ -199,14 +191,16 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
       style={{ display: 'block', flex: 1, borderRadius: 8, overflow: 'hidden' }}
     >
       <defs>
-        {/* Subtle noise texture for depth */}
-        <filter id="tile-noise">
-          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" result="noise" />
-          <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
-          <feBlend in="SourceGraphic" in2="grayNoise" mode="soft-light" result="blended" />
-          <feComposite in="blended" in2="SourceGraphic" operator="in" />
+        {/* Shared hover brightness filter */}
+        <filter id="hover-brighten" x="-5%" y="-5%" width="110%" height="110%">
+          <feComponentTransfer>
+            <feFuncR type="linear" slope="1.3" />
+            <feFuncG type="linear" slope="1.3" />
+            <feFuncB type="linear" slope="1.3" />
+          </feComponentTransfer>
         </filter>
       </defs>
+
       {tiles.map((tile, idx) => {
         const x = tile.x + GAP / 2;
         const y = tile.y + GAP / 2;
@@ -215,28 +209,34 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
 
         const isSmall = w < 40 || h < 40;
         const isTiny = w < 20 || h < 20;
+        const isHovered = hoveredIdx === idx;
 
         const pctVal = tile.pct;
-        let bg: string;
-        let border: string;
-        let pctColor: string;
-        if (pctVal === null) {
-          bg = colors.surfaceLight;
-          border = colors.border;
-          pctColor = colors.muted;
-        } else if (pctVal > 0) {
-          bg = `${colors.positive}18`;
-          border = `${colors.positive}40`;
-          pctColor = colors.positive;
-        } else if (pctVal < 0) {
-          bg = `${colors.negative}18`;
-          border = `${colors.negative}40`;
-          pctColor = colors.negative;
-        } else {
-          bg = colors.surfaceLight;
-          border = colors.border;
-          pctColor = colors.muted;
-        }
+        const isPositive = pctVal !== null && pctVal > 0;
+        const isNegative = pctVal !== null && pctVal < 0;
+
+        // P&L magnitude — capped at 50% for visual range (50%+ gain looks same as 50%)
+        const absPct = pctVal !== null ? Math.min(Math.abs(pctVal) / 50, 1) : 0;
+
+        const baseBg   = isPositive ? BG_POSITIVE : isNegative ? BG_NEGATIVE : BG_NEUTRAL;
+        const pctColor = isPositive ? colors.positive : isNegative ? colors.negative : colors.muted;
+        const borderColor = isHovered
+          ? isPositive ? `${colors.positive}70`
+          : isNegative ? `${colors.negative}70`
+          : 'rgba(255,255,255,0.18)'
+          : isPositive ? 'rgba(45,106,79,0.6)'
+          : isNegative ? 'rgba(127,29,29,0.6)'
+          : 'rgba(255,255,255,0.06)';
+
+        const gradId  = `g-${idx}`;
+        const clipId  = `c-${idx}`;
+
+        // Radial gradient center: top-left for gain, top-right for loss
+        // radius scales with absPct so bigger gains = bigger glow spread
+        const accentColor = isPositive ? ACCENT_POSITIVE : ACCENT_NEGATIVE;
+        const glowRadius  = 40 + absPct * 60; // 40–100% of the radial gradient
+        const cx = isNegative ? '100%' : '0%';
+        const cy = '0%';
 
         const name = displayTicker(tile.ticker, tile.market);
         const weightStr = `${(tile.weight * 100).toFixed(1)}%`;
@@ -245,40 +245,18 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
           ? `${pctVal >= 0 ? '+' : ''}${pctVal.toFixed(2)}%`
           : null;
 
-        // Font size: fit name into tile width, cap at 13px
         const maxNameFontSize = Math.min(13, Math.max(8, (w - 8) / Math.max(name.length, 1) * (13 / CHAR_W)));
-        // Truncate name to fit tile width at computed font size
         const charsPerWidth = Math.floor((w - 8) / (maxNameFontSize * CHAR_W / 13));
         const displayName = name.length > charsPerWidth && charsPerWidth > 1
           ? name.slice(0, charsPerWidth - 1) + '…'
           : name;
 
-        // Decide which lines to show based on available height
         const showMultiLine = !isSmall && w >= 60 && h >= 60;
         const lineCount = showMultiLine ? (pctStr ? 4 : 3) : 1;
         const lineHeight = 15;
         const totalTextH = lineCount * lineHeight;
         const textStartY = y + h / 2 - totalTextH / 2 + lineHeight * 0.75;
-
-        // Sub-line font size: fit value/weight/pct strings into tile width
         const subFontSize = Math.min(11, Math.max(8, (w - 8) / 8));
-
-        // Per-tile gradient IDs
-        const gradId = `grad-${idx}`;
-        const clipId = `clip-${idx}`;
-
-        // P&L fill proportion
-        const absPct = pctVal !== null ? Math.min(Math.abs(pctVal) / 100, 1) : 0;
-        // Gradient stop position = absPct, gradient goes from vivid color → transparent
-        const isPositive = pctVal !== null && pctVal > 0;
-        const isNegative = pctVal !== null && pctVal < 0;
-
-        const isHovered = hoveredIdx === idx;
-
-        // Gradient: left-to-right for gain (vivid green → dark bg), right-to-left for loss
-        // We always define gradient left→right and flip with gradientTransform for loss
-        const gradColor = isNegative ? colors.negative : isPositive ? colors.positive : 'transparent';
-        const stopOpacity = isHovered ? 0.55 : 0.38;
 
         return (
           <g
@@ -286,34 +264,33 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
             onMouseEnter={() => setHoveredIdx(idx)}
             onMouseLeave={() => setHoveredIdx(null)}
             style={{ cursor: 'default' }}
+            filter={isHovered ? 'url(#hover-brighten)' : undefined}
           >
             <defs>
               <clipPath id={clipId}>
                 <rect x={x} y={y} width={w} height={h} rx={4} />
               </clipPath>
               {(isPositive || isNegative) && (
-                <linearGradient
+                <radialGradient
                   id={gradId}
-                  x1="0%" y1="0%" x2="100%" y2="0%"
-                  gradientTransform={isNegative ? 'rotate(180, 0.5, 0.5)' : undefined}
+                  cx={cx} cy={cy} r={`${glowRadius}%`}
+                  gradientUnits="objectBoundingBox"
                 >
-                  {/* Vivid color at the fill edge, fades to transparent */}
-                  <stop offset="0%" stopColor={gradColor} stopOpacity={stopOpacity} />
-                  <stop offset={`${Math.round(absPct * 100)}%`} stopColor={gradColor} stopOpacity={stopOpacity * 0.6} />
-                  <stop offset={`${Math.min(Math.round(absPct * 100) + 25, 100)}%`} stopColor={gradColor} stopOpacity={0} />
-                  <stop offset="100%" stopColor={gradColor} stopOpacity={0} />
-                </linearGradient>
+                  <stop offset="0%"   stopColor={accentColor} stopOpacity={0.9} />
+                  <stop offset="40%"  stopColor={accentColor} stopOpacity={0.4} />
+                  <stop offset="100%" stopColor={accentColor} stopOpacity={0} />
+                </radialGradient>
               )}
             </defs>
-            {/* Base background */}
+
+            {/* Dark base */}
             <rect
               x={x} y={y} width={w} height={h}
-              fill={bg}
-              stroke={isHovered ? (isNegative ? `${colors.negative}90` : isPositive ? `${colors.positive}90` : 'rgba(255,255,255,0.25)') : border}
-              strokeWidth={isHovered ? 1.5 : 1}
+              fill={baseBg}
               rx={4}
             />
-            {/* Gradient P&L overlay */}
+
+            {/* Radial glow overlay */}
             {(isPositive || isNegative) && (
               <rect
                 x={x} y={y} width={w} height={h}
@@ -322,6 +299,16 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
                 style={{ pointerEvents: 'none' }}
               />
             )}
+
+            {/* Border on top */}
+            <rect
+              x={x} y={y} width={w} height={h}
+              fill="none"
+              stroke={borderColor}
+              strokeWidth={isHovered ? 1.5 : 1}
+              rx={4}
+            />
+
             {!isTiny && (
               <>
                 <text
