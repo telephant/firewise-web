@@ -174,10 +174,6 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         const neonColor   = isPositive ? colors.positive : colors.negative;
         const gradId = `g-${idx}`;
         const clipId = `c-${idx}`;
-        // Waterline: vertical line at fill boundary
-        const waterlineX = isNegative ? x + w * (1 - absPct) : x + w * absPct;
-        const showWaterline = (isPositive || isNegative) && absPct > 0.02 && absPct < 0.98 && w > 30;
-
         const name = displayTicker(tile.ticker, tile.market);
         const weightStr = `${(tile.weight * 100).toFixed(1)}%`;
         const valueStr = fmtValue(tile.value, currency);
@@ -208,10 +204,10 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
               </clipPath>
               {(isPositive || isNegative) && (
                 <linearGradient id={gradId} x1={isNegative ? '100%' : '0%'} y1="0%" x2={isNegative ? '0%' : '100%'} y2="0%">
-                  <stop offset="0%"              stopColor={neonColor} stopOpacity={0.28} />
-                  <stop offset={`${fillStop}%`}  stopColor={neonColor} stopOpacity={0.22} />
+                  <stop offset="0%"                stopColor={neonColor} stopOpacity={0.13} />
+                  <stop offset={`${fillStop}%`}    stopColor={neonColor} stopOpacity={0.10} />
                   <stop offset={`${featherStop}%`} stopColor={neonColor} stopOpacity={0} />
-                  <stop offset="100%"            stopColor={neonColor} stopOpacity={0} />
+                  <stop offset="100%"              stopColor={neonColor} stopOpacity={0} />
                 </linearGradient>
               )}
             </defs>
@@ -224,19 +220,6 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
               <rect x={x} y={y} width={w} height={h}
                 fill={`url(#${gradId})`}
                 clipPath={`url(#${clipId})`}
-                style={{ pointerEvents: 'none' }}
-              />
-            )}
-
-            {/* Waterline — subtle vertical tick at proportion boundary */}
-            {showWaterline && (
-              <line
-                x1={waterlineX} y1={y + 4}
-                x2={waterlineX} y2={y + h - 4}
-                stroke={neonColor}
-                strokeOpacity={0.25}
-                strokeWidth={1}
-                strokeDasharray="2 3"
                 style={{ pointerEvents: 'none' }}
               />
             )}
