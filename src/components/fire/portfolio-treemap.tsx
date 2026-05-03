@@ -21,11 +21,10 @@ interface TileRect extends TileInput {
   h: number;
 }
 
-function worst(row: number[], w: number, s: number): number {
+function worst(row: number[], w: number, rowSum: number): number {
   const rMin = Math.min(...row);
   const rMax = Math.max(...row);
-  const rSum = row.reduce((a, b) => a + b, 0);
-  return Math.max((w * w * rMax) / (s * s), (s * s) / (w * w * rMin));
+  return Math.max((w * w * rMax) / (rowSum * rowSum), (rowSum * rowSum) / (w * w * rMin));
 }
 
 function squarify(
@@ -186,6 +185,7 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
   }));
 
   const tiles = squarify(inputs, 0, 0, W, H);
+  const CHAR_W = 7; // approximate px width per character at 13px font size
 
   return (
     <svg
@@ -193,7 +193,7 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
       viewBox={`0 0 ${W} ${H}`}
       style={{ display: 'block', borderRadius: 8, overflow: 'hidden' }}
     >
-      {tiles.map((tile) => {
+      {tiles.map((tile, idx) => {
         const x = tile.x + GAP / 2;
         const y = tile.y + GAP / 2;
         const w = tile.w - GAP;
@@ -237,7 +237,7 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         const textStartY = y + h / 2 - totalTextH / 2 + lineHeight * 0.8;
 
         return (
-          <g key={`${tile.ticker}-${tile.market}`}>
+          <g key={`${tile.ticker}-${tile.market}-${idx}`}>
             <rect
               x={x}
               y={y}
@@ -255,12 +255,12 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
                   y={textStartY}
                   textAnchor="middle"
                   fill={colors.text}
-                  fontSize={Math.min(13, w / (name.length * 0.6 + 1))}
+                  fontSize={Math.min(13, w / (name.length * CHAR_W / 13 + 1))}
                   fontWeight="600"
                   style={{ fontFamily: 'inherit' }}
                 >
-                  {name.length * 7 > w - 8
-                    ? name.slice(0, Math.floor((w - 8) / 7)) + '…'
+                  {name.length * CHAR_W > w - 8
+                    ? name.slice(0, Math.floor((w - 8) / CHAR_W)) + '…'
                     : name}
                 </text>
 
