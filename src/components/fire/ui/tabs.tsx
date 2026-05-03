@@ -63,15 +63,14 @@ export function Tabs({
 export interface TabsListProps {
   children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function TabsList({ children, className = '' }: TabsListProps) {
+export function TabsList({ children, className = '', style }: TabsListProps) {
   return (
     <div
       className={`flex gap-1 rounded-lg p-1 ${className}`}
-      style={{
-        backgroundColor: colors.surface,
-      }}
+      style={{ backgroundColor: colors.surface, ...style }}
       role="tablist"
     >
       {children}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { colors } from '@/components/fire/ui';
 import { displayTicker } from '@/lib/fire/commodities';
 import type { Holding } from '@/lib/fire/api';
@@ -83,6 +83,8 @@ function squarify(items: TileInput[], x: number, y: number, width: number, heigh
 
 // ── Component ───────────────────────────────────────────────────────────────
 
+interface TooltipPos { x: number; y: number; }
+
 interface Props {
   holdings: Holding[];
   currency: string;
@@ -108,6 +110,8 @@ function fmtValue(value: number, currency: string): string {
 
 export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<TooltipPos>({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const filtered = holdings
     .filter(h => h.value !== null && h.value > 0)
@@ -121,6 +125,8 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
     );
   }
 
+  const hoveredHolding = hoveredIdx !== null ? filtered[hoveredIdx] ?? null : null;
+
   const inputs: TileInput[] = filtered.map(h => ({
     ticker: h.ticker, market: h.market,
     value: h.value!, weight: h.value! / totalValue,
@@ -131,11 +137,20 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
   const CHAR_W = 7;
 
   return (
+    <div
+      ref={containerRef}
+      style={{ flex: 1, position: 'relative', overflow: 'hidden' }}
+      onMouseMove={(e) => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      }}
+    >
     <svg
       width="100%" height="100%"
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="xMidYMid meet"
-      style={{ display: 'block', flex: 1, borderRadius: 8, overflow: 'hidden' }}
+      style={{ display: 'block', borderRadius: 8, overflow: 'hidden' }}
     >
       <defs>
         {/* Hover: brighten entire tile */}
@@ -276,5 +291,96 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         );
       })}
     </svg>
+
+    {/* Tooltip */}
+    {hoveredHolding && (
+      <Tooltip holding={hoveredHolding} currency={currency} pos={tooltipPos} containerRef={containerRef} />
+    )}
+    </div>
+  );
+}
+
+// ── Tooltip ──────────────────────────────────────────────────────────────────
+
+function fmt(value: number | null, currency: string): string {
+  if (value === null) return '—';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+}
+
+function Tooltip({
+  holding, currency, pos, containerRef,
+}: {
+  holding: Holding;
+  currency: string;
+  pos: TooltipPos;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const W_TIP = 220;
+  const H_TIP = 192;
+  const MARGIN = 12;
+
+  const containerW = containerRef.current?.clientWidth ?? 800;
+  const containerH = containerRef.current?.clientHeight ?? 420;
+
+  // Flip to left if too close to right edge, flip up if too close to bottom
+  const left = pos.x + MARGIN + W_TIP > containerW ? pos.x - W_TIP - MARGIN : pos.x + MARGIN;
+  const top  = pos.y + MARGIN + H_TIP > containerH ? pos.y - H_TIP - MARGIN : pos.y + MARGIN;
+
+  const isPositive = holding.unrealized_pl !== null && holding.unrealized_pl > 0;
+  const isNegative = holding.unrealized_pl !== null && holding.unrealized_pl < 0;
+  const plColor = isPositive ? colors.positive : isNegative ? colors.negative : colors.muted;
+  const pctStr = holding.unrealized_pl_pct !== null
+    ? `${holding.unrealized_pl_pct >= 0 ? '+' : ''}${holding.unrealized_pl_pct.toFixed(2)}%`
+    : '—';
+
+  const rows: [string, string, string?][] = [
+    ['Shares',        holding.shares.toLocaleString()],
+    ['Avg Cost',      fmt(holding.avg_cost, holding.currency)],
+    ['Current Price', holding.current_price !== null ? fmt(holding.current_price, holding.currency) : '—'],
+    ['Market Value',  fmt(holding.value, currency)],
+    ['Unrealized P&L', fmt(holding.unrealized_pl, currency), pctStr],
+  ];
+
+  return (
+    <div style={{
+      position: 'absolute',
+      left,
+      top,
+      width: W_TIP,
+      backgroundColor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: 8,
+      padding: '12px 14px',
+      pointerEvents: 'none',
+      zIndex: 50,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ color: colors.text, fontSize: 14, fontWeight: 700, letterSpacing: '0.3px' }}>
+          {displayTicker(holding.ticker, holding.market)}
+        </span>
+        <span style={{ color: colors.muted, fontSize: 11, backgroundColor: colors.surfaceLight, borderRadius: 4, padding: '2px 6px' }}>
+          {holding.market}
+        </span>
+      </div>
+
+      {/* Rows */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {rows.map(([label, value, badge]) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ color: colors.muted, fontSize: 11 }}>{label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {badge && (
+                <span style={{ color: plColor, fontSize: 10, fontWeight: 600 }}>{badge}</span>
+              )}
+              <span style={{ color: label === 'Unrealized P&L' ? plColor : colors.text, fontSize: 12, fontWeight: 500 }}>
+                {value}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
