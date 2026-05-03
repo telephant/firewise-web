@@ -215,8 +215,11 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         const isPositive = pctVal !== null && pctVal > 0;
         const isNegative = pctVal !== null && pctVal < 0;
 
-        // P&L magnitude — capped at 50% for visual range (50%+ gain looks same as 50%)
-        const absPct = pctVal !== null ? Math.min(Math.abs(pctVal) / 50, 1) : 0;
+        // P&L fill proportion — capped at 100%, mapped from pct directly
+        const absPct = pctVal !== null ? Math.min(Math.abs(pctVal) / 100, 1) : 0;
+        // fill% is the hard stop, with a soft feather of ~15% beyond
+        const fillStop   = Math.round(absPct * 100);
+        const featherStop = Math.min(fillStop + 15, 100);
 
         const baseBg   = isPositive ? BG_POSITIVE : isNegative ? BG_NEGATIVE : BG_NEUTRAL;
         const pctColor = isPositive ? colors.positive : isNegative ? colors.negative : colors.muted;
@@ -231,12 +234,11 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         const gradId  = `g-${idx}`;
         const clipId  = `c-${idx}`;
 
-        // Radial gradient center: top-left for gain, top-right for loss
-        // radius scales with absPct so bigger gains = bigger glow spread
+        // Linear gradient: left→right for gain, right→left for loss
+        // Solid accent color up to fillStop%, then feathers to transparent
         const accentColor = isPositive ? ACCENT_POSITIVE : ACCENT_NEGATIVE;
-        const glowRadius  = 40 + absPct * 60; // 40–100% of the radial gradient
-        const cx = isNegative ? '100%' : '0%';
-        const cy = '0%';
+        const gradX1 = isNegative ? '100%' : '0%';
+        const gradX2 = isNegative ? '0%' : '100%';
 
         const name = displayTicker(tile.ticker, tile.market);
         const weightStr = `${(tile.weight * 100).toFixed(1)}%`;
@@ -271,15 +273,12 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
                 <rect x={x} y={y} width={w} height={h} rx={4} />
               </clipPath>
               {(isPositive || isNegative) && (
-                <radialGradient
-                  id={gradId}
-                  cx={cx} cy={cy} r={`${glowRadius}%`}
-                  gradientUnits="objectBoundingBox"
-                >
-                  <stop offset="0%"   stopColor={accentColor} stopOpacity={0.9} />
-                  <stop offset="40%"  stopColor={accentColor} stopOpacity={0.4} />
-                  <stop offset="100%" stopColor={accentColor} stopOpacity={0} />
-                </radialGradient>
+                <linearGradient id={gradId} x1={gradX1} y1="0%" x2={gradX2} y2="0%">
+                  <stop offset="0%"            stopColor={accentColor} stopOpacity={0.85} />
+                  <stop offset={`${fillStop}%`}  stopColor={accentColor} stopOpacity={0.75} />
+                  <stop offset={`${featherStop}%`} stopColor={accentColor} stopOpacity={0} />
+                  <stop offset="100%"          stopColor={accentColor} stopOpacity={0} />
+                </linearGradient>
               )}
             </defs>
 
