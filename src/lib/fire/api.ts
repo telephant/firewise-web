@@ -26,6 +26,8 @@ export interface Trade {
   date: string;
   notes: string | null;
   created_at: string;
+  asset_type: 'stock' | 'commodity';
+  unit: string | null;
 }
 
 export interface Holding {
@@ -131,6 +133,8 @@ export interface CreateTradeData {
   currency: string;
   date: string;
   notes?: string;
+  asset_type?: 'stock' | 'commodity';
+  unit?: string;
 }
 
 export interface CreateDividendData {
@@ -364,6 +368,23 @@ export const stockPriceApi = {
       `/fire/stock-prices?${searchParams.toString()}`
     );
   },
+};
+
+// ── Commodity ──────────────────────────────────────────────────────────────
+
+export interface CommodityInfo {
+  ticker: string;
+  name: string;
+  unit: string;
+  unitLabel: string;
+  currency: string;
+  price: number | null;
+  change: number | null;
+  changePercent: number | null;
+}
+
+export const commodityApi = {
+  list: () => fetchApi<CommodityInfo[]>('/fire/commodities'),
 };
 
 // ── DCA ────────────────────────────────────────────────────────────────────
