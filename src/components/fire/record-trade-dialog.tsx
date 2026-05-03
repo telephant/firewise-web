@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -50,10 +50,12 @@ export function RecordTradeDialog({
   const [error, setError] = useState<string | null>(null);
   const [commodities, setCommodities] = useState<CommodityInfo[]>([]);
   const [selectedCommodity, setSelectedCommodity] = useState<CommodityInfo | null>(null);
+  const hasFetched = useRef(false);
 
   // Load commodity prices when dialog opens
   useEffect(() => {
-    if (!open || commodities.length > 0) return;
+    if (!open || hasFetched.current) return;
+    hasFetched.current = true;
     commodityApi.list().then(res => {
       if (res.success && res.data) setCommodities(res.data);
     }).catch(console.error);
@@ -265,7 +267,7 @@ export function RecordTradeDialog({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label>{assetType === 'commodity' && selectedCommodity ? `Quantity (${selectedCommodity.unitLabel})` : 'Shares'}</Label>
+                <Label>{assetType === 'commodity' && (selectedCommodity || editTrade?.unit) ? `Quantity (${selectedCommodity?.unitLabel ?? editTrade?.unit ?? 'unit'})` : 'Shares'}</Label>
                 <Input
                   type="number"
                   min="0"
@@ -277,7 +279,7 @@ export function RecordTradeDialog({
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label>{assetType === 'commodity' && selectedCommodity ? `Price per ${selectedCommodity.unitLabel}` : 'Price per Share'}</Label>
+                <Label>{assetType === 'commodity' && (selectedCommodity || editTrade?.unit) ? `Price per ${selectedCommodity?.unitLabel ?? editTrade?.unit ?? 'unit'}` : 'Price per Share'}</Label>
                 <Input
                   type="number"
                   min="0"
