@@ -53,7 +53,7 @@ export function RecordTradeDialog({
 
   // Load commodity prices when dialog opens
   useEffect(() => {
-    if (!open) return;
+    if (!open || commodities.length > 0) return;
     commodityApi.list().then(res => {
       if (res.success && res.data) setCommodities(res.data);
     }).catch(console.error);
@@ -82,6 +82,10 @@ export function RecordTradeDialog({
       setCurrency(editTrade.currency);
       setNotes(editTrade.notes || '');
       setError(null);
+      if (editTrade.asset_type === 'commodity') {
+        const match = commodities.find(c => c.ticker === editTrade.ticker);
+        if (match) setSelectedCommodity(match);
+      }
     } else if (!open) {
       setAssetType('stock');
       setTicker('');
@@ -95,7 +99,7 @@ export function RecordTradeDialog({
       setError(null);
       setSelectedCommodity(null);
     }
-  }, [open, editTrade, defaultCurrency]);
+  }, [open, editTrade, defaultCurrency, commodities]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,56 +134,6 @@ export function RecordTradeDialog({
       setError(result.error || (isEdit ? 'Failed to update trade' : 'Failed to record trade'));
     }
   };
-
-  // ── Commodity card grid ──────────────────────────────────────────────────
-
-  function CommodityGrid() {
-    return (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        {commodities.map(c => {
-          const isSelected = selectedCommodity?.ticker === c.ticker;
-          const changeColor = (c.changePercent ?? 0) >= 0 ? colors.positive : colors.negative;
-          return (
-            <button
-              key={c.ticker}
-              type="button"
-              onClick={() => setSelectedCommodity(c)}
-              style={{
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: `1px solid ${isSelected ? colors.accent : colors.border}`,
-                backgroundColor: isSelected ? `${colors.accent}15` : colors.surfaceLight,
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'border-color 0.15s, background-color 0.15s',
-              }}
-            >
-              <div style={{ color: colors.text, fontSize: 13, fontWeight: 600, marginBottom: 2 }}>
-                {c.name}
-              </div>
-              <div style={{ color: colors.muted, fontSize: 11, marginBottom: 6 }}>
-                {c.ticker} · {c.unitLabel}
-              </div>
-              {c.price != null ? (
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ color: colors.text, fontSize: 12, fontWeight: 500 }}>
-                    ${c.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                  {c.changePercent != null && (
-                    <span style={{ color: changeColor, fontSize: 11 }}>
-                      {c.changePercent >= 0 ? '+' : ''}{c.changePercent.toFixed(2)}%
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div style={{ color: colors.muted, fontSize: 11 }}>—</div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -259,7 +213,49 @@ export function RecordTradeDialog({
             {assetType === 'commodity' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <Label>Commodity</Label>
-                <CommodityGrid />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {commodities.map(c => {
+                    const isSelected = selectedCommodity?.ticker === c.ticker;
+                    const changeColor = (c.changePercent ?? 0) >= 0 ? colors.positive : colors.negative;
+                    return (
+                      <button
+                        key={c.ticker}
+                        type="button"
+                        onClick={() => setSelectedCommodity(c)}
+                        style={{
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          border: `1px solid ${isSelected ? colors.accent : colors.border}`,
+                          backgroundColor: isSelected ? `${colors.accent}15` : colors.surfaceLight,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'border-color 0.15s, background-color 0.15s',
+                        }}
+                      >
+                        <div style={{ color: colors.text, fontSize: 13, fontWeight: 600, marginBottom: 2 }}>
+                          {c.name}
+                        </div>
+                        <div style={{ color: colors.muted, fontSize: 11, marginBottom: 6 }}>
+                          {c.ticker} · {c.unitLabel}
+                        </div>
+                        {c.price != null ? (
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                            <span style={{ color: colors.text, fontSize: 12, fontWeight: 500 }}>
+                              ${c.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            {c.changePercent != null && (
+                              <span style={{ color: changeColor, fontSize: 11 }}>
+                                {c.changePercent >= 0 ? '+' : ''}{c.changePercent.toFixed(2)}%
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{ color: colors.muted, fontSize: 11 }}>—</div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
