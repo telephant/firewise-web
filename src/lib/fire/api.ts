@@ -91,6 +91,43 @@ export interface PortfolioStats {
   currency: string;
 }
 
+export type ScoringProfile = 'lenient' | 'moderate' | 'strict';
+
+export interface AnalyticsScore {
+  total: number;
+  level: 'A' | 'B' | 'C' | 'D';
+  return_quality: number;
+  risk_control: number;
+  diversification: number;
+  win_loss_quality: number;
+}
+
+export interface AnalyticsMetrics {
+  sharpe_ratio: number | null;
+  sortino_ratio: number | null;
+  volatility_annual: number | null;
+  max_drawdown: number | null;
+  win_rate: number | null;
+  avg_win_pct: number | null;
+  avg_loss_pct: number | null;
+  concentration_top3: number;
+  concentration_hhi: number;
+  market_count: number;
+  data_months: number;
+}
+
+export interface AnalyticsFlag {
+  type: 'warning' | 'info';
+  message: string;
+}
+
+export interface PortfolioAnalytics {
+  score: AnalyticsScore;
+  metrics: AnalyticsMetrics;
+  flags: AnalyticsFlag[];
+  scoring_profile: ScoringProfile;
+}
+
 export interface FamilyMember {
   id: string;
   family_id: string;
@@ -206,6 +243,11 @@ export const portfolioApi = {
     fetchApi<Portfolio>(`/portfolios/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => fetchApi(`/portfolios/${id}`, { method: 'DELETE' }),
   getRealizedPL: (id: string) => fetchApi<RealizedPLItem[]>(`/portfolios/${id}/realized-pl`),
+};
+
+export const portfolioAnalyticsApi = {
+  get: (id: string, profile: ScoringProfile = 'moderate') =>
+    fetchApi<PortfolioAnalytics>(`/portfolios/${id}/analytics?profile=${profile}`),
 };
 
 export const tradeApi = {
