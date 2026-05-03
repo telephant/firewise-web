@@ -162,31 +162,36 @@ export default function PortfolioDetail() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
             <Breadcrumb items={[{ label: 'Portfolios', href: '/fire/portfolios' }, { label: portfolio?.name || '...' }]} />
-            <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>{portfolio?.name || 'Portfolio'}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>{portfolio?.name || 'Portfolio'}</h1>
+              <button
+                onClick={() => {
+                  const lines = holdings
+                    .filter(h => h.value !== null && h.value > 0)
+                    .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+                    .map(h => {
+                      const weight = stats?.total_value ? ((h.value! / stats.total_value) * 100).toFixed(1) : '—';
+                      const value = new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(h.value!);
+                      return `${h.ticker}\t${weight}%\t${value}`;
+                    });
+                  navigator.clipboard.writeText(['Ticker\tWeight\tValue', ...lines].join('\n'));
+                }}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: colors.muted, fontSize: 12, padding: '2px 8px',
+                  borderRadius: 4, transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = colors.text)}
+                onMouseLeave={e => (e.currentTarget.style.color = colors.muted)}
+              >
+                Copy
+              </button>
+            </div>
             {portfolio?.description && (
               <p style={{ color: colors.muted, fontSize: 13, marginTop: 4 }}>{portfolio.description}</p>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                const lines = holdings
-                  .filter(h => h.value !== null && h.value > 0)
-                  .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
-                  .map(h => {
-                    const weight = stats?.total_value ? ((h.value! / stats.total_value) * 100).toFixed(1) : '—';
-                    const value = new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(h.value!);
-                    return `${h.ticker}\t${weight}%\t${value}`;
-                  });
-                const header = `Ticker\tWeight\tValue`;
-                navigator.clipboard.writeText([header, ...lines].join('\n'));
-              }}
-            >
-              Copy Portfolio
-            </Button>
-            <Button onClick={() => setTradeDialogOpen(true)}>Record Trade</Button>
-          </div>
+          <Button onClick={() => setTradeDialogOpen(true)}>Record Trade</Button>
         </div>
       </div>
 
