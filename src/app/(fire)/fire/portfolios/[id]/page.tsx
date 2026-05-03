@@ -171,10 +171,14 @@ export default function PortfolioDetail() {
         </div>
       </div>
 
-      {/* Tabs — scrollable area */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 24px' }}>
-      <Tabs defaultValue="distribution" onValueChange={(v) => { if (v === 'pl') handlePlTabActivate(); }}>
-        <TabsList>
+      {/* Tabs — flex column, fills remaining height */}
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '0 24px 24px' }}>
+      <Tabs
+        defaultValue="distribution"
+        onValueChange={(v) => { if (v === 'pl') handlePlTabActivate(); }}
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
+      >
+        <TabsList style={{ flexShrink: 0 }}>
           <TabsTrigger value="distribution">Distribution</TabsTrigger>
           <TabsTrigger value="holdings">Holdings</TabsTrigger>
           <TabsTrigger value="dividends">Dividends</TabsTrigger>
@@ -183,20 +187,18 @@ export default function PortfolioDetail() {
           <TabsTrigger value="dca">DCA {dcaPending.length > 0 && `(${dcaPending.length})`}</TabsTrigger>
         </TabsList>
 
-        {/* Distribution Tab */}
-        <TabsContent value="distribution">
-          <div style={{ marginTop: 16 }}>
-            <PortfolioTreemap
-              holdings={holdings}
-              currency={currency}
-              totalValue={stats?.total_value ?? 0}
-            />
-          </div>
+        {/* Distribution Tab — fills height, no scroll */}
+        <TabsContent value="distribution" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', marginTop: 16 }}>
+          <PortfolioTreemap
+            holdings={holdings}
+            currency={currency}
+            totalValue={stats?.total_value ?? 0}
+          />
         </TabsContent>
 
         {/* Holdings Tab */}
-        <TabsContent value="holdings">
-          <div style={{ marginTop: 16 }}>
+        <TabsContent value="holdings" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
+          <div>
             {holdings.length === 0 ? (
               <p style={{ textAlign: 'center', padding: '48px 0', color: colors.muted, fontSize: 14 }}>
                 No holdings yet. Record a buy trade to get started.
@@ -293,8 +295,8 @@ export default function PortfolioDetail() {
         </TabsContent>
 
         {/* Dividends Tab */}
-        <TabsContent value="dividends">
-          <div style={{ marginTop: 16 }}>
+        <TabsContent value="dividends" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
+          <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
               <Button variant="outline" onClick={() => setDividendDialogOpen(true)}>Add Dividend</Button>
             </div>
@@ -343,8 +345,8 @@ export default function PortfolioDetail() {
         </TabsContent>
 
         {/* P&L Tab */}
-        <TabsContent value="pl">
-          <div style={{ marginTop: 16 }}>
+        <TabsContent value="pl" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
+          <div>
             {plLoading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
                 <Loader size="sm" variant="dots" />
@@ -389,8 +391,8 @@ export default function PortfolioDetail() {
         </TabsContent>
 
         {/* Stats Tab */}
-        <TabsContent value="stats">
-          <div style={{ marginTop: 16 }}>
+        <TabsContent value="stats" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
+          <div>
             {!stats ? (
               <p style={{ textAlign: 'center', padding: '48px 0', color: colors.muted, fontSize: 14 }}>No stats available.</p>
             ) : (
@@ -454,8 +456,8 @@ export default function PortfolioDetail() {
         </TabsContent>
 
         {/* DCA Tab */}
-        <TabsContent value="dca">
-          <div style={{ marginTop: 16 }}>
+        <TabsContent value="dca" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
+          <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
               <Button variant="outline" onClick={() => { setEditDcaPlan(undefined); setDcaDialogOpen(true); }}>
                 + New Plan

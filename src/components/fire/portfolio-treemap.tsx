@@ -164,7 +164,7 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
   if (filtered.length === 0 || totalValue <= 0) {
     return (
       <div style={{
-        height: H,
+        flex: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -190,8 +190,10 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
   return (
     <svg
       width="100%"
+      height="100%"
       viewBox={`0 0 ${W} ${H}`}
-      style={{ display: 'block', borderRadius: 8, overflow: 'hidden' }}
+      preserveAspectRatio="xMidYMid meet"
+      style={{ display: 'block', flex: 1, borderRadius: 8, overflow: 'hidden' }}
     >
       {tiles.map((tile, idx) => {
         const x = tile.x + GAP / 2;

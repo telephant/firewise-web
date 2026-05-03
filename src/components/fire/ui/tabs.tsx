@@ -27,6 +27,7 @@ export interface TabsProps {
   onValueChange?: (value: string) => void;
   children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function Tabs({
@@ -35,6 +36,7 @@ export function Tabs({
   onValueChange,
   children,
   className = '',
+  style,
 }: TabsProps) {
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue || '');
 
@@ -50,7 +52,7 @@ export function Tabs({
 
   return (
     <TabsContext.Provider value={{ value, onValueChange: handleValueChange }}>
-      <div className={className}>
+      <div className={className} style={style}>
         {children}
       </div>
     </TabsContext.Provider>
@@ -126,11 +128,12 @@ export interface TabsContentProps {
   value: string;
   children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   /** If true, content is hidden with CSS instead of unmounting (preserves state) */
   forceMount?: boolean;
 }
 
-export function TabsContent({ value, children, className = '', forceMount = false }: TabsContentProps) {
+export function TabsContent({ value, children, className = '', style, forceMount = false }: TabsContentProps) {
   const { value: selectedValue } = useTabsContext();
   const isSelected = selectedValue === value;
 
@@ -143,7 +146,7 @@ export function TabsContent({ value, children, className = '', forceMount = fals
     <div
       role="tabpanel"
       className={className}
-      style={!isSelected ? { display: 'none' } : undefined}
+      style={{ ...style, ...(!isSelected ? { display: 'none' } : undefined) }}
       hidden={!isSelected}
     >
       {children}
