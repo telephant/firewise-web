@@ -149,27 +149,30 @@ export default function PortfolioDetail() {
 
   if (loading) {
     return (
-      <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ height: '100%', backgroundColor: colors.bg, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <Loader size="md" variant="bar" />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <Breadcrumb items={[{ label: 'Portfolios', href: '/fire/portfolios' }, { label: portfolio?.name || '...' }]} />
-          <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>{portfolio?.name || 'Portfolio'}</h1>
-          {portfolio?.description && (
-            <p style={{ color: colors.muted, fontSize: 13, marginTop: 4 }}>{portfolio.description}</p>
-          )}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: colors.bg, overflow: 'hidden' }}>
+      {/* Header — fixed, does not scroll */}
+      <div style={{ padding: '24px 24px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <Breadcrumb items={[{ label: 'Portfolios', href: '/fire/portfolios' }, { label: portfolio?.name || '...' }]} />
+            <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>{portfolio?.name || 'Portfolio'}</h1>
+            {portfolio?.description && (
+              <p style={{ color: colors.muted, fontSize: 13, marginTop: 4 }}>{portfolio.description}</p>
+            )}
+          </div>
+          <Button onClick={() => setTradeDialogOpen(true)}>Record Trade</Button>
         </div>
-        <Button onClick={() => setTradeDialogOpen(true)}>Record Trade</Button>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — scrollable area */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 24px' }}>
       <Tabs defaultValue="distribution" onValueChange={(v) => { if (v === 'pl') handlePlTabActivate(); }}>
         <TabsList>
           <TabsTrigger value="distribution">Distribution</TabsTrigger>
@@ -539,6 +542,7 @@ export default function PortfolioDetail() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
 
       <RecordTradeDialog
         open={tradeDialogOpen}
