@@ -19,6 +19,7 @@ import { HoldingTradesPanel } from '@/components/fire/holding-trades-panel';
 import { DcaPlanDialog } from '@/components/fire/dca-plan-dialog';
 import { DcaPendingCard } from '@/components/fire/dca-pending-card';
 import { isCommodity, displayTicker, displayUnit } from '@/lib/fire/commodities';
+import { PortfolioTreemap } from '@/components/fire/portfolio-treemap';
 
 function fmt(value: number | null, currency: string): string {
   if (value === null) return '—';
@@ -78,6 +79,8 @@ export default function PortfolioDetail() {
   const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
   const [dividendDialogOpen, setDividendDialogOpen] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
+  const [holdingsPage, setHoldingsPage] = useState(0);
+  const HOLDINGS_PAGE_SIZE = 20;
 
   useEffect(() => {
     if (!id) return;
@@ -101,6 +104,10 @@ export default function PortfolioDetail() {
       setLoading(false);
     });
   }, [id]);
+
+  useEffect(() => {
+    setHoldingsPage(0);
+  }, [holdings]);
 
   function handlePlTabActivate() {
     if (plLoaded || plLoading) return;
@@ -162,14 +169,26 @@ export default function PortfolioDetail() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="holdings" onValueChange={(v) => { if (v === 'pl') handlePlTabActivate(); }}>
+      <Tabs defaultValue="distribution" onValueChange={(v) => { if (v === 'pl') handlePlTabActivate(); }}>
         <TabsList>
+          <TabsTrigger value="distribution">Distribution</TabsTrigger>
           <TabsTrigger value="holdings">Holdings</TabsTrigger>
           <TabsTrigger value="dividends">Dividends</TabsTrigger>
           <TabsTrigger value="pl">P&amp;L</TabsTrigger>
           <TabsTrigger value="stats">Stats</TabsTrigger>
           <TabsTrigger value="dca">DCA {dcaPending.length > 0 && `(${dcaPending.length})`}</TabsTrigger>
         </TabsList>
+
+        {/* Distribution Tab */}
+        <TabsContent value="distribution">
+          <div style={{ marginTop: 16 }}>
+            <PortfolioTreemap
+              holdings={holdings}
+              currency={currency}
+              totalValue={stats?.total_value ?? 0}
+            />
+          </div>
+        </TabsContent>
 
         {/* Holdings Tab */}
         <TabsContent value="holdings">
@@ -179,65 +198,92 @@ export default function PortfolioDetail() {
                 No holdings yet. Record a buy trade to get started.
               </p>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
-                      {['Ticker', 'Qty', 'Avg Cost', 'Current Price', 'Value', 'Unrealized P&L', ''].map(h => (
-                        <th key={h} style={{ paddingBottom: 8, paddingRight: 16, textAlign: 'left', color: colors.muted, fontWeight: 500, fontSize: 12 }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {holdings.map((h) => {
-                      const plPositive = h.unrealized_pl !== null ? h.unrealized_pl >= 0 : null;
-                      return (
-                        <tr key={`${h.ticker}-${h.market}`} style={{ borderBottom: `1px solid ${colors.border}` }}>
-                          <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: colors.text }}>
-                            {displayTicker(h.ticker, h.market)}
-                            <span style={{
-                              display: 'inline-block',
-                              marginLeft: 6,
-                              padding: '1px 6px',
-                              borderRadius: 4,
-                              fontSize: 10,
-                              fontWeight: 600,
-                              backgroundColor: isCommodity(h.market) ? `${colors.warning}20` : `${colors.accent}20`,
-                              color: isCommodity(h.market) ? colors.warning : colors.accent,
-                              border: `1px solid ${isCommodity(h.market) ? `${colors.warning}40` : `${colors.accent}40`}`,
-                            }}>
-                              {isCommodity(h.market) ? 'CMDTY' : h.market}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{isCommodity(h.market) ? h.shares.toFixed(4) : h.shares} {displayUnit(h.ticker, h.market)}</td>
-                          <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{fmt(h.avg_cost, h.currency)}</td>
-                          <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>
-                            {h.current_price !== null ? fmt(h.current_price, h.currency) : '—'}
-                          </td>
-                          <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>
-                            {h.value !== null ? fmt(h.value, h.currency) : '—'}
-                          </td>
-                          <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: plPositive === true ? colors.positive : plPositive === false ? colors.negative : colors.text }}>
-                            {h.unrealized_pl !== null ? fmt(h.unrealized_pl, h.currency) : '—'}
-                            {h.unrealized_pl_pct !== null && (
-                              <span style={{ marginLeft: 4, fontSize: 11 }}>({pct(h.unrealized_pl_pct)})</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '12px 0' }}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedHolding(h)}
-                            >
-                              Trades
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                        {['Ticker', 'Qty', 'Avg Cost', 'Current Price', 'Value', 'Unrealized P&L', ''].map(h => (
+                          <th key={h} style={{ paddingBottom: 8, paddingRight: 16, textAlign: 'left', color: colors.muted, fontWeight: 500, fontSize: 12 }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {holdings
+                        .slice(holdingsPage * HOLDINGS_PAGE_SIZE, (holdingsPage + 1) * HOLDINGS_PAGE_SIZE)
+                        .map((h) => {
+                          const plPositive = h.unrealized_pl !== null ? h.unrealized_pl >= 0 : null;
+                          return (
+                            <tr key={`${h.ticker}-${h.market}`} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                              <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: colors.text }}>
+                                {displayTicker(h.ticker, h.market)}
+                                <span style={{
+                                  display: 'inline-block',
+                                  marginLeft: 6,
+                                  padding: '1px 6px',
+                                  borderRadius: 4,
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  backgroundColor: isCommodity(h.market) ? `${colors.warning}20` : `${colors.accent}20`,
+                                  color: isCommodity(h.market) ? colors.warning : colors.accent,
+                                  border: `1px solid ${isCommodity(h.market) ? `${colors.warning}40` : `${colors.accent}40`}`,
+                                }}>
+                                  {isCommodity(h.market) ? 'CMDTY' : h.market}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{isCommodity(h.market) ? h.shares.toFixed(4) : h.shares} {displayUnit(h.ticker, h.market)}</td>
+                              <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{fmt(h.avg_cost, h.currency)}</td>
+                              <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>
+                                {h.current_price !== null ? fmt(h.current_price, h.currency) : '—'}
+                              </td>
+                              <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>
+                                {h.value !== null ? fmt(h.value, h.currency) : '—'}
+                              </td>
+                              <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: plPositive === true ? colors.positive : plPositive === false ? colors.negative : colors.text }}>
+                                {h.unrealized_pl !== null ? fmt(h.unrealized_pl, h.currency) : '—'}
+                                {h.unrealized_pl_pct !== null && (
+                                  <span style={{ marginLeft: 4, fontSize: 11 }}>({pct(h.unrealized_pl_pct)})</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '12px 0' }}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setSelectedHolding(h)}
+                                >
+                                  Trades
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+                {holdings.length > HOLDINGS_PAGE_SIZE && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 16 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={holdingsPage === 0}
+                      onClick={() => setHoldingsPage(p => p - 1)}
+                    >
+                      ← Prev
+                    </Button>
+                    <span style={{ fontSize: 12, color: colors.muted }}>
+                      Page {holdingsPage + 1} of {Math.ceil(holdings.length / HOLDINGS_PAGE_SIZE)}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={(holdingsPage + 1) * HOLDINGS_PAGE_SIZE >= holdings.length}
+                      onClick={() => setHoldingsPage(p => p + 1)}
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </TabsContent>
