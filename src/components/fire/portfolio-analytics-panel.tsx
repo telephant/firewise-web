@@ -63,13 +63,15 @@ export function PortfolioAnalyticsPanel({ portfolioId }: Props) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ScoringProfile>('moderate');
 
-  useEffect(() => {
+  const fetchAnalytics = (skipCache = false) => {
     setLoading(true);
-    const cached = getCachedAnalytics(portfolioId, profile);
-    if (cached) {
-      setAnalytics(cached);
-      setLoading(false);
-      return;
+    if (!skipCache) {
+      const cached = getCachedAnalytics(portfolioId, profile);
+      if (cached) {
+        setAnalytics(cached);
+        setLoading(false);
+        return;
+      }
     }
     portfolioAnalyticsApi.get(portfolioId, profile).then(res => {
       if (res.success && res.data) {
@@ -78,7 +80,9 @@ export function PortfolioAnalyticsPanel({ portfolioId }: Props) {
       }
       setLoading(false);
     });
-  }, [portfolioId, profile]);
+  };
+
+  useEffect(() => { fetchAnalytics(); }, [portfolioId, profile]);
 
   return (
     <div style={{
@@ -119,25 +123,45 @@ export function PortfolioAnalyticsPanel({ portfolioId }: Props) {
           </div>
         )}
 
-        {/* Profile selector */}
-        <select
-          value={profile}
-          onChange={e => setProfile(e.target.value as ScoringProfile)}
-          style={{
-            backgroundColor: colors.surfaceLight,
-            color: colors.muted,
-            border: `1px solid ${colors.border}`,
-            borderRadius: 6,
-            padding: '4px 8px',
-            fontSize: 11,
-            cursor: 'pointer',
-            outline: 'none',
-          }}
-        >
-          <option value="lenient">Lenient</option>
-          <option value="moderate">Moderate</option>
-          <option value="strict">Strict</option>
-        </select>
+        {/* Profile selector + refresh */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            onClick={() => fetchAnalytics(true)}
+            disabled={loading}
+            title="Refresh"
+            style={{
+              background: 'none',
+              border: `1px solid ${colors.border}`,
+              borderRadius: 6,
+              padding: '4px 7px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              color: loading ? colors.border : colors.muted,
+              fontSize: 12,
+              lineHeight: 1,
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.color = colors.text; }}
+            onMouseLeave={e => { e.currentTarget.style.color = loading ? colors.border : colors.muted; }}
+          >↻</button>
+          <select
+            value={profile}
+            onChange={e => setProfile(e.target.value as ScoringProfile)}
+            style={{
+              backgroundColor: colors.surfaceLight,
+              color: colors.muted,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 6,
+              padding: '4px 8px',
+              fontSize: 11,
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            <option value="lenient">Lenient</option>
+            <option value="moderate">Moderate</option>
+            <option value="strict">Strict</option>
+          </select>
+        </div>
       </div>
 
       {loading && (
