@@ -164,15 +164,13 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
 
         // Fill proportion — direct pct mapping, capped at 100%
         const absPct = pctVal !== null ? Math.min(Math.abs(pctVal) / 100, 1) : 0;
-        const fillStop    = Math.round(absPct * 100);
-        const featherStop = Math.min(fillStop + 18, 100);
+        const fillW = w * absPct;
+        const fillX = isNegative ? x + w - fillW : x;
 
         const baseBg = isPositive ? BG_POSITIVE : isNegative ? BG_NEGATIVE : BG_NEUTRAL;
         const pctColor = isPositive ? colors.positive : isNegative ? colors.negative : colors.muted;
 
-        // Neon color at low opacity — more vivid but not fluorescent
-        const neonColor   = isPositive ? colors.positive : colors.negative;
-        const gradId = `g-${idx}`;
+        const neonColor = isPositive ? colors.positive : colors.negative;
         const clipId = `c-${idx}`;
         const name = displayTicker(tile.ticker, tile.market);
         const weightStr = `${(tile.weight * 100).toFixed(1)}%`;
@@ -202,23 +200,17 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
               <clipPath id={clipId}>
                 <rect x={x} y={y} width={w} height={h} rx={RX} />
               </clipPath>
-              {(isPositive || isNegative) && (
-                <linearGradient id={gradId} x1={isNegative ? '100%' : '0%'} y1="0%" x2={isNegative ? '0%' : '100%'} y2="0%">
-                  <stop offset="0%"                stopColor={neonColor} stopOpacity={0.13} />
-                  <stop offset={`${fillStop}%`}    stopColor={neonColor} stopOpacity={0.10} />
-                  <stop offset={`${featherStop}%`} stopColor={neonColor} stopOpacity={0} />
-                  <stop offset="100%"              stopColor={neonColor} stopOpacity={0} />
-                </linearGradient>
-              )}
             </defs>
 
             {/* Dark base */}
             <rect x={x} y={y} width={w} height={h} fill={baseBg} rx={RX} />
 
-            {/* P&L gradient fill */}
-            {(isPositive || isNegative) && (
-              <rect x={x} y={y} width={w} height={h}
-                fill={`url(#${gradId})`}
+            {/* P&L solid fill — proportion of tile width */}
+            {(isPositive || isNegative) && fillW > 0 && (
+              <rect
+                x={fillX} y={y} width={fillW} height={h}
+                fill={neonColor}
+                fillOpacity={0.10}
                 clipPath={`url(#${clipId})`}
                 style={{ pointerEvents: 'none' }}
               />
