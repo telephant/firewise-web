@@ -82,6 +82,7 @@ export default function PortfolioDetail() {
   const [dividendDialogOpen, setDividendDialogOpen] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
   const [holdingsPage, setHoldingsPage] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -175,16 +176,18 @@ export default function PortfolioDetail() {
                       return `${h.ticker}\t${weight}%\t${value}`;
                     });
                   navigator.clipboard.writeText(['Ticker\tWeight\tValue', ...lines].join('\n'));
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
                 }}
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: colors.muted, fontSize: 12, padding: '2px 8px',
+                  color: copied ? colors.positive : colors.muted, fontSize: 12, padding: '2px 8px',
                   borderRadius: 4, transition: 'color 0.15s',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.color = colors.text)}
                 onMouseLeave={e => (e.currentTarget.style.color = colors.muted)}
               >
-                Copy Holdings
+                {copied ? '✓ Copied' : 'Copy Holdings'}
               </button>
             </div>
             {portfolio?.description && (
