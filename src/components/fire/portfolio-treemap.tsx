@@ -198,6 +198,38 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
       preserveAspectRatio="xMidYMid meet"
       style={{ display: 'block', flex: 1, borderRadius: 8, overflow: 'hidden' }}
     >
+      <defs>
+        {/* Glow filter for hovered positive tile */}
+        <filter id="glow-positive" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feFlood floodColor={colors.positive} floodOpacity="0.4" result="color" />
+          <feComposite in="color" in2="blur" operator="in" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        {/* Glow filter for hovered negative tile */}
+        <filter id="glow-negative" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feFlood floodColor={colors.negative} floodOpacity="0.4" result="color" />
+          <feComposite in="color" in2="blur" operator="in" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        {/* Glow filter for hovered neutral tile */}
+        <filter id="glow-neutral" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feFlood floodColor="rgba(255,255,255,0.3)" floodOpacity="0.4" result="color" />
+          <feComposite in="color" in2="blur" operator="in" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       {tiles.map((tile, idx) => {
         const x = tile.x + GAP / 2;
         const y = tile.y + GAP / 2;
@@ -258,17 +290,23 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         const absPct = pctVal !== null ? Math.min(Math.abs(pctVal) / 100, 1) : 0;
         const fillW = w * absPct;
         const fillX = pctVal !== null && pctVal < 0 ? x + w - fillW : x;
-        const fillColor = pctVal !== null && pctVal < 0 ? `${colors.negative}55` : `${colors.positive}55`;
+        const fillColor = pctVal !== null && pctVal < 0 ? `${colors.negative}60` : `${colors.positive}60`;
         const clipId = `clip-${tile.ticker}-${tile.market}-${idx}`;
 
         const isHovered = hoveredIdx === idx;
+        const glowFilter = isHovered
+          ? pctVal !== null && pctVal > 0 ? 'url(#glow-positive)'
+          : pctVal !== null && pctVal < 0 ? 'url(#glow-negative)'
+          : 'url(#glow-neutral)'
+          : undefined;
 
         return (
           <g
             key={`${tile.ticker}-${tile.market}-${idx}`}
             onMouseEnter={() => setHoveredIdx(idx)}
             onMouseLeave={() => setHoveredIdx(null)}
-            style={{ cursor: 'default' }}
+            style={{ cursor: 'default', transition: 'filter 0.15s ease' }}
+            filter={glowFilter}
           >
             <defs>
               <clipPath id={clipId}>
