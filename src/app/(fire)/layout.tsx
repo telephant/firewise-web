@@ -3,7 +3,7 @@ import { FireTopBar } from '@/components/fire/top-bar';
 
 export default function FireLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0A0A0B' }}>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0A0A0B', overflow: 'hidden' }}>
       <PortfolioSidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <FireTopBar />
