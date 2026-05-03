@@ -55,6 +55,8 @@ function getYoY(snapshot: ChartPoint, allPoints: ChartPoint[]): string | null {
   return `${p >= 0 ? '+' : ''}${p.toFixed(1)}% YoY`;
 }
 
+const HOLDINGS_PAGE_SIZE = 20;
+
 export default function PortfolioDetail() {
   const { id } = useParams<{ id: string }>();
 
@@ -80,7 +82,6 @@ export default function PortfolioDetail() {
   const [dividendDialogOpen, setDividendDialogOpen] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
   const [holdingsPage, setHoldingsPage] = useState(0);
-  const HOLDINGS_PAGE_SIZE = 20;
 
   useEffect(() => {
     if (!id) return;
