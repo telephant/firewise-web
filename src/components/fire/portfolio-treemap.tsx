@@ -231,10 +231,23 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
           ? `${pctVal >= 0 ? '+' : ''}${pctVal.toFixed(2)}%`
           : null;
 
-        const lineHeight = 16;
-        const lines = isTiny ? 0 : isSmall ? 1 : pctStr ? 4 : 3;
-        const totalTextH = lines * lineHeight;
-        const textStartY = y + h / 2 - totalTextH / 2 + lineHeight * 0.8;
+        // Font size: fit name into tile width, cap at 13px
+        const maxNameFontSize = Math.min(13, Math.max(8, (w - 8) / Math.max(name.length, 1) * (13 / CHAR_W)));
+        // Truncate name to fit tile width at computed font size
+        const charsPerWidth = Math.floor((w - 8) / (maxNameFontSize * CHAR_W / 13));
+        const displayName = name.length > charsPerWidth && charsPerWidth > 1
+          ? name.slice(0, charsPerWidth - 1) + '…'
+          : name;
+
+        // Decide which lines to show based on available height
+        const showMultiLine = !isSmall && w >= 60 && h >= 60;
+        const lineCount = showMultiLine ? (pctStr ? 4 : 3) : 1;
+        const lineHeight = 15;
+        const totalTextH = lineCount * lineHeight;
+        const textStartY = y + h / 2 - totalTextH / 2 + lineHeight * 0.75;
+
+        // Sub-line font size: fit value/weight/pct strings into tile width
+        const subFontSize = Math.min(11, Math.max(8, (w - 8) / 8));
 
         return (
           <g key={`${tile.ticker}-${tile.market}-${idx}`}>
@@ -255,48 +268,46 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
                   y={textStartY}
                   textAnchor="middle"
                   fill={colors.text}
-                  fontSize={Math.min(13, w / (name.length * CHAR_W / 13 + 1))}
+                  fontSize={maxNameFontSize}
                   fontWeight="600"
                   style={{ fontFamily: 'inherit' }}
                 >
-                  {name.length * CHAR_W > w - 8
-                    ? name.slice(0, Math.floor((w - 8) / CHAR_W)) + '…'
-                    : name}
+                  {displayName}
                 </text>
 
-                {!isSmall && (
+                {showMultiLine && (
                   <text
                     x={x + w / 2}
                     y={textStartY + lineHeight}
                     textAnchor="middle"
                     fill={colors.text}
-                    fontSize={11}
+                    fontSize={subFontSize}
                     style={{ fontFamily: 'inherit' }}
                   >
                     {valueStr}
                   </text>
                 )}
 
-                {!isSmall && (
+                {showMultiLine && (
                   <text
                     x={x + w / 2}
                     y={textStartY + lineHeight * 2}
                     textAnchor="middle"
                     fill={colors.muted}
-                    fontSize={11}
+                    fontSize={subFontSize}
                     style={{ fontFamily: 'inherit' }}
                   >
                     {weightStr}
                   </text>
                 )}
 
-                {!isSmall && pctStr && (
+                {showMultiLine && pctStr && (
                   <text
                     x={x + w / 2}
                     y={textStartY + lineHeight * 3}
                     textAnchor="middle"
                     fill={pctColor}
-                    fontSize={11}
+                    fontSize={subFontSize}
                     fontWeight="500"
                     style={{ fontFamily: 'inherit' }}
                   >
