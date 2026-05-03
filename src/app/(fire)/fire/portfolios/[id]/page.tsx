@@ -20,6 +20,7 @@ import { DcaPlanDialog } from '@/components/fire/dca-plan-dialog';
 import { DcaPendingCard } from '@/components/fire/dca-pending-card';
 import { isCommodity, displayTicker, displayUnit } from '@/lib/fire/commodities';
 import { PortfolioTreemap } from '@/components/fire/portfolio-treemap';
+import { PortfolioAnalyticsPanel } from '@/components/fire/portfolio-analytics-panel';
 
 function fmt(value: number | null, currency: string): string {
   if (value === null) return '—';
@@ -215,12 +216,19 @@ export default function PortfolioDetail() {
         </TabsList>
 
         {/* Distribution Tab — fills height, no scroll */}
-        <TabsContent value="distribution" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', marginTop: 16 }}>
-          <PortfolioTreemap
-            holdings={holdings}
-            currency={currency}
-            totalValue={stats?.total_value ?? 0}
-          />
+        <TabsContent value="distribution" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'row', gap: 12, marginTop: 16 }}>
+          {/* Treemap — 65% width */}
+          <div style={{ flex: '0 0 65%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <PortfolioTreemap
+              holdings={holdings}
+              currency={currency}
+              totalValue={stats?.total_value ?? 0}
+            />
+          </div>
+          {/* Analytics panel — 35% width */}
+          <div style={{ flex: '0 0 calc(35% - 12px)', overflow: 'hidden' }}>
+            {portfolio && <PortfolioAnalyticsPanel portfolioId={portfolio.id} />}
+          </div>
         </TabsContent>
 
         {/* Holdings Tab */}
