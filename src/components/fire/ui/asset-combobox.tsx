@@ -8,8 +8,29 @@ import { colors } from './theme';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Check } from 'lucide-react';
 import { IconPlus } from './icons';
-import type { Asset, AssetType } from '@/types/fire';
-import { ASSET_TYPE_LABELS } from '@/types/fire';
+
+type AssetType = 'cash' | 'deposit' | 'stock' | 'etf' | 'bond' | 'real_estate' | 'crypto' | 'metals' | 'other';
+
+interface Asset {
+  id: string;
+  name: string;
+  type: AssetType;
+  ticker: string | null;
+  currency: string;
+  balance: number;
+}
+
+const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  cash: 'Cash',
+  deposit: 'Deposit/Savings',
+  stock: 'Stock',
+  etf: 'ETF',
+  bond: 'Bond',
+  real_estate: 'Real Estate',
+  crypto: 'Crypto',
+  metals: 'Metals',
+  other: 'Other',
+};
 
 export interface AssetComboboxProps {
   label?: string;

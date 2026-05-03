@@ -4,8 +4,26 @@ import { useMemo } from 'react';
 import { RadioOptionGroup, type RadioOption } from './radio-option-group';
 import { Select } from './select';
 import { Input } from './input';
-import type { AssetWithBalance } from '@/types/fire';
-import { formatCurrency } from '@/lib/fire/utils';
+
+interface AssetWithBalance {
+  id: string;
+  name: string;
+  currency: string;
+  balance: number;
+  converted_balance?: number;
+  converted_currency?: string;
+  exchange_rate?: number;
+}
+
+function formatCurrency(amount: number, options: { currency?: string } = {}): string {
+  const currency = options.currency || 'USD';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 export type PaymentSourceType = 'cash' | 'external';
 
