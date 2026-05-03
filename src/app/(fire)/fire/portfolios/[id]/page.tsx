@@ -184,7 +184,7 @@ export default function PortfolioDetail() {
                 onMouseEnter={e => (e.currentTarget.style.color = colors.text)}
                 onMouseLeave={e => (e.currentTarget.style.color = colors.muted)}
               >
-                Copy
+                Copy Holdings
               </button>
             </div>
             {portfolio?.description && (
