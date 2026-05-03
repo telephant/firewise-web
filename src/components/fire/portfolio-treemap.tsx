@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { colors } from '@/components/fire/ui';
 import { displayTicker } from '@/lib/fire/commodities';
 import type { Holding } from '@/lib/fire/api';
@@ -157,6 +158,8 @@ function fmtValue(value: number, currency: string): string {
 }
 
 export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
   const filtered = holdings
     .filter(h => h.value !== null && h.value > 0)
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
@@ -251,18 +254,50 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         // Sub-line font size: fit value/weight/pct strings into tile width
         const subFontSize = Math.min(11, Math.max(8, (w - 8) / 8));
 
+        // P&L fill: pct% of tile width, left-to-right for gain, right-to-left for loss
+        const absPct = pctVal !== null ? Math.min(Math.abs(pctVal) / 100, 1) : 0;
+        const fillW = w * absPct;
+        const fillX = pctVal !== null && pctVal < 0 ? x + w - fillW : x;
+        const fillColor = pctVal !== null && pctVal < 0 ? `${colors.negative}55` : `${colors.positive}55`;
+        const clipId = `clip-${tile.ticker}-${tile.market}-${idx}`;
+
+        const isHovered = hoveredIdx === idx;
+
         return (
-          <g key={`${tile.ticker}-${tile.market}-${idx}`}>
+          <g
+            key={`${tile.ticker}-${tile.market}-${idx}`}
+            onMouseEnter={() => setHoveredIdx(idx)}
+            onMouseLeave={() => setHoveredIdx(null)}
+            style={{ cursor: 'default' }}
+          >
+            <defs>
+              <clipPath id={clipId}>
+                <rect x={x} y={y} width={w} height={h} rx={4} />
+              </clipPath>
+            </defs>
+            {/* Base background */}
             <rect
               x={x}
               y={y}
               width={w}
               height={h}
-              fill={bg}
-              stroke={border}
-              strokeWidth={1}
+              fill={isHovered ? (pctVal !== null && pctVal < 0 ? `${colors.negative}25` : pctVal !== null && pctVal > 0 ? `${colors.positive}25` : colors.surfaceLight) : bg}
+              stroke={isHovered ? (pctVal !== null && pctVal < 0 ? `${colors.negative}80` : pctVal !== null && pctVal > 0 ? `${colors.positive}80` : 'rgba(255,255,255,0.2)') : border}
+              strokeWidth={isHovered ? 1.5 : 1}
               rx={4}
             />
+            {/* P&L fill overlay — clipped to tile shape */}
+            {pctVal !== null && pctVal !== 0 && fillW > 0 && (
+              <rect
+                x={fillX}
+                y={y}
+                width={fillW}
+                height={h}
+                fill={fillColor}
+                clipPath={`url(#${clipId})`}
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
             {!isTiny && (
               <>
                 <text
