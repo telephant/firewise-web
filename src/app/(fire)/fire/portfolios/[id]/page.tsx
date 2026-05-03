@@ -18,33 +18,7 @@ import { AddDividendDialog } from '@/components/fire/add-dividend-dialog';
 import { HoldingTradesPanel } from '@/components/fire/holding-trades-panel';
 import { DcaPlanDialog } from '@/components/fire/dca-plan-dialog';
 import { DcaPendingCard } from '@/components/fire/dca-pending-card';
-
-// Commodity display helpers
-const COMMODITY_NAMES: Record<string, string> = {
-  'GC=F': 'Gold',
-  'SI=F': 'Silver',
-  'PL=F': 'Platinum',
-  'CL=F': 'Crude Oil',
-};
-
-const COMMODITY_UNIT_LABELS: Record<string, string> = {
-  'GC=F': 'troy oz',
-  'SI=F': 'troy oz',
-  'PL=F': 'troy oz',
-  'CL=F': 'barrel',
-};
-
-function isCommodity(market: string) {
-  return market === 'COMMODITY';
-}
-
-function displayTicker(ticker: string, market: string) {
-  return isCommodity(market) ? (COMMODITY_NAMES[ticker] ?? ticker) : ticker;
-}
-
-function displayUnit(ticker: string, market: string) {
-  return isCommodity(market) ? (COMMODITY_UNIT_LABELS[ticker] ?? 'unit') : 'shares';
-}
+import { isCommodity, displayTicker, displayUnit } from '@/lib/fire/commodities';
 
 function fmt(value: number | null, currency: string): string {
   if (value === null) return '—';
@@ -209,7 +183,7 @@ export default function PortfolioDetail() {
                 <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
-                      {['Ticker', 'Shares', 'Avg Cost', 'Current Price', 'Value', 'Unrealized P&L', ''].map(h => (
+                      {['Ticker', 'Qty', 'Avg Cost', 'Current Price', 'Value', 'Unrealized P&L', ''].map(h => (
                         <th key={h} style={{ paddingBottom: 8, paddingRight: 16, textAlign: 'left', color: colors.muted, fontWeight: 500, fontSize: 12 }}>{h}</th>
                       ))}
                     </tr>
@@ -235,7 +209,7 @@ export default function PortfolioDetail() {
                               {isCommodity(h.market) ? 'CMDTY' : h.market}
                             </span>
                           </td>
-                          <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{h.shares.toFixed(2)} {displayUnit(h.ticker, h.market)}</td>
+                          <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{isCommodity(h.market) ? h.shares.toFixed(4) : h.shares} {displayUnit(h.ticker, h.market)}</td>
                           <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{fmt(h.avg_cost, h.currency)}</td>
                           <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>
                             {h.current_price !== null ? fmt(h.current_price, h.currency) : '—'}
