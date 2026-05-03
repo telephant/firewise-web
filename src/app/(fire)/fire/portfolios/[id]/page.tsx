@@ -19,6 +19,33 @@ import { HoldingTradesPanel } from '@/components/fire/holding-trades-panel';
 import { DcaPlanDialog } from '@/components/fire/dca-plan-dialog';
 import { DcaPendingCard } from '@/components/fire/dca-pending-card';
 
+// Commodity display helpers
+const COMMODITY_NAMES: Record<string, string> = {
+  'GC=F': 'Gold',
+  'SI=F': 'Silver',
+  'PL=F': 'Platinum',
+  'CL=F': 'Crude Oil',
+};
+
+const COMMODITY_UNIT_LABELS: Record<string, string> = {
+  'GC=F': 'troy oz',
+  'SI=F': 'troy oz',
+  'PL=F': 'troy oz',
+  'CL=F': 'barrel',
+};
+
+function isCommodity(market: string) {
+  return market === 'COMMODITY';
+}
+
+function displayTicker(ticker: string, market: string) {
+  return isCommodity(market) ? (COMMODITY_NAMES[ticker] ?? ticker) : ticker;
+}
+
+function displayUnit(ticker: string, market: string) {
+  return isCommodity(market) ? (COMMODITY_UNIT_LABELS[ticker] ?? 'unit') : 'shares';
+}
+
 function fmt(value: number | null, currency: string): string {
   if (value === null) return '—';
   return new Intl.NumberFormat('en-US', {
@@ -193,10 +220,22 @@ export default function PortfolioDetail() {
                       return (
                         <tr key={`${h.ticker}-${h.market}`} style={{ borderBottom: `1px solid ${colors.border}` }}>
                           <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: colors.text }}>
-                            {h.ticker}
-                            <span style={{ marginLeft: 6, fontSize: 11, color: colors.muted }}>{h.market}</span>
+                            {displayTicker(h.ticker, h.market)}
+                            <span style={{
+                              display: 'inline-block',
+                              marginLeft: 6,
+                              padding: '1px 6px',
+                              borderRadius: 4,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              backgroundColor: isCommodity(h.market) ? `${colors.warning}20` : `${colors.accent}20`,
+                              color: isCommodity(h.market) ? colors.warning : colors.accent,
+                              border: `1px solid ${isCommodity(h.market) ? `${colors.warning}40` : `${colors.accent}40`}`,
+                            }}>
+                              {isCommodity(h.market) ? 'CMDTY' : h.market}
+                            </span>
                           </td>
-                          <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{h.shares}</td>
+                          <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{h.shares.toFixed(2)} {displayUnit(h.ticker, h.market)}</td>
                           <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{fmt(h.avg_cost, h.currency)}</td>
                           <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>
                             {h.current_price !== null ? fmt(h.current_price, h.currency) : '—'}
