@@ -114,6 +114,9 @@ export interface AnalyticsMetrics {
   concentration_hhi: number;
   market_count: number;
   data_months: number;
+  beta: number | null;
+  alpha_annual: number | null;
+  r_squared: number | null;
 }
 
 export interface AnalyticsFlag {

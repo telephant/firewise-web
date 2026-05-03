@@ -163,6 +163,20 @@ export function PortfolioAnalyticsPanel({ portfolioId }: Props) {
             value={fmtPctSigned(analytics.metrics.max_drawdown)}
             valueColor={analytics.metrics.max_drawdown !== null && analytics.metrics.max_drawdown < -0.15 ? colors.negative : undefined}
           />
+          <MetricRow
+            label="Beta (vs SPY)"
+            value={analytics.metrics.beta !== null ? analytics.metrics.beta.toFixed(2) : '—'}
+            valueColor={analytics.metrics.beta !== null && analytics.metrics.beta > 1.2 ? colors.warning : undefined}
+          />
+          <MetricRow
+            label="Alpha (annual)"
+            value={analytics.metrics.alpha_annual !== null ? `${analytics.metrics.alpha_annual >= 0 ? '+' : ''}${(analytics.metrics.alpha_annual * 100).toFixed(1)}%` : '—'}
+            valueColor={analytics.metrics.alpha_annual !== null ? (analytics.metrics.alpha_annual >= 0 ? colors.positive : colors.negative) : undefined}
+          />
+          <MetricRow
+            label="R²"
+            value={analytics.metrics.r_squared !== null ? analytics.metrics.r_squared.toFixed(2) : '—'}
+          />
 
           <Divider />
 
