@@ -150,58 +150,54 @@ export function DividendMonthCalendarView({
   const gridBorder = `1px solid ${colors.border}`;
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', justifyContent: 'center', gap: 0, alignItems: 'flex-start' }}>
-      {/* Calendar — fixed width, drawer attaches directly to its right */}
-      <div style={{ width: calWidth, flexShrink: 0 }}>
-      <div>
-        {/* Annual summary bar */}
-        <div style={{
-          display: 'flex',
-          gap: 0,
-          marginBottom: 16,
-          border: gridBorder,
-          borderRadius: 8,
-          overflow: 'hidden',
-        }}>
-          <div style={{ flex: 1, padding: '10px 14px', borderRight: gridBorder }}>
-            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-              Realized {year}
-            </div>
-            <div style={{ color: colors.positive, fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>
-              {fmtFull(annualSummary.realized, currency)}
-            </div>
-          </div>
-          <div style={{ flex: 1, padding: '10px 14px', borderRight: gridBorder }}>
-            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-              Projected {year}
-            </div>
-            <div style={{ color: colors.muted, fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>
-              {fmtFull(annualSummary.projected, currency)}
-            </div>
-          </div>
-          <div style={{ flex: 1, padding: '10px 14px' }}>
-            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-              Full Year Est.
-            </div>
-            <div style={{ color: colors.text, fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>
-              {fmtFull(annualSummary.total, currency)}
-            </div>
-          </div>
-        </div>
+    <div ref={containerRef} style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
+      {/* Left stats panel */}
+      <div style={{ width: 148, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
         {/* Year nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
           <button
             onClick={() => onYearChange(year - 1)}
-            style={{ background: 'none', border: gridBorder, borderRadius: 6, padding: '4px 10px', color: colors.muted, cursor: 'pointer', fontSize: 13 }}
+            style={{ background: 'none', border: gridBorder, borderRadius: 6, padding: '3px 8px', color: colors.muted, cursor: 'pointer', fontSize: 12 }}
           >‹</button>
-          <span style={{ color: colors.text, fontWeight: 700, fontSize: 15 }}>{year}</span>
+          <span style={{ color: colors.text, fontWeight: 700, fontSize: 14 }}>{year}</span>
           <button
             onClick={() => onYearChange(year + 1)}
-            style={{ background: 'none', border: gridBorder, borderRadius: 6, padding: '4px 10px', color: colors.muted, cursor: 'pointer', fontSize: 13 }}
+            style={{ background: 'none', border: gridBorder, borderRadius: 6, padding: '3px 8px', color: colors.muted, cursor: 'pointer', fontSize: 12 }}
           >›</button>
         </div>
 
+        {[
+          { label: 'Realized', value: annualSummary.realized, color: colors.positive },
+          { label: 'Projected', value: annualSummary.projected, color: colors.muted },
+          { label: 'Full Year', value: annualSummary.total, color: colors.text },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ padding: '12px 0', borderTop: gridBorder }}>
+            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>
+              {label}
+            </div>
+            <div style={{ color, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
+              {fmtFull(value, currency)}
+            </div>
+          </div>
+        ))}
+
+        {/* Legend */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 20, paddingTop: 16, borderTop: gridBorder }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: `${colors.positive}50`, flexShrink: 0 }} />
+            <span style={{ color: colors.muted, fontSize: 11 }}>Received</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: `${colors.muted}40`, flexShrink: 0 }} />
+            <span style={{ color: colors.muted, fontSize: 11 }}>Estimated</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar — fixed width, drawer attaches directly to its right */}
+      <div style={{ width: calWidth, flexShrink: 0 }}>
+      <div>
         {calendarLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
             <Loader size="sm" variant="dots" />
@@ -316,17 +312,6 @@ export function DividendMonthCalendarView({
               })}
             </div>
 
-            {/* Legend */}
-            <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: `${colors.positive}50` }} />
-                <span style={{ color: colors.muted, fontSize: 11 }}>Received</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: `${colors.muted}40` }} />
-                <span style={{ color: colors.muted, fontSize: 11 }}>Estimated</span>
-              </div>
-            </div>
           </>
         )}
       </div>
