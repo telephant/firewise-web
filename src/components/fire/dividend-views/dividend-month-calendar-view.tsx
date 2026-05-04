@@ -142,7 +142,7 @@ export function DividendMonthCalendarView({
         ) : (
           <>
             {/* 6×2 grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
               {MONTH_NAMES_SHORT.map((name, idx) => {
                 const { total, tickerCount, hasActual, hasForecasted } = getMonthDisplay(idx);
                 const isSelected = selectedMonth === idx;
@@ -154,7 +154,7 @@ export function DividendMonthCalendarView({
                     key={idx}
                     onClick={() => !isEmpty && setSelectedMonth(isSelected ? null : idx)}
                     style={{
-                      padding: '10px 12px',
+                      padding: '14px 16px',
                       borderRadius: 6,
                       border: isSelected
                         ? `1px solid ${colors.accent}60`
@@ -166,7 +166,7 @@ export function DividendMonthCalendarView({
                           : colors.surface,
                       cursor: isEmpty ? 'default' : 'pointer',
                       transition: 'all 0.12s',
-                      minHeight: 96,
+                      minHeight: 110,
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
