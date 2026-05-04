@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { colors, Loader } from '@/components/fire/ui';
 import type { Dividend, DividendCalendarResponse, DividendCalendarMonthDividend } from '@/lib/fire/api';
 
@@ -17,6 +17,14 @@ interface Props {
 const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
+
+const FREQ_LABEL: Record<string, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  yearly: 'Annual',
+  biweekly: 'Bi-weekly',
+  weekly: 'Weekly',
+};
 
 function fmt(value: number, currency: string): string {
   return new Intl.NumberFormat('en-US', {
@@ -36,14 +44,6 @@ function fmtFull(value: number, currency: string): string {
   }).format(value);
 }
 
-const FREQ_LABEL: Record<string, string> = {
-  monthly: 'Monthly',
-  quarterly: 'Quarterly',
-  yearly: 'Annual',
-  biweekly: 'Bi-weekly',
-  weekly: 'Weekly',
-};
-
 export function DividendMonthCalendarView({
   dividends,
   calendarData,
@@ -53,9 +53,26 @@ export function DividendMonthCalendarView({
   year,
   onYearChange,
 }: Props) {
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // 0-11
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(600);
 
-  // Build per-month actual dividends from the DB dividends prop
+  // Track container width responsively
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width;
+      if (w) setContainerWidth(w);
+    });
+    ro.observe(el);
+    setContainerWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
+
+  // Cap calendar width at 640px so it doesn't look too sparse on wide screens
+  const calWidth = Math.min(containerWidth, 640);
+
   const actualByMonth = useMemo(() => {
     const map = new Map<number, Dividend[]>();
     dividends.forEach(d => {
@@ -72,19 +89,14 @@ export function DividendMonthCalendarView({
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
 
-  // For a given month, compute display total respecting taxMode
-  // Priority: use calendarData (which has both actual+forecast blended) for the total,
-  // but apply taxMode on top via the actual dividends we have locally.
-  function getMonthDisplay(monthIdx: number): { total: number; tickerCount: number; hasActual: boolean; hasForecasted: boolean } {
+  function getMonthDisplay(monthIdx: number) {
     const actualDivs = actualByMonth.get(monthIdx) ?? [];
     const calMonth = calendarData?.months[monthIdx];
+    const forecastedDivs = (calMonth?.dividends ?? []).filter(d => d.isForecasted);
+    const taxRate = calendarData?.taxRates.us ?? 0.3;
 
     const actualTotal = actualDivs.reduce((sum, d) =>
       sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
-
-    const forecastedDivs = (calMonth?.dividends ?? []).filter(d => d.isForecasted);
-    // For forecasted, calendar API returns gross — apply net if needed (use US tax rate as default)
-    const taxRate = calendarData?.taxRates.us ?? 0.3;
     const forecastedTotal = forecastedDivs.reduce((sum, d) =>
       sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
 
@@ -99,7 +111,6 @@ export function DividendMonthCalendarView({
     };
   }
 
-  // Drawer content for selected month
   const drawerActual: Dividend[] = selectedMonth !== null ? (actualByMonth.get(selectedMonth) ?? []) : [];
   const drawerForecasted: DividendCalendarMonthDividend[] = useMemo(() => {
     if (selectedMonth === null || !calendarData) return [];
@@ -108,30 +119,32 @@ export function DividendMonthCalendarView({
       .filter(d => d.isForecasted && !actualTickers.has(d.ticker));
   }, [selectedMonth, calendarData, actualByMonth]);
 
-  const drawerOpen = selectedMonth !== null;
-
+  const taxRate = calendarData?.taxRates.us ?? 0.3;
   const drawerActualTotal = drawerActual.reduce((sum, d) =>
     sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
-  const drawerForecastedTotal = drawerForecasted.reduce((sum, d) => {
-    const taxRate = calendarData?.taxRates.us ?? 0.3;
-    return sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount);
-  }, 0);
+  const drawerForecastedTotal = drawerForecasted.reduce((sum, d) =>
+    sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
   const drawerTotal = drawerActualTotal + drawerForecastedTotal;
 
+  const drawerOpen = selectedMonth !== null;
+
+  // Border color for grid lines
+  const gridBorder = `1px solid ${colors.border}`;
+
   return (
-    <div style={{ display: 'flex', gap: 0 }}>
-      {/* Main grid */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+    <div ref={containerRef} style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+      {/* Calendar */}
+      <div style={{ width: calWidth, flexShrink: 0 }}>
         {/* Year nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <button
             onClick={() => onYearChange(year - 1)}
-            style={{ background: 'none', border: `1px solid ${colors.border}`, borderRadius: 6, padding: '4px 10px', color: colors.muted, cursor: 'pointer', fontSize: 13 }}
+            style={{ background: 'none', border: gridBorder, borderRadius: 6, padding: '4px 10px', color: colors.muted, cursor: 'pointer', fontSize: 13 }}
           >‹</button>
-          <span style={{ color: colors.text, fontWeight: 600, fontSize: 14 }}>{year}</span>
+          <span style={{ color: colors.text, fontWeight: 700, fontSize: 15 }}>{year}</span>
           <button
             onClick={() => onYearChange(year + 1)}
-            style={{ background: 'none', border: `1px solid ${colors.border}`, borderRadius: 6, padding: '4px 10px', color: colors.muted, cursor: 'pointer', fontSize: 13 }}
+            style={{ background: 'none', border: gridBorder, borderRadius: 6, padding: '4px 10px', color: colors.muted, cursor: 'pointer', fontSize: 13 }}
           >›</button>
         </div>
 
@@ -141,13 +154,24 @@ export function DividendMonthCalendarView({
           </div>
         ) : (
           <>
-            {/* 6×2 grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            {/* 4×3 grid with shared borders */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              border: gridBorder,
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}>
               {MONTH_NAMES_SHORT.map((name, idx) => {
                 const { total, tickerCount, hasActual, hasForecasted } = getMonthDisplay(idx);
                 const isSelected = selectedMonth === idx;
                 const isCurrent = idx === currentMonth && year === currentYear;
                 const isEmpty = tickerCount === 0;
+                // Draw right border except last in each row, bottom border except last row
+                const col = idx % 4;
+                const row = Math.floor(idx / 4);
+                const borderRight = col < 3 ? gridBorder : 'none';
+                const borderBottom = row < 2 ? gridBorder : 'none';
 
                 return (
                   <div
@@ -155,50 +179,58 @@ export function DividendMonthCalendarView({
                     onClick={() => !isEmpty && setSelectedMonth(isSelected ? null : idx)}
                     style={{
                       padding: '14px 16px',
-                      borderRadius: 6,
-                      border: isSelected
-                        ? `1px solid ${colors.accent}60`
-                        : `1px solid ${isCurrent ? colors.accent + '30' : colors.border}`,
+                      minHeight: 110,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      cursor: isEmpty ? 'default' : 'pointer',
+                      borderRight,
+                      borderBottom,
                       backgroundColor: isSelected
                         ? `${colors.accent}12`
                         : isCurrent
                           ? `${colors.accent}06`
-                          : colors.surface,
-                      cursor: isEmpty ? 'default' : 'pointer',
-                      transition: 'all 0.12s',
-                      minHeight: 110,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
+                          : 'transparent',
+                      transition: 'background 0.12s',
+                      position: 'relative',
                     }}
                   >
-                    {/* Month label */}
+                    {/* Selected indicator bar */}
+                    {isSelected && (
+                      <div style={{
+                        position: 'absolute',
+                        top: 0, left: 0, right: 0,
+                        height: 2,
+                        backgroundColor: colors.accent,
+                      }} />
+                    )}
+
+                    {/* Month name — large and prominent */}
                     <div style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: isCurrent ? colors.accent : colors.muted,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      marginBottom: 6,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: isCurrent ? colors.accent : isSelected ? colors.text : colors.muted,
+                      letterSpacing: '0.02em',
+                      marginBottom: 10,
                     }}>
                       {name}
                     </div>
 
                     {isEmpty ? (
-                      <div style={{ color: colors.border, fontSize: 12 }}>—</div>
+                      <div style={{ color: colors.border, fontSize: 13, marginTop: 'auto' }}>—</div>
                     ) : (
-                      <div>
-                        {/* Total */}
+                      <div style={{ marginTop: 'auto' }}>
+                        {/* Amount */}
                         <div style={{
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: 700,
                           color: hasActual ? colors.positive : colors.muted,
-                          marginBottom: 3,
+                          marginBottom: 6,
+                          letterSpacing: '-0.01em',
                         }}>
                           {fmt(total, currency)}
                         </div>
                         {/* Ticker count + badges */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
                           <span style={{ color: colors.muted, fontSize: 10 }}>
                             {tickerCount} stock{tickerCount !== 1 ? 's' : ''}
                           </span>
@@ -208,14 +240,18 @@ export function DividendMonthCalendarView({
                               backgroundColor: `${colors.positive}18`,
                               color: colors.positive,
                               fontWeight: 600,
-                            }}>received</span>
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.03em',
+                            }}>rcvd</span>
                           )}
-                          {hasForecasted && (
+                          {hasForecasted && !hasActual && (
                             <span style={{
                               fontSize: 9, padding: '1px 5px', borderRadius: 3,
-                              backgroundColor: `${colors.muted}18`,
+                              backgroundColor: `${colors.muted}15`,
                               color: colors.muted,
                               fontWeight: 600,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.03em',
                             }}>est.</span>
                           )}
                         </div>
@@ -227,7 +263,7 @@ export function DividendMonthCalendarView({
             </div>
 
             {/* Legend */}
-            <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
+            <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: `${colors.positive}50` }} />
                 <span style={{ color: colors.muted, fontSize: 11 }}>Received</span>
@@ -248,10 +284,10 @@ export function DividendMonthCalendarView({
         transition: 'width 0.2s ease',
         flexShrink: 0,
       }}>
-        <div style={{ width: 256, paddingLeft: 16, borderLeft: `1px solid ${colors.border}` }}>
-          {/* Drawer header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ color: colors.text, fontSize: 13, fontWeight: 600 }}>
+        <div style={{ width: 256, paddingLeft: 16, borderLeft: gridBorder }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <span style={{ color: colors.text, fontSize: 13, fontWeight: 700 }}>
               {selectedMonth !== null ? `${MONTH_NAMES_FULL[selectedMonth]} ${year}` : ''}
             </span>
             <button
@@ -264,7 +300,7 @@ export function DividendMonthCalendarView({
             {/* Actual section */}
             {drawerActual.length > 0 && (
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: colors.positive, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: colors.positive, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                   Received
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -291,12 +327,11 @@ export function DividendMonthCalendarView({
             {/* Forecasted section */}
             {drawerForecasted.length > 0 && (
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: colors.muted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: colors.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                   Estimated
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {drawerForecasted.map((d, i) => {
-                    const taxRate = calendarData?.taxRates.us ?? 0.3;
                     const amount = taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount;
                     return (
                       <div key={`fc-${i}`} style={{ padding: '8px 10px', backgroundColor: colors.surfaceLight, borderRadius: 6, border: `1px dashed ${colors.border}` }}>
