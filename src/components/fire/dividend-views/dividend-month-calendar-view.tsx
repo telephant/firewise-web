@@ -385,18 +385,21 @@ export function DividendMonthCalendarView({
       </div>
       </div>
 
-      {/* Right drawer */}
-      <div style={{
-        width: drawerOpen ? 256 : 0,
-        overflow: 'hidden',
-        transition: 'width 0.2s ease',
-        flexShrink: 0,
-      }}>
-        <div style={{ width: 256, paddingLeft: 16, borderLeft: gridBorder }}>
+      {/* Right drawer — always visible */}
+      <div style={{ width: 256, flexShrink: 0, paddingLeft: 16, borderLeft: gridBorder }}>
+        {!drawerOpen ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 180, gap: 8 }}>
+            <div style={{ fontSize: 20, opacity: 0.2 }}>↖</div>
+            <span style={{ color: colors.muted, fontSize: 12, textAlign: 'center', lineHeight: 1.5 }}>
+              Click a month to<br />see details
+            </span>
+          </div>
+        ) : (
+        <div>
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <span style={{ color: colors.text, fontSize: 13, fontWeight: 700 }}>
-              {selectedMonth !== null ? `${MONTH_NAMES_FULL[selectedMonth]} ${year}` : ''}
+              {MONTH_NAMES_FULL[selectedMonth!]} {year}
             </span>
             <button
               onClick={() => setSelectedMonth(null)}
@@ -465,6 +468,7 @@ export function DividendMonthCalendarView({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
