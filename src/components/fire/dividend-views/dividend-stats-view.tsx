@@ -28,7 +28,7 @@ export function DividendStatsView({ dividends, taxMode }: Props) {
           const dd = new Date(div.ex_date);
           return dd.getFullYear() === y && dd.getMonth() === m;
         })
-        .reduce((sum, div) => sum + (taxMode === 'net' ? div.total_amount * (1 - div.tax_rate) : div.total_amount), 0);
+        .reduce((sum, div) => sum + (taxMode === 'net' ? (div.amount_usd ?? div.total_amount) * (1 - div.tax_rate) : (div.amount_usd ?? div.total_amount)), 0);
       months.push({
         name: `${MONTH_NAMES[m]} ${String(y).slice(2)}`,
         value: total,
@@ -43,7 +43,7 @@ export function DividendStatsView({ dividends, taxMode }: Props) {
     const map = new Map<string, { amount: number; count: number }>();
     dividends.forEach(d => {
       const existing = map.get(d.ticker) ?? { amount: 0, count: 0 };
-      const amt = taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount;
+      const amt = taxMode === 'net' ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate) : (d.amount_usd ?? d.total_amount);
       map.set(d.ticker, { amount: existing.amount + amt, count: existing.count + 1 });
     });
     return [...map.entries()]

@@ -88,7 +88,7 @@ export function DividendMonthCalendarView({
     const taxRate = calendarData?.taxRates.us ?? 0.3;
 
     const actualTotal = actualDivs.reduce((sum, d) =>
-      sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
+      sum + (taxMode === 'net' ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate) : (d.amount_usd ?? d.total_amount)), 0);
     const forecastedTotal = forecastedDivs.reduce((sum, d) =>
       sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
 
@@ -113,7 +113,7 @@ export function DividendMonthCalendarView({
 
   const taxRate = calendarData?.taxRates.us ?? 0.3;
   const drawerActualTotal = drawerActual.reduce((sum, d) =>
-    sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
+    sum + (taxMode === 'net' ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate) : (d.amount_usd ?? d.total_amount)), 0);
   const drawerForecastedTotal = drawerForecasted.reduce((sum, d) =>
     sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
   const drawerTotal = drawerActualTotal + drawerForecastedTotal;
@@ -134,7 +134,7 @@ export function DividendMonthCalendarView({
       const forecastedDivs = (calMonth?.dividends ?? []).filter(d => d.isForecasted);
 
       const actualTotal = actualDivs.reduce((sum, d) =>
-        sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
+        sum + (taxMode === 'net' ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate) : (d.amount_usd ?? d.total_amount)), 0);
       const forecastedTotal = forecastedDivs.reduce((sum, d) =>
         sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
 

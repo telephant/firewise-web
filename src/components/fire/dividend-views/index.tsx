@@ -30,7 +30,9 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
   const [taxMode, setTaxMode] = useState<TaxMode>('gross');
 
   const grandTotal = dividends.reduce((sum, d) =>
-    sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
+    sum + (taxMode === 'net'
+      ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate)
+      : (d.amount_usd ?? d.total_amount)), 0);
 
   const now = new Date();
   const [calendarYear, setCalendarYear] = useState(now.getFullYear());

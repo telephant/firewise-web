@@ -57,6 +57,7 @@ export interface Dividend {
   pay_date: string | null;
   source: 'auto' | 'manual';
   created_at: string;
+  amount_usd?: number;
 }
 
 export interface DividendCalendarMonthDividend {
