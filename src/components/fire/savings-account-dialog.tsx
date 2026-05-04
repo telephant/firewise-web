@@ -43,7 +43,7 @@ export function SavingsAccountDialog({ account, onSuccess, onClose }: Props) {
     const payload: CreateSavingsAccountData = {
       ...form,
       interest_rate: form.interest_rate / 100, // convert % → decimal for API
-      bank: form.bank || undefined,
+      bank: form.bank || '',
       notes: form.notes || undefined,
     };
 

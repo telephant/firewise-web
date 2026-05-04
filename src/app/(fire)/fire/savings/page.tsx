@@ -62,10 +62,16 @@ export default function SavingsPage() {
   };
 
   const handleAccountSuccess = (account: SavingsAccount) => {
-    setAccounts(prev => {
-      const idx = prev.findIndex(a => a.id === account.id);
-      return idx >= 0 ? prev.map(a => a.id === account.id ? account : a) : [account, ...prev];
-    });
+    const isNew = !accounts.find(a => a.id === account.id);
+    if (isNew) {
+      // New account: add it optimistically (it's fully enriched from createAccount response)
+      setAccounts(prev => [account, ...prev]);
+    } else {
+      // Edited account: re-fetch to get fresh enriched fields (next_payout_date, etc.)
+      savingsApi.list().then(res => {
+        if (res.success && res.data) setAccounts(res.data);
+      });
+    }
     setAccountDialog({ open: false });
   };
 
