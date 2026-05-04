@@ -451,7 +451,7 @@ export default function FireDashboard() {
 
             {/* Savings group */}
             <p style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '16px 0 8px' }}>Savings</p>
-            {savingsLoading ? (
+            {!savingsReady ? (
               <Loader size="sm" variant="dots" />
             ) : savings.length === 0 ? (
               <p style={{ color: colors.muted, fontSize: 12 }}>No savings accounts yet.</p>
