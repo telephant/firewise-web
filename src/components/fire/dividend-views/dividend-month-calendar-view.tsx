@@ -142,7 +142,7 @@ export function DividendMonthCalendarView({
         ) : (
           <>
             {/* 6×2 grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
               {MONTH_NAMES_SHORT.map((name, idx) => {
                 const { total, tickerCount, hasActual, hasForecasted } = getMonthDisplay(idx);
                 const isSelected = selectedMonth === idx;
