@@ -28,7 +28,7 @@ export function DividendStatsView({ dividends, taxMode }: Props) {
           const dd = new Date(div.ex_date);
           return dd.getFullYear() === y && dd.getMonth() === m;
         })
-        .reduce((sum, div) => sum + (taxMode === 'net' ? (div.amount_usd ?? div.total_amount) * (1 - div.tax_rate) : (div.amount_usd ?? div.total_amount)), 0);
+        .reduce((sum, div) => sum + (taxMode === 'net' ? (div.amount_usd ?? 0) * (1 - div.tax_rate) : (div.amount_usd ?? 0)), 0);
       months.push({
         name: `${MONTH_NAMES[m]} ${String(y).slice(2)}`,
         value: total,

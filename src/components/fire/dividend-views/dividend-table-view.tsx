@@ -1,6 +1,7 @@
 'use client';
 
 import { colors, Button } from '@/components/fire/ui';
+import { useCurrency } from '@/components/fire/currency-context';
 import type { Dividend } from '@/lib/fire/api';
 
 interface Props {
@@ -20,9 +21,24 @@ function fmt(value: number, currency: string): string {
 }
 
 export function DividendTableView({ dividends, currency, taxMode, onAdd }: Props) {
+  const { fmt: fmtDisplay } = useCurrency();
+
+  const total = dividends.reduce((sum, d) => {
+    const amt = taxMode === 'net'
+      ? (d.amount_usd ?? 0) * (1 - d.tax_rate)
+      : (d.amount_usd ?? 0);
+    return sum + amt;
+  }, 0);
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        {dividends.length > 0 ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: colors.muted, fontSize: 11, fontWeight: 500 }}>Total</span>
+            <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>{fmtDisplay(total)}</span>
+          </div>
+        ) : <div />}
         <Button variant="outline" onClick={onAdd}>Add Dividend</Button>
       </div>
       {dividends.length === 0 ? (

@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { colors, Loader } from '@/components/fire/ui';
-import { useCurrency } from '@/components/fire/currency-context';
 import type { Dividend, DividendCalendarResponse, DividendCalendarMonthDividend } from '@/lib/fire/api';
 
 interface Props {
@@ -44,7 +43,16 @@ export function DividendMonthCalendarView({
   year,
   onYearChange,
 }: Props) {
-  const { fmt: fmtDisplay } = useCurrency();
+  // Calendar amounts from backend are in calendarData.currency (portfolio native, not USD).
+  // Use fmtCal for all calendar aggregates — do not pass through useCurrency() which expects USD.
+  const calCurrency = calendarData?.currency || 'USD';
+  const fmtCal = (value: number, decimals = 0) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: calCurrency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(600);
@@ -82,21 +90,21 @@ export function DividendMonthCalendarView({
   const currentYear = new Date().getFullYear();
 
   function getMonthDisplay(monthIdx: number) {
-    const actualDivs = actualByMonth.get(monthIdx) ?? [];
+    // All amounts in calendarData are already in calCurrency (converted by backend).
     const calMonth = calendarData?.months[monthIdx];
-    const forecastedDivs = (calMonth?.dividends ?? []).filter(d => d.isForecasted);
+    const allDivs = calMonth?.dividends ?? [];
     const taxRate = calendarData?.taxRates.us ?? 0.3;
 
-    const actualTotal = actualDivs.reduce((sum, d) =>
-      sum + (taxMode === 'net' ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate) : (d.amount_usd ?? d.total_amount)), 0);
-    const forecastedTotal = forecastedDivs.reduce((sum, d) =>
+    const total = allDivs.reduce((sum, d) =>
       sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
 
+    const actualDivs = allDivs.filter(d => !d.isForecasted);
+    const forecastedDivs = allDivs.filter(d => d.isForecasted);
     const actualTickers = new Set(actualDivs.map(d => d.ticker));
     const forecastedTickers = new Set(forecastedDivs.map(d => d.ticker).filter(t => !actualTickers.has(t)));
 
     return {
-      total: actualTotal + forecastedTotal,
+      total,
       tickerCount: actualTickers.size + forecastedTickers.size,
       hasActual: actualDivs.length > 0,
       hasForecasted: forecastedDivs.length > 0,
@@ -112,8 +120,12 @@ export function DividendMonthCalendarView({
   }, [selectedMonth, calendarData, actualByMonth]);
 
   const taxRate = calendarData?.taxRates.us ?? 0.3;
-  const drawerActualTotal = drawerActual.reduce((sum, d) =>
-    sum + (taxMode === 'net' ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate) : (d.amount_usd ?? d.total_amount)), 0);
+  // Drawer totals use calendarData amounts (already in calCurrency) for consistent aggregation.
+  const drawerCalActual = selectedMonth !== null
+    ? (calendarData?.months[selectedMonth]?.dividends ?? []).filter(d => !d.isForecasted)
+    : [];
+  const drawerActualTotal = drawerCalActual.reduce((sum, d) =>
+    sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
   const drawerForecastedTotal = drawerForecasted.reduce((sum, d) =>
     sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
   const drawerTotal = drawerActualTotal + drawerForecastedTotal;
@@ -121,6 +133,7 @@ export function DividendMonthCalendarView({
   const drawerOpen = selectedMonth !== null;
 
   // Annual summary: realized + projected + derived stats
+  // All amounts from calendarData are in calCurrency (backend-converted).
   const annualSummary = useMemo(() => {
     const taxRate = calendarData?.taxRates.us ?? 0.3;
     let realized = 0;
@@ -129,12 +142,13 @@ export function DividendMonthCalendarView({
     let bestMonth = { idx: -1, amount: 0 };
 
     for (let m = 0; m < 12; m++) {
-      const actualDivs = actualByMonth.get(m) ?? [];
       const calMonth = calendarData?.months[m];
-      const forecastedDivs = (calMonth?.dividends ?? []).filter(d => d.isForecasted);
+      const allDivs = calMonth?.dividends ?? [];
+      const actualDivs = allDivs.filter(d => !d.isForecasted);
+      const forecastedDivs = allDivs.filter(d => d.isForecasted);
 
       const actualTotal = actualDivs.reduce((sum, d) =>
-        sum + (taxMode === 'net' ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate) : (d.amount_usd ?? d.total_amount)), 0);
+        sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
       const forecastedTotal = forecastedDivs.reduce((sum, d) =>
         sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
 
@@ -184,7 +198,7 @@ export function DividendMonthCalendarView({
               {label}
             </div>
             <div style={{ color, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
-              {fmtDisplay(value)}
+              {fmtCal(value)}
             </div>
           </div>
         ))}
@@ -219,7 +233,7 @@ export function DividendMonthCalendarView({
             Avg / Month
           </div>
           <div style={{ color: colors.text, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
-            {annualSummary.monthsReceived > 0 ? fmtDisplay(annualSummary.avgPerMonth) : '—'}
+            {annualSummary.monthsReceived > 0 ? fmtCal(annualSummary.avgPerMonth) : '—'}
           </div>
         </div>
 
@@ -231,7 +245,7 @@ export function DividendMonthCalendarView({
           {annualSummary.bestMonth.idx >= 0 && annualSummary.bestMonth.amount > 0 ? (
             <>
               <div style={{ color: colors.text, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
-                {fmtDisplay(annualSummary.bestMonth.amount)}
+                {fmtCal(annualSummary.bestMonth.amount)}
               </div>
               <div style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>
                 {MONTH_NAMES_SHORT[annualSummary.bestMonth.idx]}
@@ -337,7 +351,7 @@ export function DividendMonthCalendarView({
                           marginBottom: 6,
                           letterSpacing: '-0.01em',
                         }}>
-                          {fmtDisplay(total, { decimals: 0 })}
+                          {fmtCal(total)}
                         </div>
                         {/* Ticker count + badges */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
@@ -440,7 +454,7 @@ export function DividendMonthCalendarView({
                       <div key={`fc-${i}`} style={{ padding: '8px 10px', backgroundColor: colors.surfaceLight, borderRadius: 6, border: `1px dashed ${colors.border}` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                           <span style={{ color: colors.text, fontWeight: 600, fontSize: 12 }}>{d.ticker}</span>
-                          <span style={{ color: colors.muted, fontSize: 12, fontWeight: 600 }}>{fmtDisplay(amount)}</span>
+                          <span style={{ color: colors.muted, fontSize: 12, fontWeight: 600 }}>{fmtCal(amount, 2)}</span>
                         </div>
                         <div style={{ color: colors.muted, fontSize: 10 }}>
                           {d.frequency ? FREQ_LABEL[d.frequency] ?? d.frequency : 'Estimated'}
@@ -456,7 +470,7 @@ export function DividendMonthCalendarView({
             {/* Month total */}
             <div style={{ paddingTop: 10, borderTop: `1px solid ${colors.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: colors.muted, fontSize: 11, fontWeight: 600 }}>Month Total</span>
-              <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>{fmtDisplay(drawerTotal)}</span>
+              <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>{fmtCal(drawerTotal, 2)}</span>
             </div>
           </div>
         </div>

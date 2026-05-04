@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { colors } from '@/components/fire/ui';
+import { useCurrency } from '@/components/fire/currency-context';
 import { displayTicker } from '@/lib/fire/commodities';
 import type { Holding } from '@/lib/fire/api';
 
@@ -87,7 +88,6 @@ interface TooltipPos { x: number; y: number; }
 
 interface Props {
   holdings: Holding[];
-  currency: string;
   totalValue: number;
 }
 
@@ -100,15 +100,9 @@ const BG_POSITIVE = '#0a1a10';
 const BG_NEGATIVE = '#1a0a0a';
 const BG_NEUTRAL  = '#0f0f11';
 
-function fmtValue(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency,
-    minimumFractionDigits: 0, maximumFractionDigits: 0,
-    notation: value >= 1_000_000 ? 'compact' : 'standard',
-  }).format(value);
-}
 
-export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
+export function PortfolioTreemap({ holdings, totalValue }: Props) {
+  const { fmt: fmtDisplay } = useCurrency();
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState<TooltipPos>({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -189,7 +183,7 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
         const clipId = `c-${idx}`;
         const name = displayTicker(tile.ticker, tile.market);
         const weightStr = `${(tile.weight * 100).toFixed(1)}%`;
-        const valueStr = fmtValue(tile.value, currency);
+        const valueStr = fmtDisplay(tile.value, { decimals: 0 });
         const pctStr = pctVal !== null ? `${pctVal >= 0 ? '+' : ''}${pctVal.toFixed(2)}%` : null;
 
         const maxNameFontSize = Math.min(14, Math.max(8, (w - 8) / Math.max(name.length, 1) * (14 / CHAR_W)));
@@ -294,7 +288,7 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
 
     {/* Tooltip */}
     {hoveredHolding && (
-      <Tooltip holding={hoveredHolding} currency={currency} pos={tooltipPos} containerRef={containerRef} />
+      <Tooltip holding={hoveredHolding} pos={tooltipPos} containerRef={containerRef} />
     )}
     </div>
   );
@@ -308,10 +302,9 @@ function fmt(value: number | null, currency: string): string {
 }
 
 function Tooltip({
-  holding, currency, pos, containerRef,
+  holding, pos, containerRef,
 }: {
   holding: Holding;
-  currency: string;
   pos: TooltipPos;
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
@@ -337,8 +330,8 @@ function Tooltip({
     ['Shares',        holding.shares.toLocaleString()],
     ['Avg Cost',      fmt(holding.avg_cost, holding.currency)],
     ['Current Price', holding.current_price !== null ? fmt(holding.current_price, holding.currency) : '—'],
-    ['Market Value',  fmt(holding.value, currency)],
-    ['Unrealized P&L', fmt(holding.unrealized_pl, currency), pctStr],
+    ['Market Value',  fmt(holding.value, holding.currency)],
+    ['Unrealized P&L', fmt(holding.unrealized_pl, holding.currency), pctStr],
   ];
 
   return (

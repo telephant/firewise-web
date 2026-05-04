@@ -152,8 +152,10 @@ export default function PortfolioDetail() {
     ...(stats ? [{ month: 'Now', value: stats.total_value, snapshotDate: 'now' }] : []),
   ];
 
+  // sinceInception compares snapshot (native currency) vs stats (USD).
+  // Only meaningful when portfolio currency is USD; otherwise currencies don't match.
   const sinceInception =
-    snapshots.length > 0 && stats
+    snapshots.length > 0 && stats && (snapshots[0].currency || 'USD').toUpperCase() === 'USD'
       ? ((stats.total_value - snapshots[0].total_value) / snapshots[0].total_value) * 100
       : null;
 
@@ -239,7 +241,6 @@ export default function PortfolioDetail() {
           <div style={{ flex: '0 0 65%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <PortfolioTreemap
               holdings={holdings}
-              currency={currency}
               totalValue={stats?.total_value ?? 0}
             />
           </div>
@@ -459,7 +460,7 @@ export default function PortfolioDetail() {
                       valueWidth={90}
                       rowHeight={32}
                       barSize={14}
-                      valueFormatter={(v) => fmtCurrency(v)}
+                      valueFormatter={(v) => new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)}
                       showTooltip
                     />
                   )}
