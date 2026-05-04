@@ -21,6 +21,7 @@ import { DcaPendingCard } from '@/components/fire/dca-pending-card';
 import { isCommodity, displayTicker, displayUnit } from '@/lib/fire/commodities';
 import { PortfolioTreemap } from '@/components/fire/portfolio-treemap';
 import { PortfolioAnalyticsPanel } from '@/components/fire/portfolio-analytics-panel';
+import { DividendViews } from '@/components/fire/dividend-views';
 
 function fmt(value: number | null, currency: string): string {
   if (value === null) return '—';
@@ -331,52 +332,11 @@ export default function PortfolioDetail() {
 
         {/* Dividends Tab */}
         <TabsContent value="dividends" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-              <Button variant="outline" onClick={() => setDividendDialogOpen(true)}>Add Dividend</Button>
-            </div>
-            {dividends.length === 0 ? (
-              <p style={{ textAlign: 'center', padding: '48px 0', color: colors.muted, fontSize: 14 }}>No dividends recorded yet.</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
-                      {['Ticker', 'Ex Date', 'Pay Date', 'Amount/Share', 'Total Amount', 'Tax Rate', 'Source'].map(h => (
-                        <th key={h} style={{ paddingBottom: 8, paddingRight: 16, textAlign: 'left', color: colors.muted, fontWeight: 500, fontSize: 12 }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dividends.map((d) => (
-                      <tr key={d.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
-                        <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: colors.text }}>{d.ticker}</td>
-                        <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{d.ex_date}</td>
-                        <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{d.pay_date || '—'}</td>
-                        <td style={{ padding: '12px 16px 12px 0', color: colors.positive }}>{fmt(d.amount_per_share, d.currency)}</td>
-                        <td style={{ padding: '12px 16px 12px 0', color: colors.positive }}>{fmt(d.total_amount, d.currency)}</td>
-                        <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{(d.tax_rate * 100).toFixed(0)}%</td>
-                        <td style={{ padding: '12px 16px 12px 0' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            fontWeight: 500,
-                            backgroundColor: d.source === 'auto' ? 'rgba(94,106,210,0.15)' : 'rgba(255,255,255,0.06)',
-                            color: d.source === 'auto' ? colors.accent : colors.muted,
-                            border: `1px solid ${d.source === 'auto' ? 'rgba(94,106,210,0.3)' : colors.border}`,
-                          }}>
-                            {d.source}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          <DividendViews
+            dividends={dividends}
+            currency={currency}
+            onAddDividend={() => setDividendDialogOpen(true)}
+          />
         </TabsContent>
 
         {/* P&L Tab */}
