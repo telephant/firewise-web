@@ -47,6 +47,8 @@ export default function SavingsPage() {
         ...m,
         [accountId]: { records: res.data!.records, forecast: res.data!.forecast, loading: false, tab: m[accountId]?.tab ?? 'history' },
       }));
+    } else {
+      setDetailMap(m => ({ ...m, [accountId]: { ...m[accountId], loading: false } }));
     }
   }, []);
 
@@ -72,10 +74,12 @@ export default function SavingsPage() {
     setDeletingId(id);
     const res = await savingsApi.delete(id);
     setDeletingId(null);
-    if (res.success) {
-      setAccounts(prev => prev.filter(a => a.id !== id));
-      if (expandedId === id) setExpandedId(null);
+    if (!res.success) {
+      alert('Failed to delete savings account. Please try again.');
+      return;
     }
+    setAccounts(prev => prev.filter(a => a.id !== id));
+    if (expandedId === id) setExpandedId(null);
   };
 
   const handleInterestSuccess = (accountId: string, record: InterestRecord) => {
@@ -94,13 +98,15 @@ export default function SavingsPage() {
 
   const handleDeleteInterest = async (accountId: string, recordId: string) => {
     const res = await savingsApi.deleteInterest(accountId, recordId);
-    if (res.success) {
-      setDetailMap(m => ({
-        ...m,
-        [accountId]: { ...m[accountId], records: m[accountId].records.filter(r => r.id !== recordId) },
-      }));
-      loadDetail(accountId);
+    if (!res.success) {
+      alert('Failed to delete interest record. Please try again.');
+      return;
     }
+    setDetailMap(m => ({
+      ...m,
+      [accountId]: { ...m[accountId], records: m[accountId].records.filter(r => r.id !== recordId) },
+    }));
+    loadDetail(accountId);
   };
 
   const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
