@@ -13,6 +13,7 @@ import {
 } from '@/lib/fire/api';
 import type { Holding, Dividend, PortfolioStats, Portfolio, PortfolioSnapshot, RealizedPLItem, DcaPlan, DcaPending } from '@/lib/fire/api';
 import { useSetPageTitle } from '@/components/fire/page-context';
+import { useCurrency } from '@/components/fire/currency-context';
 import { RecordTradeDialog } from '@/components/fire/record-trade-dialog';
 import { AddDividendDialog } from '@/components/fire/add-dividend-dialog';
 import { HoldingTradesPanel } from '@/components/fire/holding-trades-panel';
@@ -61,6 +62,7 @@ const HOLDINGS_PAGE_SIZE = 10;
 
 export default function PortfolioDetail() {
   const { id } = useParams<{ id: string }>();
+  const { fmt: fmtCurrency } = useCurrency();
 
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   useSetPageTitle(portfolio?.name ?? null);
@@ -423,7 +425,7 @@ export default function PortfolioDetail() {
                         <tr key={item.ticker} style={{ borderBottom: `1px solid ${colors.border}` }}>
                           <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: colors.text }}>{item.ticker}</td>
                           <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: plColor }}>
-                            {fmt(item.realized_pl, currency)}
+                            {fmtCurrency(item.realized_pl)}
                           </td>
                           <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{item.trade_count}</td>
                         </tr>
@@ -455,7 +457,7 @@ export default function PortfolioDetail() {
                       valueWidth={90}
                       rowHeight={32}
                       barSize={14}
-                      valueFormatter={(v) => fmt(v, currency)}
+                      valueFormatter={(v) => fmtCurrency(v)}
                       showTooltip
                     />
                   )}
@@ -472,25 +474,25 @@ export default function PortfolioDetail() {
                     }
                     valueColor={sinceInception !== null && sinceInception >= 0 ? 'positive' : 'negative'}
                   />
-                  <StatCard label="Total Value" value={fmt(stats.total_value, currency)} valueColor="default" />
-                  <StatCard label="Total Cost" value={fmt(stats.total_cost, currency)} valueColor="default" />
+                  <StatCard label="Total Value" value={fmtCurrency(stats.total_value)} valueColor="default" />
+                  <StatCard label="Total Cost" value={fmtCurrency(stats.total_cost)} valueColor="default" />
                   <StatCard
                     label="Unrealized P&L"
-                    value={fmt(stats.unrealized_pl, currency)}
+                    value={fmtCurrency(stats.unrealized_pl)}
                     valueColor={stats.unrealized_pl >= 0 ? 'positive' : 'negative'}
                   />
                   <StatCard
                     label="Realized P&L"
-                    value={fmt(stats.realized_pl, currency)}
+                    value={fmtCurrency(stats.realized_pl)}
                     valueColor={stats.realized_pl >= 0 ? 'positive' : 'negative'}
                   />
-                  <StatCard label="Dividends (YTD)" value={fmt(stats.dividend_ytd, currency)} valueColor="positive" />
-                  <StatCard label="Dividends (MTD)" value={fmt(stats.dividend_mtd, currency)} valueColor="positive" />
+                  <StatCard label="Dividends (YTD)" value={fmtCurrency(stats.dividend_ytd)} valueColor="positive" />
+                  <StatCard label="Dividends (MTD)" value={fmtCurrency(stats.dividend_mtd)} valueColor="positive" />
                   <StatCard
                     label="MoM Gain"
                     value={
                       stats.mom_gain !== null
-                        ? `${fmt(stats.mom_gain, currency)} (${pct(stats.mom_gain_pct)})`
+                        ? `${fmtCurrency(stats.mom_gain)} (${pct(stats.mom_gain_pct)})`
                         : '—'
                     }
                     valueColor={stats.mom_gain !== null ? (stats.mom_gain >= 0 ? 'positive' : 'negative') : 'default'}
