@@ -42,6 +42,7 @@ export interface Holding {
   cost: number;
   unrealized_pl: number | null;
   unrealized_pl_pct: number | null;
+  next_ex_date: string | null; // ISO date, e.g. "2025-06-15"
 }
 
 export interface Dividend {
@@ -225,6 +226,49 @@ export interface RealizedPLItem {
 export interface ExchangeRates {
   base: string;
   rates: Record<string, number>;
+}
+
+export interface SavingsAccount {
+  id: string;
+  belong_id: string;
+  name: string;
+  bank: string | null;
+  currency: string;
+  balance: number;
+  interest_rate: number;
+  compound_frequency: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  last_credited_at: string | null;
+  next_payout_date: string;
+  next_payout_amount: number;
+  total_interest_ytd: number;
+}
+
+export interface InterestRecord {
+  id: string;
+  account_id: string;
+  amount: number;
+  credited_at: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface ForecastPeriod {
+  period: number;
+  date: string;
+  amount: number;
+}
+
+export interface CreateSavingsAccountData {
+  name: string;
+  bank?: string;
+  currency: string;
+  balance: number;
+  interest_rate: number;
+  compound_frequency: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
+  notes?: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -538,4 +582,20 @@ export const dcaApi = {
     fetchApi<DcaPending>(`/fire/dca/pending/${id}/confirm`, { method: 'POST', body: JSON.stringify(data) }),
   skipPending: (id: string) =>
     fetchApi<DcaPending>(`/fire/dca/pending/${id}/skip`, { method: 'POST' }),
+};
+
+export const savingsApi = {
+  list: () => fetchApi<SavingsAccount[]>('/fire/savings'),
+  create: (data: CreateSavingsAccountData) =>
+    fetchApi<SavingsAccount>('/fire/savings', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<CreateSavingsAccountData>) =>
+    fetchApi<{ id: string }>(`/fire/savings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    fetchApi(`/fire/savings/${id}`, { method: 'DELETE' }),
+  listInterest: (id: string) =>
+    fetchApi<{ records: InterestRecord[]; forecast: ForecastPeriod[] }>(`/fire/savings/${id}/interest`),
+  addInterest: (id: string, data: { amount: number; credited_at: string; notes?: string }) =>
+    fetchApi<InterestRecord>(`/fire/savings/${id}/interest`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteInterest: (id: string, recordId: string) =>
+    fetchApi(`/fire/savings/${id}/interest/${recordId}`, { method: 'DELETE' }),
 };
