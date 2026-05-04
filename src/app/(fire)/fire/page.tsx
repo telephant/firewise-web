@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   portfolioApi,
   portfolioStatsApi,
@@ -79,6 +80,7 @@ function DonutChart({ slices, centerLabel }: { slices: DonutSlice[]; centerLabel
 
 export default function FireDashboard() {
   const { fmt } = useCurrency();
+  const router = useRouter();
 
   // Raw data
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
@@ -369,7 +371,123 @@ export default function FireDashboard() {
         </div>
       </div>
 
-      {/* Sections 2 & 3 coming in next tasks */}
+      {/* ── Section 2: Asset Distribution ── */}
+      <div style={{ marginBottom: 28 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: colors.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Asset Distribution</p>
+        <div style={{
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
+          borderRadius: 12,
+          padding: '20px 24px',
+          display: 'flex',
+          gap: 32,
+          alignItems: 'flex-start',
+        }}>
+          {/* Left: Donut */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+            {assetsReady ? (
+              <>
+                <DonutChart slices={donutSlices} centerLabel={fmt(totalAssetsUsd)} />
+                <div style={{ display: 'flex', gap: 16 }}>
+                  {donutSlices.map(sl => (
+                    <div key={sl.name} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: sl.color }} />
+                      <span style={{ color: colors.muted, fontSize: 11 }}>{sl.name}</span>
+                      <span style={{ color: colors.text, fontSize: 11, fontWeight: 600 }}>
+                        {totalAssetsUsd > 0 ? ((sl.value / totalAssetsUsd) * 100).toFixed(1) : '0'}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader size="md" variant="bar" />
+              </div>
+            )}
+          </div>
+
+          {/* Right: Detail list */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Investments group */}
+            <p style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Investments</p>
+            {portfoliosLoading ? (
+              <Loader size="sm" variant="dots" />
+            ) : portfolios.length === 0 ? (
+              <p style={{ color: colors.muted, fontSize: 12 }}>No portfolios yet.</p>
+            ) : (
+              portfolios.map((p) => {
+                const stats = statsMap[p.id];
+                const value = stats?.total_value ?? 0;
+                const pct = totalAssetsUsd > 0 ? (value / totalAssetsUsd) * 100 : 0;
+                const plPct = stats && stats.total_cost > 0 ? (stats.unrealized_pl / stats.total_cost) * 100 : null;
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => router.push(`/fire/portfolios/${p.id}`)}
+                    style={{
+                      display: 'flex', alignItems: 'center', padding: '8px 0',
+                      borderBottom: `1px solid ${colors.border}`, cursor: 'pointer',
+                      gap: 8,
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                  >
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: colors.accent, flexShrink: 0, opacity: 0.8 }} />
+                    <span style={{ flex: 1, color: colors.text, fontSize: 13, fontWeight: 500 }}>{p.name}</span>
+                    <span style={{ color: colors.muted, fontSize: 12 }}>{pct.toFixed(1)}%</span>
+                    <span style={{ color: colors.text, fontSize: 13, fontWeight: 600, minWidth: 90, textAlign: 'right' }}>
+                      {statsLoading ? '—' : fmt(value)}
+                    </span>
+                    {plPct !== null && (
+                      <span style={{ color: plPct >= 0 ? colors.positive : colors.negative, fontSize: 11, minWidth: 55, textAlign: 'right' }}>
+                        {plPct >= 0 ? '+' : ''}{plPct.toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {/* Savings group */}
+            <p style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '16px 0 8px' }}>Savings</p>
+            {savingsLoading ? (
+              <Loader size="sm" variant="dots" />
+            ) : savings.length === 0 ? (
+              <p style={{ color: colors.muted, fontSize: 12 }}>No savings accounts yet.</p>
+            ) : (
+              savings.map(a => {
+                const balUsd = toUsdAmount(a.balance, a.currency);
+                const pct = totalAssetsUsd > 0 ? (balUsd / totalAssetsUsd) * 100 : 0;
+                return (
+                  <div
+                    key={a.id}
+                    onClick={() => router.push('/fire/savings')}
+                    style={{
+                      display: 'flex', alignItems: 'center', padding: '8px 0',
+                      borderBottom: `1px solid ${colors.border}`, cursor: 'pointer',
+                      gap: 8,
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                  >
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: colors.cyan, flexShrink: 0, opacity: 0.8 }} />
+                    <span style={{ flex: 1, color: colors.text, fontSize: 13, fontWeight: 500 }}>{a.name}</span>
+                    <span style={{ color: colors.muted, fontSize: 12 }}>{pct.toFixed(1)}%</span>
+                    <span style={{ color: colors.info, fontSize: 12 }}>{(a.interest_rate * 100).toFixed(2)}%</span>
+                    <span style={{ color: colors.muted, fontSize: 10, backgroundColor: colors.surfaceLight, padding: '1px 6px', borderRadius: 4 }}>{a.currency}</span>
+                    <span style={{ color: colors.text, fontSize: 13, fontWeight: 600, minWidth: 90, textAlign: 'right' }}>
+                      {savingsReady ? fmt(balUsd) : '—'}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Section 3 coming next */}
     </div>
   );
 }
