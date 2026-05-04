@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { colors, Button, Input } from '@/components/fire/ui';
+import { colors, Button, Input, DateInput } from '@/components/fire/ui';
 import { savingsApi, SavingsAccount, CreateSavingsAccountData } from '@/lib/fire/api';
 
-const CURRENCY_OPTIONS = ['USD', 'EUR', 'GBP', 'SGD', 'HKD', 'JPY', 'CNY', 'AUD', 'CAD', 'CHF'];
+const CURRENCY_OPTIONS = [
+  'USD', 'EUR', 'GBP', 'AED', 'SGD', 'HKD', 'JPY', 'CNY', 'AUD', 'CAD', 'CHF',
+  'MYR', 'THB', 'IDR', 'INR', 'KRW', 'TWD', 'NZD', 'SEK', 'NOK', 'DKK',
+  'SAR', 'QAR', 'KWD', 'BHD', 'OMR', 'TRY', 'ZAR', 'BRL', 'MXN',
+];
 const FREQUENCY_OPTIONS: { value: CreateSavingsAccountData['compound_frequency']; label: string }[] = [
   { value: 'monthly', label: 'Monthly' },
   { value: 'quarterly', label: 'Quarterly' },
@@ -28,6 +32,7 @@ export function SavingsAccountDialog({ account, onSuccess, onClose }: Props) {
     interest_rate: account ? account.interest_rate * 100 : 0, // store as % in UI
     compound_frequency: account?.compound_frequency ?? 'monthly',
     notes: account?.notes ?? '',
+    start_date: account?.start_date ?? '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +50,7 @@ export function SavingsAccountDialog({ account, onSuccess, onClose }: Props) {
       interest_rate: form.interest_rate / 100, // convert % → decimal for API
       bank: form.bank || '',
       notes: form.notes || undefined,
+      start_date: form.start_date || undefined,
     };
 
     const res = isEdit
@@ -159,13 +165,23 @@ export function SavingsAccountDialog({ account, onSuccess, onClose }: Props) {
           </div>
         </div>
 
-        <div>
-          <label style={{ color: colors.muted, fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>NOTES</label>
-          <Input
-            value={form.notes ?? ''}
-            onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-            placeholder="Optional notes"
-          />
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ color: colors.muted, fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>START DATE</label>
+            <DateInput
+              value={form.start_date ?? ''}
+              onChange={v => setForm(f => ({ ...f, start_date: v }))}
+              placeholder="Select date"
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ color: colors.muted, fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>NOTES</label>
+            <Input
+              value={form.notes ?? ''}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              placeholder="Optional notes"
+            />
+          </div>
         </div>
 
         {error && <p style={{ color: colors.negative, fontSize: 12, margin: 0 }}>{error}</p>}

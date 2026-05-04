@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { colors, Button, Loader } from '@/components/fire/ui';
-import { savingsApi, SavingsAccount, InterestRecord, ForecastPeriod } from '@/lib/fire/api';
+import { savingsApi, exchangeRateApi, SavingsAccount, InterestRecord, ForecastPeriod } from '@/lib/fire/api';
 import { useCurrency } from '@/components/fire/currency-context';
 import { SavingsAccountDialog } from '@/components/fire/savings-account-dialog';
 import { SavingsInterestDialog } from '@/components/fire/savings-interest-dialog';
@@ -22,8 +22,15 @@ interface DetailState {
   tab: 'history' | 'forecast';
 }
 
+// Skeleton placeholder for a single stat value
+function StatSkeleton() {
+  return <Loader size="sm" variant="dots" />;
+}
+
 export default function SavingsPage() {
   const { fmt: fmtDisplay } = useCurrency();
+  const [toUsdRates, setToUsdRates] = useState<Record<string, number>>({});
+  const [ratesLoading, setRatesLoading] = useState(false);
   const [accounts, setAccounts] = useState<SavingsAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [accountDialog, setAccountDialog] = useState<{ open: boolean; account?: SavingsAccount }>({ open: false });
@@ -39,6 +46,25 @@ export default function SavingsPage() {
     });
   }, []);
 
+  // Fetch USD-based rates for all account currencies so we can convert to display currency
+  useEffect(() => {
+    if (accounts.length === 0) return;
+    const ccys = [...new Set(accounts.map(a => a.currency))].filter(c => c !== 'USD');
+    if (ccys.length === 0) { setToUsdRates({ USD: 1 }); return; }
+    setRatesLoading(true);
+    exchangeRateApi.get('USD', ccys).then(res => {
+      if (res.success && res.data) {
+        // rates[CCY] = how many CCY per 1 USD → invert to get USD per CCY
+        const toUsd: Record<string, number> = { USD: 1 };
+        for (const [ccy, rate] of Object.entries(res.data.rates)) {
+          toUsd[ccy] = rate > 0 ? 1 / rate : 1;
+        }
+        setToUsdRates(toUsd);
+      }
+      setRatesLoading(false);
+    });
+  }, [accounts]);
+
   const loadDetail = useCallback(async (accountId: string) => {
     setDetailMap(m => ({ ...m, [accountId]: { records: [], forecast: [], loading: true, tab: m[accountId]?.tab ?? 'history' } }));
     const res = await savingsApi.listInterest(accountId);
@@ -53,10 +79,7 @@ export default function SavingsPage() {
   }, []);
 
   const handleExpand = (id: string) => {
-    if (expandedId === id) {
-      setExpandedId(null);
-      return;
-    }
+    if (expandedId === id) { setExpandedId(null); return; }
     setExpandedId(id);
     if (!detailMap[id]) loadDetail(id);
   };
@@ -64,10 +87,8 @@ export default function SavingsPage() {
   const handleAccountSuccess = (account: SavingsAccount) => {
     const isNew = !accounts.find(a => a.id === account.id);
     if (isNew) {
-      // New account: add it optimistically (it's fully enriched from createAccount response)
       setAccounts(prev => [account, ...prev]);
     } else {
-      // Edited account: re-fetch to get fresh enriched fields (next_payout_date, etc.)
       savingsApi.list().then(res => {
         if (res.success && res.data) setAccounts(res.data);
       });
@@ -80,10 +101,7 @@ export default function SavingsPage() {
     setDeletingId(id);
     const res = await savingsApi.delete(id);
     setDeletingId(null);
-    if (!res.success) {
-      alert('Failed to delete savings account. Please try again.');
-      return;
-    }
+    if (!res.success) { alert('Failed to delete savings account. Please try again.'); return; }
     setAccounts(prev => prev.filter(a => a.id !== id));
     if (expandedId === id) setExpandedId(null);
   };
@@ -104,10 +122,7 @@ export default function SavingsPage() {
 
   const handleDeleteInterest = async (accountId: string, recordId: string) => {
     const res = await savingsApi.deleteInterest(accountId, recordId);
-    if (!res.success) {
-      alert('Failed to delete interest record. Please try again.');
-      return;
-    }
+    if (!res.success) { alert('Failed to delete interest record. Please try again.'); return; }
     setDetailMap(m => ({
       ...m,
       [accountId]: { ...m[accountId], records: m[accountId].records.filter(r => r.id !== recordId) },
@@ -115,16 +130,18 @@ export default function SavingsPage() {
     loadDetail(accountId);
   };
 
-  const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-  const totalYtd = accounts.reduce((sum, a) => sum + a.total_interest_ytd, 0);
+  // Sum all accounts in USD, fmtDisplay converts USD→displayCurrency
+  const { totalBalanceUsd, totalYtdUsd } = useMemo(() => {
+    let bal = 0, ytd = 0;
+    for (const a of accounts) {
+      const toUsd = toUsdRates[a.currency] ?? 1;
+      bal += a.balance * toUsd;
+      ytd += a.total_interest_ytd * toUsd;
+    }
+    return { totalBalanceUsd: bal, totalYtdUsd: ytd };
+  }, [accounts, toUsdRates]);
 
-  if (loading) {
-    return (
-      <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader size="md" variant="bar" />
-      </div>
-    );
-  }
+  const summaryLoading = loading || ratesLoading;
 
   return (
     <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh' }}>
@@ -132,12 +149,20 @@ export default function SavingsPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>Savings</h1>
-          <div style={{ display: 'flex', gap: 20, marginTop: 6 }}>
+          <div style={{ display: 'flex', gap: 20, marginTop: 6, alignItems: 'center', minHeight: 20 }}>
             <span style={{ color: colors.muted, fontSize: 12 }}>
-              Total Balance: <span style={{ color: colors.text, fontWeight: 600 }}>{fmtDisplay(totalBalance)}</span>
+              Total{' '}
+              {summaryLoading
+                ? <StatSkeleton />
+                : <span style={{ color: colors.text, fontWeight: 600 }}>{fmtDisplay(totalBalanceUsd, { decimals: 0 })}</span>
+              }
             </span>
             <span style={{ color: colors.muted, fontSize: 12 }}>
-              Interest YTD: <span style={{ color: colors.positive, fontWeight: 600 }}>{fmtDisplay(totalYtd)}</span>
+              YTD Interest{' '}
+              {summaryLoading
+                ? <StatSkeleton />
+                : <span style={{ color: colors.positive, fontWeight: 600 }}>+{fmtDisplay(totalYtdUsd, { decimals: 0 })}</span>
+              }
             </span>
           </div>
         </div>
@@ -147,7 +172,27 @@ export default function SavingsPage() {
       </div>
 
       {/* Account list */}
-      {accounts.length === 0 ? (
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{
+              backgroundColor: colors.surface,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 10,
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ height: 14, width: 140, backgroundColor: colors.surfaceLight, borderRadius: 4, marginBottom: 6 }} />
+                <div style={{ height: 11, width: 80, backgroundColor: colors.surfaceLight, borderRadius: 4 }} />
+              </div>
+              <Loader size="sm" variant="dots" />
+            </div>
+          ))}
+        </div>
+      ) : accounts.length === 0 ? (
         <div style={{ textAlign: 'center', color: colors.muted, fontSize: 14, marginTop: 80 }}>
           No savings accounts yet. Add one to get started.
         </div>
@@ -172,6 +217,7 @@ export default function SavingsPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: colors.text, fontWeight: 600, fontSize: 14 }}>{account.name}</div>
                     {account.bank && <div style={{ color: colors.muted, fontSize: 12 }}>{account.bank}</div>}
+                    {account.start_date && <div style={{ color: colors.muted, fontSize: 11 }}>Since {account.start_date}</div>}
                   </div>
 
                   <div style={{ textAlign: 'right', minWidth: 100 }}>
@@ -182,6 +228,13 @@ export default function SavingsPage() {
                   <div style={{ textAlign: 'center', minWidth: 80 }}>
                     <div style={{ color: colors.info, fontWeight: 600, fontSize: 14 }}>{(account.interest_rate * 100).toFixed(2)}%</div>
                     <div style={{ color: colors.muted, fontSize: 11 }}>{FREQ_LABEL[account.compound_frequency]}</div>
+                  </div>
+
+                  <div style={{ textAlign: 'right', minWidth: 110 }}>
+                    <div style={{ color: account.total_interest_all > 0 ? colors.positive : colors.muted, fontWeight: 600, fontSize: 13 }}>
+                      {account.total_interest_all > 0 ? `+${fmt(account.total_interest_all, account.currency)}` : '—'}
+                    </div>
+                    <div style={{ color: colors.muted, fontSize: 11 }}>Earned</div>
                   </div>
 
                   <div style={{ textAlign: 'right', minWidth: 120 }}>
@@ -210,34 +263,36 @@ export default function SavingsPage() {
                 {/* Expanded detail */}
                 {isExpanded && (
                   <div style={{ borderTop: `1px solid ${colors.border}`, padding: '16px' }}>
-                    <div style={{ display: 'flex', gap: 2, marginBottom: 14, backgroundColor: colors.surfaceLight, borderRadius: 8, padding: 3, border: `1px solid ${colors.border}`, width: 'fit-content' }}>
-                      {(['history', 'forecast'] as const).map(tab => (
-                        <button
-                          key={tab}
-                          onClick={() => setDetailMap(m => ({ ...m, [account.id]: { ...m[account.id], tab } }))}
-                          style={{
-                            padding: '4px 14px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
-                            backgroundColor: detail?.tab === tab ? colors.surface : 'transparent',
-                            color: detail?.tab === tab ? colors.text : colors.muted,
-                            boxShadow: detail?.tab === tab ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
-                          }}
-                        >
-                          {tab === 'history' ? 'History' : 'Forecast'}
-                        </button>
-                      ))}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                      <div style={{ display: 'flex', gap: 2, backgroundColor: colors.surfaceLight, borderRadius: 8, padding: 3, border: `1px solid ${colors.border}` }}>
+                        {(['history', 'forecast'] as const).map(tab => (
+                          <button
+                            key={tab}
+                            onClick={() => setDetailMap(m => ({ ...m, [account.id]: { ...m[account.id], tab } }))}
+                            style={{
+                              padding: '4px 14px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+                              backgroundColor: detail?.tab === tab ? colors.surface : 'transparent',
+                              color: detail?.tab === tab ? colors.text : colors.muted,
+                              boxShadow: detail?.tab === tab ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+                            }}
+                          >
+                            {tab === 'history' ? 'History' : 'Forecast'}
+                          </button>
+                        ))}
+                      </div>
+                      {detail?.tab !== 'forecast' && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setInterestDialog({ open: true, accountId: account.id })}
+                          style={{ fontSize: 12, height: 28, padding: '0 12px' }}
+                        >+ Log Interest</Button>
+                      )}
                     </div>
 
                     {detail?.loading ? (
                       <div style={{ padding: 20, display: 'flex', justifyContent: 'center' }}><Loader size="sm" variant="dots" /></div>
                     ) : detail?.tab === 'history' ? (
                       <div>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-                          <Button
-                            variant="outline"
-                            onClick={() => setInterestDialog({ open: true, accountId: account.id })}
-                            style={{ fontSize: 12, height: 28, padding: '0 12px' }}
-                          >+ Log Interest</Button>
-                        </div>
                         {detail.records.length === 0 ? (
                           <p style={{ color: colors.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>No interest records yet.</p>
                         ) : (

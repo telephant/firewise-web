@@ -80,3 +80,23 @@ import { StatCard } from '@/components/fire/ui';
 <StatCard label="Total Value" value="$12,345" valueColor="positive" />
 <StatCard label="Unrealized P&L" value="-$234" valueColor="negative" trend={{ value: '-2.3%', direction: 'down' }} />
 ```
+
+### Date inputs (CRITICAL)
+**NEVER use native `<input type="date">` in fire pages.** Always use the custom `DateInput` component:
+```tsx
+import { DateInput } from '@/components/fire/ui';
+<DateInput
+  label="DATE"
+  value={form.date}           // 'YYYY-MM-DD' string
+  onChange={v => setForm(f => ({ ...f, date: v }))}
+/>
+```
+The `DateInput` component (`src/components/fire/ui/date-input.tsx`) is a custom calendar popover that matches the dark-mode design system.
+
+## Multi-Currency Aggregation (CRITICAL)
+
+**NEVER sum amounts across different currencies without conversion.** Accounts in this app can hold different currencies (USD, SGD, AED, etc.).
+
+- Showing a raw sum across currencies (e.g. total balance on the Savings page) is a known simplification and must be clearly labeled as approximate or avoided.
+- For accurate totals, either: (a) require the user to select a display currency and convert, or (b) show per-currency subtotals instead of a single total.
+- When building any "total" or "summary" stat for multi-currency data, leave a `// TODO: multi-currency` comment if you are intentionally skipping conversion, so it is visible in review.

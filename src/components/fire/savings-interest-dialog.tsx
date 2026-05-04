@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { colors, Button, Input } from '@/components/fire/ui';
+import { colors, Button, Input, DateInput } from '@/components/fire/ui';
 import { savingsApi, InterestRecord } from '@/lib/fire/api';
 
 interface Props {
@@ -74,10 +74,9 @@ export function SavingsInterestDialog({ accountId, onSuccess, onClose }: Props) 
 
         <div>
           <label style={{ color: colors.muted, fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>DATE *</label>
-          <Input
-            type="date"
+          <DateInput
             value={creditedAt}
-            onChange={e => setCreditedAt(e.target.value)}
+            onChange={v => setCreditedAt(v)}
           />
         </div>
 

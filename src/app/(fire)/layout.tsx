@@ -11,7 +11,7 @@ export default function FireLayout({ children }: { children: React.ReactNode }) 
           <PortfolioSidebar />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             <FireTopBar />
-            <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
               {children}
             </main>
           </div>

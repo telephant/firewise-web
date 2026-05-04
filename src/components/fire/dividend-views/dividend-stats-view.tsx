@@ -15,25 +15,41 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 export function DividendStatsView({ dividends, taxMode }: Props) {
   const { fmt: fmtCurrency } = useCurrency();
-  // Build last-12-months bar chart data
+
+  // Build monthly bar chart from the actual date range in dividends
   const barData = useMemo<BarChartData[]>(() => {
+    if (dividends.length === 0) return [];
+
+    // Find min and max months in the filtered set
     const now = new Date();
+    let minYear = now.getFullYear(), minMonth = now.getMonth();
+    let maxYear = now.getFullYear(), maxMonth = now.getMonth();
+
+    dividends.forEach(d => {
+      const dd = new Date(d.ex_date);
+      const y = dd.getFullYear(), m = dd.getMonth();
+      if (y < minYear || (y === minYear && m < minMonth)) { minYear = y; minMonth = m; }
+      if (y > maxYear || (y === maxYear && m > maxMonth)) { maxYear = y; maxMonth = m; }
+    });
+
+    // Build month buckets from minDate to maxDate
     const months: BarChartData[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const y = d.getFullYear();
-      const m = d.getMonth();
+    let y = minYear, m = minMonth;
+    while (y < maxYear || (y === maxYear && m <= maxMonth)) {
       const total = dividends
         .filter(div => {
           const dd = new Date(div.ex_date);
           return dd.getFullYear() === y && dd.getMonth() === m;
         })
         .reduce((sum, div) => sum + (taxMode === 'net' ? (div.amount_usd ?? 0) * (1 - div.tax_rate) : (div.amount_usd ?? 0)), 0);
+      const isCurrentMonth = y === now.getFullYear() && m === now.getMonth();
       months.push({
         name: `${MONTH_NAMES[m]} ${String(y).slice(2)}`,
         value: total,
-        fill: i === 0 ? colors.accent : colors.positive,
+        fill: isCurrentMonth ? colors.accent : colors.positive,
       });
+      m++;
+      if (m > 11) { m = 0; y++; }
     }
     return months;
   }, [dividends, taxMode]);
@@ -43,7 +59,7 @@ export function DividendStatsView({ dividends, taxMode }: Props) {
     const map = new Map<string, { amount: number; count: number }>();
     dividends.forEach(d => {
       const existing = map.get(d.ticker) ?? { amount: 0, count: 0 };
-      const amt = taxMode === 'net' ? (d.amount_usd ?? d.total_amount) * (1 - d.tax_rate) : (d.amount_usd ?? d.total_amount);
+      const amt = taxMode === 'net' ? (d.amount_usd ?? 0) * (1 - d.tax_rate) : (d.amount_usd ?? 0);
       map.set(d.ticker, { amount: existing.amount + amt, count: existing.count + 1 });
     });
     return [...map.entries()]
@@ -57,7 +73,7 @@ export function DividendStatsView({ dividends, taxMode }: Props) {
     <div>
       {/* Monthly trend */}
       <p style={{ color: colors.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
-        Monthly Trend (last 12 months)
+        Monthly Trend
       </p>
       {dividends.length === 0 ? (
         <p style={{ color: colors.muted, fontSize: 13, marginBottom: 24 }}>No dividend data yet.</p>

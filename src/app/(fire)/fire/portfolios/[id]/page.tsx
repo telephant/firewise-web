@@ -141,16 +141,15 @@ export default function PortfolioDetail() {
       return mul * ((av as number) - (bv as number));
     });
 
-  // Build chart data for Stats tab
+  // Build chart data for Stats tab — snapshots only (all in same native currency).
+  // stats.total_value is USD; snapshots are in portfolio native currency — do NOT mix them.
   const sorted = [...snapshots].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
-  const chartData: ChartPoint[] = [
-    ...sorted.map(s => ({
-      month: formatMonthLabel(s.snapshot_date),
-      value: s.total_value,
-      snapshotDate: s.snapshot_date,
-    })),
-    ...(stats ? [{ month: 'Now', value: stats.total_value, snapshotDate: 'now' }] : []),
-  ];
+  const snapshotCurrency = sorted[0]?.currency || currency;
+  const chartData: ChartPoint[] = sorted.map(s => ({
+    month: formatMonthLabel(s.snapshot_date),
+    value: s.total_value,
+    snapshotDate: s.snapshot_date,
+  }));
 
   // sinceInception compares snapshot (native currency) vs stats (USD).
   // Only meaningful when portfolio currency is USD; otherwise currencies don't match.
@@ -193,7 +192,7 @@ export default function PortfolioDetail() {
                       const weight = stats?.total_value && h.value_usd != null
                         ? ((h.value_usd / stats.total_value) * 100).toFixed(1)
                         : '—';
-                      const value = new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(h.value!);
+                      const value = new Intl.NumberFormat('en-US', { style: 'currency', currency: h.currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(h.value!);
                       return `${h.ticker}\t${weight}%\t${value}`;
                     });
                   navigator.clipboard.writeText(['Ticker\tWeight\tValue', ...lines].join('\n'));
@@ -288,6 +287,7 @@ export default function PortfolioDetail() {
                           { label: 'Current Price', key: null },
                           { label: 'Value', key: 'value' },
                           { label: 'Unrealized P&L', key: 'unrealized_pl' },
+                          { label: 'Next Ex-Date', key: null },
                           { label: '', key: null },
                         ] as { label: string; key: string | null }[]).map(col => (
                           <th
@@ -352,6 +352,13 @@ export default function PortfolioDetail() {
                                   <span style={{ marginLeft: 4, fontSize: 11 }}>({pct(h.unrealized_pl_pct)})</span>
                                 )}
                               </td>
+                              <td style={{ padding: '12px 16px 12px 0', whiteSpace: 'nowrap' }}>
+                                {h.next_ex_date ? (
+                                  <span style={{ color: colors.info, fontSize: 12 }}>{h.next_ex_date}</span>
+                                ) : (
+                                  <span style={{ color: colors.border, fontSize: 12 }}>—</span>
+                                )}
+                              </td>
                               <td style={{ padding: '12px 0' }}>
                                 <Button
                                   variant="ghost"
@@ -387,7 +394,7 @@ export default function PortfolioDetail() {
         </TabsContent>
 
         {/* Dividends Tab */}
-        <TabsContent value="dividends" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
+        <TabsContent value="dividends" style={{ flex: 1, overflow: 'hidden', marginTop: 16, display: 'flex', flexDirection: 'column' }}>
           <DividendViews
             dividends={dividends}
             currency={currency}
@@ -460,7 +467,7 @@ export default function PortfolioDetail() {
                       valueWidth={90}
                       rowHeight={32}
                       barSize={14}
-                      valueFormatter={(v) => new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)}
+                      valueFormatter={(v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: snapshotCurrency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)}
                       showTooltip
                     />
                   )}

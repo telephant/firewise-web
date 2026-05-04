@@ -1,14 +1,13 @@
 'use client';
 
-import { colors, Button } from '@/components/fire/ui';
-import { useCurrency } from '@/components/fire/currency-context';
+import { useState } from 'react';
+import { colors, Input } from '@/components/fire/ui';
 import type { Dividend } from '@/lib/fire/api';
 
 interface Props {
   dividends: Dividend[];
   currency: string;
   taxMode: 'gross' | 'net';
-  onAdd: () => void;
 }
 
 function fmt(value: number, currency: string): string {
@@ -20,30 +19,31 @@ function fmt(value: number, currency: string): string {
   }).format(value);
 }
 
-export function DividendTableView({ dividends, currency, taxMode, onAdd }: Props) {
-  const { fmt: fmtDisplay } = useCurrency();
+export function DividendTableView({ dividends, currency, taxMode }: Props) {
+  const [search, setSearch] = useState('');
 
-  const total = dividends.reduce((sum, d) => {
-    const amt = taxMode === 'net'
-      ? (d.amount_usd ?? 0) * (1 - d.tax_rate)
-      : (d.amount_usd ?? 0);
-    return sum + amt;
-  }, 0);
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? dividends.filter(d =>
+        d.ticker.toLowerCase().includes(q) ||
+        d.ex_date.includes(q) ||
+        (d.pay_date ?? '').includes(q)
+      )
+    : dividends;
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        {dividends.length > 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ color: colors.muted, fontSize: 11, fontWeight: 500 }}>Total</span>
-            <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>{fmtDisplay(total)}</span>
-          </div>
-        ) : <div />}
-        <Button variant="outline" onClick={onAdd}>Add Dividend</Button>
+      <div style={{ marginBottom: 12 }}>
+        <Input
+          placeholder="Search ticker or date…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ maxWidth: 220, fontSize: 12, height: 30 }}
+        />
       </div>
-      {dividends.length === 0 ? (
+      {filtered.length === 0 ? (
         <p style={{ textAlign: 'center', padding: '48px 0', color: colors.muted, fontSize: 14 }}>
-          No dividends recorded yet.
+          {dividends.length === 0 ? 'No dividends recorded yet.' : 'No results match your search.'}
         </p>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -56,7 +56,7 @@ export function DividendTableView({ dividends, currency, taxMode, onAdd }: Props
               </tr>
             </thead>
             <tbody>
-              {dividends.map((d) => {
+              {filtered.map((d) => {
                 const netAmount = d.total_amount * (1 - d.tax_rate);
                 const displayAmount = taxMode === 'net' ? netAmount : d.total_amount;
                 return (

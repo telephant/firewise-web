@@ -238,12 +238,14 @@ export interface SavingsAccount {
   interest_rate: number;
   compound_frequency: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
   notes: string | null;
+  start_date: string | null;
   created_at: string;
   updated_at: string;
   last_credited_at: string | null;
   next_payout_date: string;
   next_payout_amount: number;
   total_interest_ytd: number;
+  total_interest_all: number;
 }
 
 export interface InterestRecord {
@@ -269,6 +271,7 @@ export interface CreateSavingsAccountData {
   interest_rate: number;
   compound_frequency: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
   notes?: string;
+  start_date?: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
