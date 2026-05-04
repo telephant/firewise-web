@@ -23,9 +23,21 @@ const SUB_VIEWS: { id: DividendSubView; label: string }[] = [
   { id: 'calendar', label: 'Calendar' },
 ];
 
+function fmtTotal(value: number, currency: string): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
 export function DividendViews({ dividends, currency, onAddDividend }: Props) {
   const [view, setView] = useState<DividendSubView>('table');
   const [taxMode, setTaxMode] = useState<TaxMode>('gross');
+
+  const grandTotal = dividends.reduce((sum, d) =>
+    sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
 
   const now = new Date();
   const [calendarYear, setCalendarYear] = useState(now.getFullYear());
@@ -82,6 +94,16 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
             </button>
           ))}
         </div>
+
+        {/* Total — shown in stats view, sits between segmented control and tax toggle */}
+        {view === 'stats' && dividends.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: colors.muted, fontSize: 11, fontWeight: 500 }}>Total</span>
+            <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>
+              {fmtTotal(grandTotal, currency)}
+            </span>
+          </div>
+        )}
 
         {/* Tax toggle */}
         <div style={{

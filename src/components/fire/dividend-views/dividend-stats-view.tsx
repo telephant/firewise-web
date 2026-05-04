@@ -122,11 +122,7 @@ export function DividendStatsView({ dividends, currency, taxMode }: Props) {
                 </div>
               );
             })}
-            {/* Grand total */}
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${colors.border}`, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: colors.muted, fontSize: 12, fontWeight: 600 }}>Total</span>
-              <span style={{ color: colors.positive, fontSize: 14, fontWeight: 700 }}>{fmtFull(grandTotal, currency)}</span>
-            </div>
+
           </div>
         </>
       )}
