@@ -166,7 +166,7 @@ export function DividendMonthCalendarView({
                           : colors.surface,
                       cursor: isEmpty ? 'default' : 'pointer',
                       transition: 'all 0.12s',
-                      minHeight: 72,
+                      minHeight: 96,
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
