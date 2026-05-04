@@ -150,7 +150,7 @@ export function DividendMonthCalendarView({
   const gridBorder = `1px solid ${colors.border}`;
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', justifyContent: 'center', gap: 24, alignItems: 'flex-start' }}>
+    <div ref={containerRef} style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
       {/* Left stats panel */}
       <div style={{ width: 148, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
