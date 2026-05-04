@@ -129,7 +129,7 @@ export function PortfolioTreemap({ holdings, currency, totalValue }: Props) {
 
   const inputs: TileInput[] = filtered.map(h => ({
     ticker: h.ticker, market: h.market,
-    value: h.value!, weight: h.value! / totalValue,
+    value: h.value!, weight: (h.value_usd ?? h.value!) / totalValue,
     pct: h.unrealized_pl_pct ?? null,
   }));
 

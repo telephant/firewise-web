@@ -188,7 +188,9 @@ export default function PortfolioDetail() {
                     .filter(h => h.value !== null && h.value > 0)
                     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
                     .map(h => {
-                      const weight = stats?.total_value ? ((h.value! / stats.total_value) * 100).toFixed(1) : '—';
+                      const weight = stats?.total_value && h.value_usd != null
+                        ? ((h.value_usd / stats.total_value) * 100).toFixed(1)
+                        : '—';
                       const value = new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(h.value!);
                       return `${h.ticker}\t${weight}%\t${value}`;
                     });
