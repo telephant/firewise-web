@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { colors } from '@/components/fire/ui';
+import { useCurrency } from '@/components/fire/currency-context';
 import { dividendCalendarApi } from '@/lib/fire/api';
 import type { Dividend, DividendCalendarResponse } from '@/lib/fire/api';
 import { DividendTableView } from './dividend-table-view';
@@ -23,16 +24,8 @@ const SUB_VIEWS: { id: DividendSubView; label: string }[] = [
   { id: 'calendar', label: 'Calendar' },
 ];
 
-function fmtTotal(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
 export function DividendViews({ dividends, currency, onAddDividend }: Props) {
+  const { fmt } = useCurrency();
   const [view, setView] = useState<DividendSubView>('table');
   const [taxMode, setTaxMode] = useState<TaxMode>('gross');
 
@@ -100,7 +93,7 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ color: colors.muted, fontSize: 11, fontWeight: 500 }}>Total</span>
             <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>
-              {fmtTotal(grandTotal, currency)}
+              {fmt(grandTotal)}
             </span>
           </div>
         )}

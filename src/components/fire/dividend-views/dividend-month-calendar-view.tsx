@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { colors, Loader } from '@/components/fire/ui';
+import { useCurrency } from '@/components/fire/currency-context';
 import type { Dividend, DividendCalendarResponse, DividendCalendarMonthDividend } from '@/lib/fire/api';
 
 interface Props {
@@ -26,15 +27,7 @@ const FREQ_LABEL: Record<string, string> = {
   weekly: 'Weekly',
 };
 
-function fmt(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
+// Used only for per-row display with the row's own native currency (d.currency)
 function fmtFull(value: number, currency: string): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -53,6 +46,7 @@ export function DividendMonthCalendarView({
   year,
   onYearChange,
 }: Props) {
+  const { fmt: fmtDisplay } = useCurrency();
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(600);
@@ -192,7 +186,7 @@ export function DividendMonthCalendarView({
               {label}
             </div>
             <div style={{ color, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
-              {fmtFull(value, currency)}
+              {fmtDisplay(value)}
             </div>
           </div>
         ))}
@@ -227,7 +221,7 @@ export function DividendMonthCalendarView({
             Avg / Month
           </div>
           <div style={{ color: colors.text, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
-            {annualSummary.monthsReceived > 0 ? fmtFull(annualSummary.avgPerMonth, currency) : '—'}
+            {annualSummary.monthsReceived > 0 ? fmtDisplay(annualSummary.avgPerMonth) : '—'}
           </div>
         </div>
 
@@ -239,7 +233,7 @@ export function DividendMonthCalendarView({
           {annualSummary.bestMonth.idx >= 0 && annualSummary.bestMonth.amount > 0 ? (
             <>
               <div style={{ color: colors.text, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
-                {fmtFull(annualSummary.bestMonth.amount, currency)}
+                {fmtDisplay(annualSummary.bestMonth.amount)}
               </div>
               <div style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>
                 {MONTH_NAMES_SHORT[annualSummary.bestMonth.idx]}
@@ -345,7 +339,7 @@ export function DividendMonthCalendarView({
                           marginBottom: 6,
                           letterSpacing: '-0.01em',
                         }}>
-                          {fmt(total, currency)}
+                          {fmtDisplay(total, { decimals: 0 })}
                         </div>
                         {/* Ticker count + badges */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
@@ -448,7 +442,7 @@ export function DividendMonthCalendarView({
                       <div key={`fc-${i}`} style={{ padding: '8px 10px', backgroundColor: colors.surfaceLight, borderRadius: 6, border: `1px dashed ${colors.border}` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                           <span style={{ color: colors.text, fontWeight: 600, fontSize: 12 }}>{d.ticker}</span>
-                          <span style={{ color: colors.muted, fontSize: 12, fontWeight: 600 }}>{fmtFull(amount, currency)}</span>
+                          <span style={{ color: colors.muted, fontSize: 12, fontWeight: 600 }}>{fmtDisplay(amount)}</span>
                         </div>
                         <div style={{ color: colors.muted, fontSize: 10 }}>
                           {d.frequency ? FREQ_LABEL[d.frequency] ?? d.frequency : 'Estimated'}
@@ -464,7 +458,7 @@ export function DividendMonthCalendarView({
             {/* Month total */}
             <div style={{ paddingTop: 10, borderTop: `1px solid ${colors.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: colors.muted, fontSize: 11, fontWeight: 600 }}>Month Total</span>
-              <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>{fmtFull(drawerTotal, currency)}</span>
+              <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>{fmtDisplay(drawerTotal)}</span>
             </div>
           </div>
         </div>

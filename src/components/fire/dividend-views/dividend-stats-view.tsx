@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { colors, BarChart } from '@/components/fire/ui';
 import type { BarChartData } from '@/components/fire/ui';
+import { useCurrency } from '@/components/fire/currency-context';
 import type { Dividend } from '@/lib/fire/api';
 
 interface Props {
@@ -13,25 +14,8 @@ interface Props {
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function fmt(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function fmtFull(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
 export function DividendStatsView({ dividends, currency, taxMode }: Props) {
+  const { fmt: fmtCurrency } = useCurrency();
   // Build last-12-months bar chart data
   const barData = useMemo<BarChartData[]>(() => {
     const now = new Date();
@@ -86,7 +70,7 @@ export function DividendStatsView({ dividends, currency, taxMode }: Props) {
             valueWidth={80}
             rowHeight={28}
             barSize={11}
-            valueFormatter={(v) => fmt(v, currency)}
+            valueFormatter={(v) => fmtCurrency(v, { decimals: 0 })}
             showTooltip
           />
         </div>
@@ -111,7 +95,7 @@ export function DividendStatsView({ dividends, currency, taxMode }: Props) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ color: colors.muted, fontSize: 11 }}>{pct.toFixed(1)}%</span>
                       <span style={{ color: colors.positive, fontSize: 13, fontWeight: 500, minWidth: 90, textAlign: 'right' }}>
-                        {fmtFull(amount, currency)}
+                        {fmtCurrency(amount)}
                       </span>
                     </div>
                   </div>
