@@ -86,6 +86,8 @@ export default function PortfolioDetail() {
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
   const [holdingsPage, setHoldingsPage] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [holdingsSearch, setHoldingsSearch] = useState('');
+  const [holdingsSort, setHoldingsSort] = useState<{ key: 'ticker' | 'shares' | 'value' | 'unrealized_pl' | 'unrealized_pl_pct'; dir: 'asc' | 'desc' }>({ key: 'value', dir: 'desc' });
 
   useEffect(() => {
     if (!id) return;
@@ -125,6 +127,17 @@ export default function PortfolioDetail() {
   }
 
   const currency = portfolio?.currency || stats?.currency || 'USD';
+
+  const filteredHoldings = holdings
+    .filter(h => h.ticker.toLowerCase().includes(holdingsSearch.toLowerCase()))
+    .sort((a, b) => {
+      const { key, dir } = holdingsSort;
+      const mul = dir === 'asc' ? 1 : -1;
+      if (key === 'ticker') return mul * a.ticker.localeCompare(b.ticker);
+      const av = a[key] ?? -Infinity;
+      const bv = b[key] ?? -Infinity;
+      return mul * ((av as number) - (bv as number));
+    });
 
   // Build chart data for Stats tab
   const sorted = [...snapshots].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
@@ -241,17 +254,64 @@ export default function PortfolioDetail() {
               </p>
             ) : (
               <>
+                {/* Search */}
+                <div style={{ marginBottom: 12 }}>
+                  <input
+                    value={holdingsSearch}
+                    onChange={e => { setHoldingsSearch(e.target.value); setHoldingsPage(0); }}
+                    placeholder="Search ticker…"
+                    style={{
+                      background: colors.surfaceLight,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: 6,
+                      color: colors.text,
+                      fontSize: 13,
+                      padding: '6px 12px',
+                      outline: 'none',
+                      width: 180,
+                    }}
+                  />
+                </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
                     <thead>
                       <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
-                        {['Ticker', 'Qty', 'Avg Cost', 'Current Price', 'Value', 'Unrealized P&L', ''].map(h => (
-                          <th key={h} style={{ paddingBottom: 8, paddingRight: 16, textAlign: 'left', color: colors.muted, fontWeight: 500, fontSize: 12 }}>{h}</th>
+                        {([
+                          { label: 'Ticker', key: 'ticker' },
+                          { label: 'Qty', key: null },
+                          { label: 'Avg Cost', key: null },
+                          { label: 'Current Price', key: null },
+                          { label: 'Value', key: 'value' },
+                          { label: 'Unrealized P&L', key: 'unrealized_pl' },
+                          { label: '', key: null },
+                        ] as { label: string; key: string | null }[]).map(col => (
+                          <th
+                            key={col.label}
+                            onClick={() => {
+                              if (!col.key) return;
+                              const k = col.key as typeof holdingsSort.key;
+                              setHoldingsSort(s => s.key === k ? { key: k, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: 'desc' });
+                              setHoldingsPage(0);
+                            }}
+                            style={{
+                              paddingBottom: 8, paddingRight: 16, textAlign: 'left',
+                              color: holdingsSort.key === col.key ? colors.text : colors.muted,
+                              fontWeight: 500, fontSize: 12,
+                              cursor: col.key ? 'pointer' : 'default',
+                              userSelect: 'none',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {col.label}
+                            {col.key && holdingsSort.key === col.key && (
+                              <span style={{ marginLeft: 4 }}>{holdingsSort.dir === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {holdings
+                      {filteredHoldings
                         .slice(holdingsPage * HOLDINGS_PAGE_SIZE, (holdingsPage + 1) * HOLDINGS_PAGE_SIZE)
                         .map((h) => {
                           const plPositive = h.unrealized_pl !== null ? h.unrealized_pl >= 0 : null;
@@ -302,27 +362,18 @@ export default function PortfolioDetail() {
                     </tbody>
                   </table>
                 </div>
-                {holdings.length > HOLDINGS_PAGE_SIZE && (
+                {filteredHoldings.length === 0 && holdingsSearch && (
+                  <p style={{ textAlign: 'center', padding: '24px 0', color: colors.muted, fontSize: 13 }}>
+                    No results for "{holdingsSearch}"
+                  </p>
+                )}
+                {filteredHoldings.length > HOLDINGS_PAGE_SIZE && (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 16 }}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={holdingsPage === 0}
-                      onClick={() => setHoldingsPage(p => p - 1)}
-                    >
-                      ← Prev
-                    </Button>
+                    <Button variant="ghost" size="sm" disabled={holdingsPage === 0} onClick={() => setHoldingsPage(p => p - 1)}>← Prev</Button>
                     <span style={{ fontSize: 12, color: colors.muted }}>
-                      Page {holdingsPage + 1} of {Math.ceil(holdings.length / HOLDINGS_PAGE_SIZE)}
+                      Page {holdingsPage + 1} of {Math.ceil(filteredHoldings.length / HOLDINGS_PAGE_SIZE)}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={(holdingsPage + 1) * HOLDINGS_PAGE_SIZE >= holdings.length}
-                      onClick={() => setHoldingsPage(p => p + 1)}
-                    >
-                      Next →
-                    </Button>
+                    <Button variant="ghost" size="sm" disabled={(holdingsPage + 1) * HOLDINGS_PAGE_SIZE >= filteredHoldings.length} onClick={() => setHoldingsPage(p => p + 1)}>Next →</Button>
                   </div>
                 )}
               </>
