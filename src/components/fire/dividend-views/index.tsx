@@ -142,7 +142,7 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
           taxMode={taxMode}
           year={calendarYear}
           month={calendarMonth}
-          onYearChange={(y) => { setCalendarYear(y); loadedYears.current.delete(y); }}
+          onYearChange={setCalendarYear}
           onMonthChange={setCalendarMonth}
         />
       )}
