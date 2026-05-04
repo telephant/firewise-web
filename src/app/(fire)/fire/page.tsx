@@ -269,11 +269,107 @@ export default function FireDashboard() {
 
   return (
     <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh' }}>
+      {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>Dashboard</h1>
       </div>
-      {/* Sections added in subsequent tasks */}
-      <div style={{ color: colors.muted, fontSize: 13 }}>Data layer ready. UI sections coming next.</div>
+
+      {/* ── Section 1: Stat Cards ── */}
+      <div style={{ marginBottom: 28 }}>
+        {/* Primary card — Total Assets */}
+        <div style={{
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
+          borderRadius: 12,
+          padding: '20px 24px',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <p style={{ color: colors.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Total Assets</p>
+            {assetsReady ? (
+              <p style={{ color: colors.text, fontSize: 32, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>{fmt(totalAssetsUsd)}</p>
+            ) : (
+              <div style={{ paddingTop: 4 }}><Loader size="md" variant="dots" /></div>
+            )}
+            {assetsReady && (
+              <p style={{ color: roi >= 0 ? colors.positive : colors.negative, fontSize: 13, margin: '4px 0 0', fontWeight: 500 }}>
+                ROI {roi >= 0 ? '+' : ''}{roi.toFixed(2)}%
+              </p>
+            )}
+          </div>
+          <div style={{ textAlign: 'right', display: 'flex', gap: 24 }}>
+            <div>
+              <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: '0 0 2px' }}>Investments</p>
+              <p style={{ color: colors.accent, fontSize: 16, fontWeight: 600, margin: 0 }}>
+                {statsReady ? fmt(totalPortfolioValue) : '—'}
+              </p>
+            </div>
+            <div>
+              <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: '0 0 2px' }}>Savings</p>
+              <p style={{ color: colors.cyan, fontSize: 16, fontWeight: 600, margin: 0 }}>
+                {savingsReady ? fmt(totalSavingsUsd) : '—'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Secondary cards row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <StatCard
+            label="Unrealized P&L"
+            value={statsReady ? fmt(totalUnrealizedPl) : '—'}
+            valueColor={statsReady ? (totalUnrealizedPl >= 0 ? 'positive' : 'negative') : 'default'}
+            isLoading={!statsReady}
+          />
+          <StatCard
+            label="YTD Passive Income"
+            value={assetsReady ? fmt(ytdPassiveIncome) : '—'}
+            valueColor="positive"
+            isLoading={!assetsReady}
+          />
+          <StatCard
+            label="Avg / Month"
+            value={assetsReady ? fmt(avgPassivePerMonth) : '—'}
+            valueColor="positive"
+            isLoading={!assetsReady}
+          />
+          {/* FIRE Progress card */}
+          <div style={{
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
+            borderRadius: 8,
+            padding: '12px',
+            textAlign: 'center',
+          }}>
+            <p style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>FIRE Progress</p>
+            {assetsReady ? (
+              <>
+                <p style={{
+                  fontSize: 20, fontWeight: 700, margin: '0 0 8px',
+                  color: fireProgress >= 100 ? colors.positive : fireProgress >= 50 ? colors.info : colors.muted,
+                }}>
+                  {fireProgress.toFixed(1)}%
+                </p>
+                <SimpleProgressBar
+                  value={fireProgress}
+                  size="sm"
+                  color={fireProgress >= 100 ? colors.positive : fireProgress >= 50 ? colors.info : colors.muted}
+                />
+                <p style={{ color: colors.muted, fontSize: 10, marginTop: 6 }}>
+                  {fmt(avgPassivePerMonth)} / {fmt(FIRE_TARGET_MONTHLY)} target
+                </p>
+              </>
+            ) : (
+              <div style={{ paddingTop: 4 }}><Loader size="sm" variant="dots" /></div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Sections 2 & 3 coming in next tasks */}
     </div>
   );
 }
