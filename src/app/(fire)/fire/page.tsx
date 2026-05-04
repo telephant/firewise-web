@@ -506,7 +506,7 @@ export default function FireDashboard() {
             {
               label: 'Next Payout',
               value: savingsReady && nextPayout ? fmt(nextPayout.amountUsd) : null,
-              sub: nextPayout ? nextPayout.date : null,
+              sub: savingsReady && nextPayout ? nextPayout.date : null,
               color: colors.text,
             },
           ].map(({ label, value, color, sub }) => (
