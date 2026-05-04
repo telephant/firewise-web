@@ -6,7 +6,7 @@ import { dividendCalendarApi } from '@/lib/fire/api';
 import type { Dividend, DividendCalendarResponse } from '@/lib/fire/api';
 import { DividendTableView } from './dividend-table-view';
 import { DividendStatsView } from './dividend-stats-view';
-import { DividendCalendarView } from './dividend-calendar-view';
+import { DividendMonthCalendarView } from './dividend-month-calendar-view';
 
 type DividendSubView = 'table' | 'stats' | 'calendar';
 type TaxMode = 'gross' | 'net';
@@ -41,7 +41,6 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
 
   const now = new Date();
   const [calendarYear, setCalendarYear] = useState(now.getFullYear());
-  const [calendarMonth, setCalendarMonth] = useState(now.getMonth());
   const [calendarData, setCalendarData] = useState<DividendCalendarResponse | null>(null);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const loadedYears = useRef<Set<number>>(new Set());
@@ -50,6 +49,7 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
   useEffect(() => {
     if (view !== 'calendar') return;
     if (loadedYears.current.has(calendarYear)) return;
+
     setCalendarLoading(true);
     dividendCalendarApi.get(calendarYear).then(res => {
       if (res.success && res.data) {
@@ -156,16 +156,14 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
         />
       )}
       {view === 'calendar' && (
-        <DividendCalendarView
+        <DividendMonthCalendarView
           dividends={dividends}
           calendarData={calendarData}
           calendarLoading={calendarLoading}
           currency={currency}
           taxMode={taxMode}
           year={calendarYear}
-          month={calendarMonth}
           onYearChange={setCalendarYear}
-          onMonthChange={setCalendarMonth}
         />
       )}
     </div>
