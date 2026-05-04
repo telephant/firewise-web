@@ -128,6 +128,24 @@ export function DividendMonthCalendarView({
 
   const drawerOpen = selectedMonth !== null;
 
+  // Annual summary: realized (actual dividends for selected year) + projected (forecasted months)
+  const annualSummary = useMemo(() => {
+    const taxRate = calendarData?.taxRates.us ?? 0.3;
+    let realized = 0;
+    let projected = 0;
+    for (let m = 0; m < 12; m++) {
+      const actualDivs = actualByMonth.get(m) ?? [];
+      const calMonth = calendarData?.months[m];
+      const forecastedDivs = (calMonth?.dividends ?? []).filter(d => d.isForecasted);
+
+      realized += actualDivs.reduce((sum, d) =>
+        sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
+      projected += forecastedDivs.reduce((sum, d) =>
+        sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
+    }
+    return { realized, projected, total: realized + projected };
+  }, [actualByMonth, calendarData, taxMode]);
+
   // Border color for grid lines
   const gridBorder = `1px solid ${colors.border}`;
 
@@ -135,6 +153,41 @@ export function DividendMonthCalendarView({
     <div ref={containerRef} style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
       {/* Calendar */}
       <div style={{ width: calWidth, flexShrink: 0 }}>
+        {/* Annual summary bar */}
+        <div style={{
+          display: 'flex',
+          gap: 0,
+          marginBottom: 16,
+          border: gridBorder,
+          borderRadius: 8,
+          overflow: 'hidden',
+        }}>
+          <div style={{ flex: 1, padding: '10px 14px', borderRight: gridBorder }}>
+            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+              Realized {year}
+            </div>
+            <div style={{ color: colors.positive, fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>
+              {fmtFull(annualSummary.realized, currency)}
+            </div>
+          </div>
+          <div style={{ flex: 1, padding: '10px 14px', borderRight: gridBorder }}>
+            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+              Projected {year}
+            </div>
+            <div style={{ color: colors.muted, fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>
+              {fmtFull(annualSummary.projected, currency)}
+            </div>
+          </div>
+          <div style={{ flex: 1, padding: '10px 14px' }}>
+            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+              Full Year Est.
+            </div>
+            <div style={{ color: colors.text, fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>
+              {fmtFull(annualSummary.total, currency)}
+            </div>
+          </div>
+        </div>
+
         {/* Year nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <button
