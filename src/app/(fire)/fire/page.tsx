@@ -5,97 +5,62 @@ import { useRouter } from 'next/navigation';
 import {
   portfolioApi,
   portfolioStatsApi,
+  savingsApi,
+  dividendCalendarApi,
+  exchangeRateApi,
 } from '@/lib/fire/api';
-import type { Portfolio, PortfolioStats } from '@/lib/fire/api';
-import {
-  colors,
-  Button,
-  Loader,
-  StatCard,
-} from '@/components/fire/ui';
+import type { Portfolio, PortfolioStats, SavingsAccount, InterestRecord } from '@/lib/fire/api';
+import { colors, Loader, StatCard, SimpleProgressBar } from '@/components/fire/ui';
 import { useCurrency } from '@/components/fire/currency-context';
+import { PassiveIncomeChart } from '@/components/fire/passive-income-chart';
 
-// ── constants ──────────────────────────────────────────────────────────────
+const FIRE_TARGET_MONTHLY = 2000; // USD
+const CURRENT_YEAR = new Date().getFullYear();
+const CURRENT_MONTH = new Date().getMonth() + 1; // 1-12
 
-const SLICE_COLORS = [
-  '#5E6AD2',
-  '#4ADE80',
-  '#60A5FA',
-  '#FBBF24',
-  '#F87171',
-  '#A78BFA',
-  '#67E8F9',
-  '#FB923C',
-];
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-// ── SVG donut chart ────────────────────────────────────────────────────────
+interface DividendMonth { month: number; name: string; total: number; }
+
+// ── SVG Donut helpers ─────────────────────────────────────────────────────────
 
 function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = (angleDeg - 90) * Math.PI / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-interface DonutSlice {
-  name: string;
-  value: number;
-  color: string;
-}
+interface DonutSlice { name: string; value: number; color: string; }
 
-function DonutChart({ slices }: { slices: DonutSlice[] }) {
-  const cx = 90, cy = 90, R = 72, r = 48;
+function DonutChart({ slices, centerLabel }: { slices: DonutSlice[]; centerLabel: string }) {
+  const cx = 100, cy = 100, R = 80, r = 54;
   const total = slices.reduce((s, sl) => s + sl.value, 0);
-
   if (total === 0) return null;
 
   const paths: React.ReactNode[] = [];
 
   if (slices.length === 1) {
-    // Full circle via two half-arcs with tiny gap
     const sl = slices[0];
     const gapDeg = 1;
     const halfAngle = 180 - gapDeg / 2;
-
-    const outerStart1 = polarToXY(cx, cy, R, -halfAngle);
-    const outerEnd1 = polarToXY(cx, cy, R, halfAngle);
-    const innerStart1 = polarToXY(cx, cy, r, halfAngle);
-    const innerEnd1 = polarToXY(cx, cy, r, -halfAngle);
-
-    const outerStart2 = polarToXY(cx, cy, R, halfAngle + gapDeg);
-    const outerEnd2 = polarToXY(cx, cy, R, 360 - gapDeg / 2);
-    const innerStart2 = polarToXY(cx, cy, r, 360 - gapDeg / 2);
-    const innerEnd2 = polarToXY(cx, cy, r, halfAngle + gapDeg);
-
+    const o1s = polarToXY(cx, cy, R, -halfAngle), o1e = polarToXY(cx, cy, R, halfAngle);
+    const i1s = polarToXY(cx, cy, r, halfAngle), i1e = polarToXY(cx, cy, r, -halfAngle);
+    const o2s = polarToXY(cx, cy, R, halfAngle + gapDeg), o2e = polarToXY(cx, cy, R, 360 - gapDeg / 2);
+    const i2s = polarToXY(cx, cy, r, 360 - gapDeg / 2), i2e = polarToXY(cx, cy, r, halfAngle + gapDeg);
     paths.push(
-      <path
-        key="half1"
-        fill={sl.color}
-        d={`M ${outerStart1.x} ${outerStart1.y} A ${R} ${R} 0 1 1 ${outerEnd1.x} ${outerEnd1.y} L ${innerStart1.x} ${innerStart1.y} A ${r} ${r} 0 1 0 ${innerEnd1.x} ${innerEnd1.y} Z`}
-      />,
-      <path
-        key="half2"
-        fill={sl.color}
-        d={`M ${outerStart2.x} ${outerStart2.y} A ${R} ${R} 0 0 1 ${outerEnd2.x} ${outerEnd2.y} L ${innerStart2.x} ${innerStart2.y} A ${r} ${r} 0 0 0 ${innerEnd2.x} ${innerEnd2.y} Z`}
-      />
+      <path key="h1" fill={sl.color} d={`M ${o1s.x} ${o1s.y} A ${R} ${R} 0 1 1 ${o1e.x} ${o1e.y} L ${i1s.x} ${i1s.y} A ${r} ${r} 0 1 0 ${i1e.x} ${i1e.y} Z`} />,
+      <path key="h2" fill={sl.color} d={`M ${o2s.x} ${o2s.y} A ${R} ${R} 0 0 1 ${o2e.x} ${o2e.y} L ${i2s.x} ${i2s.y} A ${r} ${r} 0 0 0 ${i2e.x} ${i2e.y} Z`} />,
     );
   } else {
     let startAngle = 0;
     slices.forEach((sl, i) => {
-      const pct = sl.value / total;
-      const sweep = pct * 360;
+      const sweep = (sl.value / total) * 360;
       const endAngle = startAngle + sweep;
-
-      const outerStart = polarToXY(cx, cy, R, startAngle);
-      const outerEnd = polarToXY(cx, cy, R, endAngle);
-      const innerEnd = polarToXY(cx, cy, r, endAngle);
-      const innerStart = polarToXY(cx, cy, r, startAngle);
-      const largeArc = sweep > 180 ? 1 : 0;
-
+      const os = polarToXY(cx, cy, R, startAngle), oe = polarToXY(cx, cy, R, endAngle);
+      const ie = polarToXY(cx, cy, r, endAngle), is_ = polarToXY(cx, cy, r, startAngle);
+      const large = sweep > 180 ? 1 : 0;
       paths.push(
-        <path
-          key={i}
-          fill={sl.color}
-          d={`M ${outerStart.x} ${outerStart.y} A ${R} ${R} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} L ${innerEnd.x} ${innerEnd.y} A ${r} ${r} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y} Z`}
-          style={{ opacity: 0.92 }}
+        <path key={i} fill={sl.color} opacity={0.9}
+          d={`M ${os.x} ${os.y} A ${R} ${R} 0 ${large} 1 ${oe.x} ${oe.y} L ${ie.x} ${ie.y} A ${r} ${r} 0 ${large} 0 ${is_.x} ${is_.y} Z`}
         />
       );
       startAngle = endAngle;
@@ -103,295 +68,207 @@ function DonutChart({ slices }: { slices: DonutSlice[] }) {
   }
 
   return (
-    <svg viewBox="0 0 180 180" width={180} height={180} style={{ flexShrink: 0 }}>
+    <svg viewBox="0 0 200 200" width={200} height={200} style={{ flexShrink: 0 }}>
       {paths}
+      <text x={cx} y={cy - 6} textAnchor="middle" fill={colors.muted} fontSize={10} fontWeight={500}>Total</text>
+      <text x={cx} y={cy + 14} textAnchor="middle" fill={colors.text} fontSize={13} fontWeight={700}>{centerLabel}</text>
     </svg>
   );
 }
 
-// ── component ──────────────────────────────────────────────────────────────
+// ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function FireDashboard() {
   const router = useRouter();
   const { fmt } = useCurrency();
 
+  // Raw data
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-  const [loading, setLoading] = useState(true);
   const [statsMap, setStatsMap] = useState<Record<string, PortfolioStats>>({});
-  const [statsLoading, setStatsLoading] = useState(false);
+  const [savings, setSavings] = useState<SavingsAccount[]>([]);
+  const [interestByAccount, setInterestByAccount] = useState<Record<string, InterestRecord[]>>({});
+  const [dividendMonths, setDividendMonths] = useState<DividendMonth[]>([]);
+  const [toUsdRates, setToUsdRates] = useState<Record<string, number>>({ USD: 1 });
 
-  // Load portfolios on mount
+  // Loading flags
+  const [portfoliosLoading, setPortfoliosLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [savingsLoading, setSavingsLoading] = useState(true);
+  const [dividendsLoading, setDividendsLoading] = useState(true);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const [interestLoading, setInterestLoading] = useState(false);
+
+  // ── Fetch all data ────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    portfolioApi.list().then(r => {
-      if (r.success && r.data) {
-        const list = r.data;
-        setPortfolios(list);
-        setLoading(false);
+    Promise.all([
+      portfolioApi.list(),
+      savingsApi.list(),
+      dividendCalendarApi.get(CURRENT_YEAR),
+    ]).then(([portRes, savRes, divRes]) => {
+      // Portfolios
+      const portList = (portRes.success && portRes.data) ? portRes.data : [];
+      setPortfolios(portList);
+      setPortfoliosLoading(false);
 
-        if (list.length > 0) {
-          setStatsLoading(true);
-          Promise.all(list.map(p => portfolioStatsApi.getStats(p.id))).then(results => {
-            const map: Record<string, PortfolioStats> = {};
-            results.forEach((res, i) => {
-              if (res.success && res.data) {
-                map[list[i].id] = res.data;
-              }
-            });
-            setStatsMap(map);
-            setStatsLoading(false);
-          }).catch(() => setStatsLoading(false));
-        }
-      } else {
-        setLoading(false);
+      // Savings
+      const savList = (savRes.success && savRes.data) ? savRes.data : [];
+      setSavings(savList);
+      setSavingsLoading(false);
+
+      // Dividend calendar
+      if (divRes.success && divRes.data) {
+        setDividendMonths(divRes.data.months);
       }
-    }).catch(() => setLoading(false));
+      setDividendsLoading(false);
+
+      // Portfolio stats (needs IDs)
+      if (portList.length > 0) {
+        Promise.all(portList.map((p: Portfolio) => portfolioStatsApi.getStats(p.id))).then(results => {
+          const map: Record<string, PortfolioStats> = {};
+          results.forEach((res, i) => {
+            if (res.success && res.data) map[portList[i].id] = res.data;
+          });
+          setStatsMap(map);
+          setStatsLoading(false);
+        }).catch(() => setStatsLoading(false));
+      } else {
+        setStatsLoading(false);
+      }
+
+      // Exchange rates (needs currencies from savings)
+      const ccys = [...new Set(savList.map((a: SavingsAccount) => a.currency))].filter((c: string) => c !== 'USD');
+      if (ccys.length > 0) {
+        setRatesLoading(true);
+        exchangeRateApi.get('USD', ccys).then(res => {
+          if (res.success && res.data) {
+            const toUsd: Record<string, number> = { USD: 1 };
+            for (const [ccy, rate] of Object.entries(res.data.rates as Record<string, number>)) {
+              toUsd[ccy] = (rate as number) > 0 ? 1 / (rate as number) : 1;
+            }
+            setToUsdRates(toUsd);
+          }
+          setRatesLoading(false);
+        });
+      }
+
+      // Interest records per savings account
+      if (savList.length > 0) {
+        setInterestLoading(true);
+        Promise.all(savList.map((a: SavingsAccount) => savingsApi.listInterest(a.id))).then(results => {
+          const map: Record<string, InterestRecord[]> = {};
+          results.forEach((res, i) => {
+            if (res.success && res.data) map[savList[i].id] = res.data.records;
+          });
+          setInterestByAccount(map);
+          setInterestLoading(false);
+        }).catch(() => setInterestLoading(false));
+      }
+    });
   }, []);
 
-  // ── aggregate stat calculation ──────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────────
 
-  const aggregated = useMemo(() => {
-    let totalValue = 0;
-    let totalCost = 0;
-    let unrealizedPl = 0;
-    let dividendYtd = 0;
+  const toUsdAmount = (amount: number, currency: string) =>
+    amount * (toUsdRates[currency] ?? 1);
 
-    portfolios.forEach(p => {
-      const stats = statsMap[p.id];
-      if (!stats) return;
-      totalValue += stats.total_value;
-      totalCost += stats.total_cost;
-      unrealizedPl += stats.unrealized_pl;
-      dividendYtd += stats.dividend_ytd;
-    });
+  // ── Derived calculations ──────────────────────────────────────────────────────
 
-    return { totalValue, totalCost, unrealizedPl, dividendYtd };
-  }, [portfolios, statsMap]);
+  const totalPortfolioValue = useMemo(() =>
+    Object.values(statsMap).reduce((s, st) => s + st.total_value, 0),
+    [statsMap]);
 
-  // ── donut slices ────────────────────────────────────────────────────────
+  const totalPortfolioCost = useMemo(() =>
+    Object.values(statsMap).reduce((s, st) => s + st.total_cost, 0),
+    [statsMap]);
 
-  const donutSlices: DonutSlice[] = useMemo(() => {
-    return portfolios.map((p, i) => {
-      const stats = statsMap[p.id];
-      return {
-        name: p.name,
-        value: stats?.total_value ?? 0,
-        color: SLICE_COLORS[i % SLICE_COLORS.length],
-      };
-    });
-  }, [portfolios, statsMap]);
+  const totalUnrealizedPl = useMemo(() =>
+    Object.values(statsMap).reduce((s, st) => s + st.unrealized_pl, 0),
+    [statsMap]);
 
-  const donutTotal = donutSlices.reduce((s, sl) => s + sl.value, 0);
+  const totalDividendYtd = useMemo(() =>
+    Object.values(statsMap).reduce((s, st) => s + st.dividend_ytd, 0),
+    [statsMap]);
 
-  // ── table styles ────────────────────────────────────────────────────────
+  const totalSavingsUsd = useMemo(() =>
+    savings.reduce((s, a) => s + toUsdAmount(a.balance, a.currency), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [savings, toUsdRates]);
 
-  const thStyle: React.CSSProperties = {
-    padding: '10px 14px',
-    textAlign: 'left',
-    color: colors.muted,
-    fontWeight: 500,
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: '0.06em',
-    borderBottom: `1px solid ${colors.border}`,
-    whiteSpace: 'nowrap',
-  };
+  const totalInterestYtdUsd = useMemo(() =>
+    savings.reduce((s, a) => s + toUsdAmount(a.total_interest_ytd, a.currency), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [savings, toUsdRates]);
 
-  const tdStyle: React.CSSProperties = {
-    padding: '12px 14px',
-    color: colors.text,
-    fontSize: 13,
-    borderBottom: `1px solid ${colors.border}`,
-  };
+  const totalAssetsUsd = totalPortfolioValue + totalSavingsUsd;
 
-  // ── per-portfolio table helpers ─────────────────────────────────────────
+  const roi = totalPortfolioCost > 0
+    ? ((totalPortfolioValue - totalPortfolioCost) / totalPortfolioCost) * 100
+    : 0;
 
-  function getReturnPct(p: Portfolio): number | null {
-    const stats = statsMap[p.id];
-    if (!stats || !stats.total_cost || stats.total_cost === 0) return null;
-    const totalReturn = stats.unrealized_pl + stats.realized_pl + stats.dividend_ytd;
-    return (totalReturn / stats.total_cost) * 100;
-  }
+  const ytdPassiveIncome = totalDividendYtd + totalInterestYtdUsd;
+  const avgPassivePerMonth = CURRENT_MONTH > 0 ? ytdPassiveIncome / CURRENT_MONTH : 0;
+  const fireProgress = Math.min((avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100, 100);
 
-  // ── aggregate stat card display ─────────────────────────────────────────
+  // Interest by month (all accounts, converted to USD)
+  const interestByMonth = useMemo(() => {
+    const map: Record<number, number> = {};
+    for (const acct of savings) {
+      const records = interestByAccount[acct.id] ?? [];
+      for (const r of records) {
+        const m = new Date(r.credited_at).getMonth() + 1;
+        const usd = toUsdAmount(r.amount, acct.currency);
+        map[m] = (map[m] ?? 0) + usd;
+      }
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savings, interestByAccount, toUsdRates]);
+
+  // Dividends by month from calendar
+  const dividendsByMonth = useMemo(() => {
+    const map: Record<number, number> = {};
+    for (const m of dividendMonths) map[m.month] = m.total;
+    return map;
+  }, [dividendMonths]);
+
+  // Donut slices
+  const donutSlices = useMemo(() => {
+    const slices: DonutSlice[] = [];
+    if (totalPortfolioValue > 0) slices.push({ name: 'Investments', value: totalPortfolioValue, color: colors.accent });
+    if (totalSavingsUsd > 0) slices.push({ name: 'Savings', value: totalSavingsUsd, color: colors.cyan });
+    return slices;
+  }, [totalPortfolioValue, totalSavingsUsd]);
+
+  // Next payout (earliest savings account)
+  const nextPayout = useMemo(() => {
+    if (savings.length === 0) return null;
+    const sorted = [...savings].sort((a, b) => a.next_payout_date.localeCompare(b.next_payout_date));
+    const acct = sorted[0];
+    return {
+      date: acct.next_payout_date,
+      amountUsd: toUsdAmount(acct.next_payout_amount, acct.currency),
+      name: acct.name,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savings, toUsdRates]);
+
+  // ── Loading state flags ───────────────────────────────────────────────────────
 
   const statsReady = !statsLoading && portfolios.every(p => statsMap[p.id]);
+  const savingsReady = !savingsLoading && !ratesLoading;
+  const assetsReady = statsReady && savingsReady;
+  const chartReady = assetsReady && !dividendsLoading && !interestLoading;
 
-  // ── render ──────────────────────────────────────────────────────────────
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: colors.bg }}>
-        <Loader size="md" variant="bar" />
-      </div>
-    );
-  }
-
-  if (portfolios.length === 0) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: colors.bg, gap: 16 }}>
-        <p style={{ color: colors.muted, fontSize: 14, margin: 0 }}>No portfolios yet.</p>
-        <Button onClick={() => router.push('/fire/portfolios')}>Go to Portfolios</Button>
-      </div>
-    );
-  }
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ marginBottom: 24 }}>
         <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>Dashboard</h1>
       </div>
-
-      {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
-        <StatCard
-          label="Total Value"
-          value={statsReady ? fmt(aggregated.totalValue) : '—'}
-        />
-        <StatCard
-          label="Total Cost"
-          value={statsReady ? fmt(aggregated.totalCost) : '—'}
-        />
-        <StatCard
-          label="Unrealized P&L"
-          value={statsReady ? fmt(aggregated.unrealizedPl) : '—'}
-          valueColor={statsReady ? (aggregated.unrealizedPl >= 0 ? 'positive' : 'negative') : undefined}
-        />
-        <StatCard
-          label="YTD Dividends"
-          value={statsReady ? fmt(aggregated.dividendYtd) : '—'}
-          valueColor={statsReady ? 'positive' : undefined}
-        />
-      </div>
-
-      {/* Portfolio Allocation */}
-      <p style={{ fontSize: 11, fontWeight: 600, color: colors.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-        Portfolio Allocation
-      </p>
-      <div
-        style={{
-          backgroundColor: colors.surface,
-          border: `1px solid ${colors.border}`,
-          borderRadius: 8,
-          padding: '20px 24px',
-          marginBottom: 28,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 32,
-        }}
-      >
-        {statsLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', padding: '20px 0' }}>
-            <Loader size="md" variant="bar" />
-          </div>
-        ) : (
-          <>
-            <DonutChart slices={donutSlices.filter(s => s.value > 0)} />
-            {/* Legend */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
-              {portfolios.map((p, i) => {
-                const sliceColor = SLICE_COLORS[i % SLICE_COLORS.length];
-                const sliceValue = donutSlices[i]?.value ?? 0;
-                const pct = donutTotal > 0 ? (sliceValue / donutTotal) * 100 : 0;
-
-                return (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: sliceColor, flexShrink: 0 }} />
-                    <span style={{ color: colors.text, fontSize: 13, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.name}
-                    </span>
-                    <span style={{ color: colors.muted, fontSize: 12, marginRight: 8 }}>
-                      {pct.toFixed(1)}%
-                    </span>
-                    <span style={{ color: colors.text, fontSize: 13, whiteSpace: 'nowrap' }}>
-                      {fmt(sliceValue)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Portfolios table */}
-      <p style={{ fontSize: 11, fontWeight: 600, color: colors.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-        Portfolios
-      </p>
-      <div
-        style={{
-          backgroundColor: colors.surface,
-          border: `1px solid ${colors.border}`,
-          borderRadius: 8,
-          overflow: 'hidden',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Name</th>
-              <th style={{ ...thStyle, textAlign: 'right' }}>Value</th>
-              <th style={{ ...thStyle, textAlign: 'right' }}>Unrealized P&amp;L</th>
-              <th style={{ ...thStyle, textAlign: 'right' }}>Return %</th>
-              <th style={{ ...thStyle, textAlign: 'right', width: 40 }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {portfolios.map(p => {
-              const stats = statsLoading ? null : statsMap[p.id];
-              const retPct = statsLoading ? null : getReturnPct(p);
-
-              return (
-                <tr
-                  key={p.id}
-                  onClick={() => router.push(`/fire/portfolios/${p.id}`)}
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLTableRowElement).style.backgroundColor = colors.surfaceLight;
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '';
-                  }}
-                >
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>{p.name}</td>
-
-                  <td style={{ ...tdStyle, textAlign: 'right' }}>
-                    {!stats ? (
-                      <span style={{ color: colors.muted }}>—</span>
-                    ) : (
-                      <span style={{ color: colors.text }}>{fmt(stats.total_value)}</span>
-                    )}
-                  </td>
-
-                  <td style={{ ...tdStyle, textAlign: 'right' }}>
-                    {!stats ? (
-                      <span style={{ color: colors.muted }}>—</span>
-                    ) : (
-                      <span style={{ color: stats.unrealized_pl >= 0 ? colors.positive : colors.negative }}>
-                        {fmt(stats.unrealized_pl)}
-                      </span>
-                    )}
-                  </td>
-
-                  <td style={{ ...tdStyle, textAlign: 'right' }}>
-                    {retPct === null ? (
-                      <span style={{ color: colors.muted }}>—</span>
-                    ) : (
-                      <span style={{ color: retPct >= 0 ? colors.positive : colors.negative }}>
-                        {retPct >= 0 ? '+' : ''}{retPct.toFixed(2)}%
-                      </span>
-                    )}
-                  </td>
-
-                  <td style={{ ...tdStyle, textAlign: 'right', width: 40 }}>
-                    <span style={{ color: colors.muted, fontSize: 16 }}>→</span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {/* Sections added in subsequent tasks */}
+      <div style={{ color: colors.muted, fontSize: 13 }}>Data layer ready. UI sections coming next.</div>
     </div>
   );
 }
