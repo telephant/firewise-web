@@ -151,10 +151,9 @@ export function DividendMonthCalendarView({
 
   return (
     <div ref={containerRef} style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
-      {/* Centering spacer */}
-      {!drawerOpen && <div style={{ flex: 1 }} />}
-      {/* Calendar */}
-      <div style={{ width: calWidth, flexShrink: 0 }}>
+      {/* Calendar — fills available space, content capped at calWidth */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ maxWidth: calWidth }}>
         {/* Annual summary bar */}
         <div style={{
           display: 'flex',
@@ -331,9 +330,7 @@ export function DividendMonthCalendarView({
           </>
         )}
       </div>
-
-      {/* Right spacer when drawer closed (keeps calendar centered) */}
-      {!drawerOpen && <div style={{ flex: 1 }} />}
+      </div>
 
       {/* Right drawer */}
       <div style={{
