@@ -8,13 +8,12 @@ import type { Dividend } from '@/lib/fire/api';
 
 interface Props {
   dividends: Dividend[];
-  currency: string;
   taxMode: 'gross' | 'net';
 }
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function DividendStatsView({ dividends, currency, taxMode }: Props) {
+export function DividendStatsView({ dividends, taxMode }: Props) {
   const { fmt: fmtCurrency } = useCurrency();
   // Build last-12-months bar chart data
   const barData = useMemo<BarChartData[]>(() => {

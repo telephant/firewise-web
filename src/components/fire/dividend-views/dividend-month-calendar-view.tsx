@@ -9,7 +9,6 @@ interface Props {
   dividends: Dividend[];
   calendarData: DividendCalendarResponse | null;
   calendarLoading: boolean;
-  currency: string;
   taxMode: 'gross' | 'net';
   year: number;
   onYearChange: (y: number) => void;
@@ -41,7 +40,6 @@ export function DividendMonthCalendarView({
   dividends,
   calendarData,
   calendarLoading,
-  currency,
   taxMode,
   year,
   onYearChange,

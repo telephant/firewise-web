@@ -144,7 +144,6 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
       {view === 'stats' && (
         <DividendStatsView
           dividends={dividends}
-          currency={currency}
           taxMode={taxMode}
         />
       )}
@@ -153,7 +152,6 @@ export function DividendViews({ dividends, currency, onAddDividend }: Props) {
           dividends={dividends}
           calendarData={calendarData}
           calendarLoading={calendarLoading}
-          currency={currency}
           taxMode={taxMode}
           year={calendarYear}
           onYearChange={setCalendarYear}
