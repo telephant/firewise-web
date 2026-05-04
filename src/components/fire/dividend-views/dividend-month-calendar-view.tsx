@@ -150,10 +150,10 @@ export function DividendMonthCalendarView({
   const gridBorder = `1px solid ${colors.border}`;
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
-      {/* Calendar — fills available space, content capped at calWidth */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ maxWidth: calWidth }}>
+    <div ref={containerRef} style={{ display: 'flex', justifyContent: 'center', gap: 0, alignItems: 'flex-start' }}>
+      {/* Calendar — fixed width, drawer attaches directly to its right */}
+      <div style={{ width: calWidth, flexShrink: 0 }}>
+      <div>
         {/* Annual summary bar */}
         <div style={{
           display: 'flex',
