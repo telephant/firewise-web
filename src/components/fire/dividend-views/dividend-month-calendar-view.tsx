@@ -128,22 +128,37 @@ export function DividendMonthCalendarView({
 
   const drawerOpen = selectedMonth !== null;
 
-  // Annual summary: realized (actual dividends for selected year) + projected (forecasted months)
+  // Annual summary: realized + projected + derived stats
   const annualSummary = useMemo(() => {
     const taxRate = calendarData?.taxRates.us ?? 0.3;
     let realized = 0;
     let projected = 0;
+    let monthsReceived = 0;
+    let bestMonth = { idx: -1, amount: 0 };
+
     for (let m = 0; m < 12; m++) {
       const actualDivs = actualByMonth.get(m) ?? [];
       const calMonth = calendarData?.months[m];
       const forecastedDivs = (calMonth?.dividends ?? []).filter(d => d.isForecasted);
 
-      realized += actualDivs.reduce((sum, d) =>
+      const actualTotal = actualDivs.reduce((sum, d) =>
         sum + (taxMode === 'net' ? d.total_amount * (1 - d.tax_rate) : d.total_amount), 0);
-      projected += forecastedDivs.reduce((sum, d) =>
+      const forecastedTotal = forecastedDivs.reduce((sum, d) =>
         sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0);
+
+      realized += actualTotal;
+      projected += forecastedTotal;
+
+      if (actualDivs.length > 0) monthsReceived++;
+      const monthTotal = actualTotal + forecastedTotal;
+      if (monthTotal > bestMonth.amount) bestMonth = { idx: m, amount: monthTotal };
     }
-    return { realized, projected, total: realized + projected };
+
+    const total = realized + projected;
+    const avgPerMonth = monthsReceived > 0 ? realized / monthsReceived : 0;
+    const progressPct = total > 0 ? Math.min((realized / total) * 100, 100) : 0;
+
+    return { realized, projected, total, monthsReceived, avgPerMonth, bestMonth, progressPct };
   }, [actualByMonth, calendarData, taxMode]);
 
   // Border color for grid lines
@@ -181,6 +196,59 @@ export function DividendMonthCalendarView({
             </div>
           </div>
         ))}
+
+        {/* Progress */}
+        <div style={{ padding: '12px 0', borderTop: gridBorder }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Progress
+            </div>
+            <span style={{ color: colors.muted, fontSize: 10 }}>
+              {annualSummary.monthsReceived} / 12 mo
+            </span>
+          </div>
+          <div style={{ height: 4, backgroundColor: colors.surfaceLight, borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{
+              height: '100%',
+              width: `${annualSummary.progressPct}%`,
+              backgroundColor: colors.positive,
+              borderRadius: 2,
+              transition: 'width 0.4s ease',
+            }} />
+          </div>
+          <div style={{ color: colors.muted, fontSize: 10, marginTop: 4 }}>
+            {annualSummary.progressPct.toFixed(0)}% of full year
+          </div>
+        </div>
+
+        {/* Avg / month */}
+        <div style={{ padding: '12px 0', borderTop: gridBorder }}>
+          <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>
+            Avg / Month
+          </div>
+          <div style={{ color: colors.text, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
+            {annualSummary.monthsReceived > 0 ? fmtFull(annualSummary.avgPerMonth, currency) : '—'}
+          </div>
+        </div>
+
+        {/* Best month */}
+        <div style={{ padding: '12px 0', borderTop: gridBorder }}>
+          <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>
+            Best Month
+          </div>
+          {annualSummary.bestMonth.idx >= 0 && annualSummary.bestMonth.amount > 0 ? (
+            <>
+              <div style={{ color: colors.text, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                {fmtFull(annualSummary.bestMonth.amount, currency)}
+              </div>
+              <div style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>
+                {MONTH_NAMES_SHORT[annualSummary.bestMonth.idx]}
+              </div>
+            </>
+          ) : (
+            <div style={{ color: colors.muted, fontSize: 14 }}>—</div>
+          )}
+        </div>
 
         {/* Legend */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 20, paddingTop: 16, borderTop: gridBorder }}>
