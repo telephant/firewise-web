@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   portfolioApi,
   portfolioStatsApi,
-  exchangeRateApi,
 } from '@/lib/fire/api';
 import type { Portfolio, PortfolioStats } from '@/lib/fire/api';
 import {
@@ -13,9 +12,8 @@ import {
   Button,
   Loader,
   StatCard,
-  CurrencyCombobox,
-  ButtonGroup,
 } from '@/components/fire/ui';
+import { useCurrency } from '@/components/fire/currency-context';
 
 // ── constants ──────────────────────────────────────────────────────────────
 
@@ -29,23 +27,6 @@ const SLICE_COLORS = [
   '#67E8F9',
   '#FB923C',
 ];
-
-// ── helpers ────────────────────────────────────────────────────────────────
-
-function fmtNumber(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function convert(
-  value: number,
-  fromCurrency: string,
-  rates: Record<string, number>
-): { value: number; approximate: boolean } {
-  if (!rates[fromCurrency] || rates[fromCurrency] === 0) {
-    return { value, approximate: true };
-  }
-  return { value: value / rates[fromCurrency], approximate: false };
-}
 
 // ── SVG donut chart ────────────────────────────────────────────────────────
 
@@ -132,25 +113,15 @@ function DonutChart({ slices }: { slices: DonutSlice[] }) {
 
 export default function FireDashboard() {
   const router = useRouter();
+  const { fmt } = useCurrency();
 
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState(true);
   const [statsMap, setStatsMap] = useState<Record<string, PortfolioStats>>({});
   const [statsLoading, setStatsLoading] = useState(false);
-  const [baseCurrency, setBaseCurrencyState] = useState('USD');
-  const [convertMode, setConvertMode] = useState(false);
-  const [rates, setRates] = useState<Record<string, number>>({});
-
-  const setBaseCurrency = useCallback((val: string) => {
-    setBaseCurrencyState(val);
-    localStorage.setItem('fire_base_currency', val);
-  }, []);
 
   // Load portfolios on mount
   useEffect(() => {
-    const saved = localStorage.getItem('fire_base_currency');
-    if (saved) setBaseCurrencyState(saved);
-
     portfolioApi.list().then(r => {
       if (r.success && r.data) {
         const list = r.data;
@@ -176,75 +147,38 @@ export default function FireDashboard() {
     }).catch(() => setLoading(false));
   }, []);
 
-  // Load exchange rates when portfolios or baseCurrency changes
-  useEffect(() => {
-    if (portfolios.length === 0) return;
-    const uniqueCurrencies = [...new Set(portfolios.map(p => p.currency))];
-    exchangeRateApi.get(baseCurrency, uniqueCurrencies).then(r => {
-      if (r.success && r.data) {
-        setRates(r.data.rates);
-      }
-    }).catch(() => {});
-  }, [portfolios, baseCurrency]);
-
   // ── aggregate stat calculation ──────────────────────────────────────────
 
   const aggregated = useMemo(() => {
-    const hasMixedCurrencies =
-      new Set(portfolios.map(p => p.currency)).size > 1;
-
     let totalValue = 0;
     let totalCost = 0;
     let unrealizedPl = 0;
     let dividendYtd = 0;
-    let approximate = false;
 
     portfolios.forEach(p => {
       const stats = statsMap[p.id];
       if (!stats) return;
-
-      if (convertMode) {
-        const cv = convert(stats.total_value, p.currency, rates);
-        const cc = convert(stats.total_cost, p.currency, rates);
-        const cu = convert(stats.unrealized_pl, p.currency, rates);
-        const cd = convert(stats.dividend_ytd, p.currency, rates);
-        if (cv.approximate || cc.approximate || cu.approximate || cd.approximate) {
-          approximate = true;
-        }
-        totalValue += cv.value;
-        totalCost += cc.value;
-        unrealizedPl += cu.value;
-        dividendYtd += cd.value;
-      } else {
-        // Only safe to sum if same currency or single currency
-        totalValue += stats.total_value;
-        totalCost += stats.total_cost;
-        unrealizedPl += stats.unrealized_pl;
-        dividendYtd += stats.dividend_ytd;
-      }
+      totalValue += stats.total_value;
+      totalCost += stats.total_cost;
+      unrealizedPl += stats.unrealized_pl;
+      dividendYtd += stats.dividend_ytd;
     });
 
-    return { totalValue, totalCost, unrealizedPl, dividendYtd, approximate, hasMixedCurrencies };
-  }, [portfolios, statsMap, convertMode, rates]);
+    return { totalValue, totalCost, unrealizedPl, dividendYtd };
+  }, [portfolios, statsMap]);
 
   // ── donut slices ────────────────────────────────────────────────────────
 
   const donutSlices: DonutSlice[] = useMemo(() => {
     return portfolios.map((p, i) => {
       const stats = statsMap[p.id];
-      if (!stats) return { name: p.name, value: 0, color: SLICE_COLORS[i % SLICE_COLORS.length] };
-      let value = stats.total_value;
-      if (convertMode) {
-        const { value: cv } = convert(stats.total_value, p.currency, rates);
-        value = cv;
-      }
       return {
         name: p.name,
-        value,
+        value: stats?.total_value ?? 0,
         color: SLICE_COLORS[i % SLICE_COLORS.length],
       };
     });
-  }, [portfolios, statsMap, convertMode, rates]);
+  }, [portfolios, statsMap]);
 
   const donutTotal = donutSlices.reduce((s, sl) => s + sl.value, 0);
 
@@ -271,26 +205,6 @@ export default function FireDashboard() {
 
   // ── per-portfolio table helpers ─────────────────────────────────────────
 
-  function getPortfolioValue(p: Portfolio): { display: string; raw: number; approximate: boolean } | null {
-    const stats = statsMap[p.id];
-    if (!stats) return null;
-    if (convertMode) {
-      const { value, approximate } = convert(stats.total_value, p.currency, rates);
-      return { display: fmtNumber(value), raw: value, approximate };
-    }
-    return { display: fmtNumber(stats.total_value), raw: stats.total_value, approximate: false };
-  }
-
-  function getPortfolioUnrealized(p: Portfolio): { display: string; raw: number; approximate: boolean } | null {
-    const stats = statsMap[p.id];
-    if (!stats) return null;
-    if (convertMode) {
-      const { value, approximate } = convert(stats.unrealized_pl, p.currency, rates);
-      return { display: fmtNumber(value), raw: value, approximate };
-    }
-    return { display: fmtNumber(stats.unrealized_pl), raw: stats.unrealized_pl, approximate: false };
-  }
-
   function getReturnPct(p: Portfolio): number | null {
     const stats = statsMap[p.id];
     if (!stats || !stats.total_cost || stats.total_cost === 0) return null;
@@ -301,13 +215,6 @@ export default function FireDashboard() {
   // ── aggregate stat card display ─────────────────────────────────────────
 
   const statsReady = !statsLoading && portfolios.every(p => statsMap[p.id]);
-  const currencyLabel = convertMode ? baseCurrency : (aggregated.hasMixedCurrencies ? 'Mixed' : (portfolios[0]?.currency ?? ''));
-  const approxPrefix = aggregated.approximate ? '~' : '';
-
-  function statValue(val: number, signed = false): string {
-    const prefix = signed && val > 0 ? '+' : '';
-    return `${approxPrefix}${prefix}${fmtNumber(val)}`;
-  }
 
   // ── render ──────────────────────────────────────────────────────────────
 
@@ -333,39 +240,26 @@ export default function FireDashboard() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>Dashboard</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 180 }}>
-            <CurrencyCombobox value={baseCurrency} onChange={setBaseCurrency} />
-          </div>
-          <ButtonGroup
-            options={[
-              { id: 'original', label: 'Original' },
-              { id: 'convert', label: 'Convert' },
-            ]}
-            value={convertMode ? 'convert' : 'original'}
-            onChange={(v) => setConvertMode(v === 'convert')}
-          />
-        </div>
       </div>
 
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
         <StatCard
-          label={`Total Value${currencyLabel ? ` (${currencyLabel})` : ''}`}
-          value={statsReady ? statValue(aggregated.totalValue) : '—'}
+          label="Total Value"
+          value={statsReady ? fmt(aggregated.totalValue) : '—'}
         />
         <StatCard
-          label={`Total Cost${currencyLabel ? ` (${currencyLabel})` : ''}`}
-          value={statsReady ? statValue(aggregated.totalCost) : '—'}
+          label="Total Cost"
+          value={statsReady ? fmt(aggregated.totalCost) : '—'}
         />
         <StatCard
-          label={`Unrealized P&L${currencyLabel ? ` (${currencyLabel})` : ''}`}
-          value={statsReady ? statValue(aggregated.unrealizedPl, true) : '—'}
+          label="Unrealized P&L"
+          value={statsReady ? fmt(aggregated.unrealizedPl) : '—'}
           valueColor={statsReady ? (aggregated.unrealizedPl >= 0 ? 'positive' : 'negative') : undefined}
         />
         <StatCard
-          label={`YTD Dividends${currencyLabel ? ` (${currencyLabel})` : ''}`}
-          value={statsReady ? statValue(aggregated.dividendYtd) : '—'}
+          label="YTD Dividends"
+          value={statsReady ? fmt(aggregated.dividendYtd) : '—'}
           valueColor={statsReady ? 'positive' : undefined}
         />
       </div>
@@ -396,13 +290,9 @@ export default function FireDashboard() {
             {/* Legend */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
               {portfolios.map((p, i) => {
-                const stats = statsMap[p.id];
                 const sliceColor = SLICE_COLORS[i % SLICE_COLORS.length];
                 const sliceValue = donutSlices[i]?.value ?? 0;
                 const pct = donutTotal > 0 ? (sliceValue / donutTotal) * 100 : 0;
-                const approximate = convertMode && stats
-                  ? convert(stats.total_value, p.currency, rates).approximate
-                  : false;
 
                 return (
                   <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -414,7 +304,7 @@ export default function FireDashboard() {
                       {pct.toFixed(1)}%
                     </span>
                     <span style={{ color: colors.text, fontSize: 13, whiteSpace: 'nowrap' }}>
-                      {approximate ? '~' : ''}{fmtNumber(sliceValue)}
+                      {fmt(sliceValue)}
                     </span>
                   </div>
                 );
@@ -448,8 +338,7 @@ export default function FireDashboard() {
           </thead>
           <tbody>
             {portfolios.map(p => {
-              const val = statsLoading ? null : getPortfolioValue(p);
-              const unrl = statsLoading ? null : getPortfolioUnrealized(p);
+              const stats = statsLoading ? null : statsMap[p.id];
               const retPct = statsLoading ? null : getReturnPct(p);
 
               return (
@@ -464,29 +353,22 @@ export default function FireDashboard() {
                     (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '';
                   }}
                 >
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span>{p.name}</span>
-                      <span style={{ color: colors.muted, fontSize: 11 }}>{p.currency}</span>
-                    </div>
-                  </td>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{p.name}</td>
 
                   <td style={{ ...tdStyle, textAlign: 'right' }}>
-                    {val === null ? (
+                    {!stats ? (
                       <span style={{ color: colors.muted }}>—</span>
                     ) : (
-                      <span style={{ color: colors.text }}>
-                        {val.approximate ? '~' : ''}{val.display}
-                      </span>
+                      <span style={{ color: colors.text }}>{fmt(stats.total_value)}</span>
                     )}
                   </td>
 
                   <td style={{ ...tdStyle, textAlign: 'right' }}>
-                    {unrl === null ? (
+                    {!stats ? (
                       <span style={{ color: colors.muted }}>—</span>
                     ) : (
-                      <span style={{ color: unrl.raw >= 0 ? colors.positive : colors.negative }}>
-                        {unrl.approximate ? '~' : ''}{unrl.raw >= 0 ? '+' : ''}{unrl.display}
+                      <span style={{ color: stats.unrealized_pl >= 0 ? colors.positive : colors.negative }}>
+                        {fmt(stats.unrealized_pl)}
                       </span>
                     )}
                   </td>
@@ -496,7 +378,7 @@ export default function FireDashboard() {
                       <span style={{ color: colors.muted }}>—</span>
                     ) : (
                       <span style={{ color: retPct >= 0 ? colors.positive : colors.negative }}>
-                        {retPct >= 0 ? '+' : ''}{fmtNumber(retPct)}%
+                        {retPct >= 0 ? '+' : ''}{retPct.toFixed(2)}%
                       </span>
                     )}
                   </td>
