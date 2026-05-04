@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   portfolioApi,
   portfolioStatsApi,
@@ -79,7 +78,6 @@ function DonutChart({ slices, centerLabel }: { slices: DonutSlice[]; centerLabel
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function FireDashboard() {
-  const router = useRouter();
   const { fmt } = useCurrency();
 
   // Raw data
@@ -101,76 +99,87 @@ export default function FireDashboard() {
   // ── Fetch all data ────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    let alive = true;
+
     Promise.all([
       portfolioApi.list(),
       savingsApi.list(),
       dividendCalendarApi.get(CURRENT_YEAR),
     ]).then(([portRes, savRes, divRes]) => {
-      // Portfolios
+      if (!alive) return;
+
       const portList = (portRes.success && portRes.data) ? portRes.data : [];
       setPortfolios(portList);
       setPortfoliosLoading(false);
 
-      // Savings
       const savList = (savRes.success && savRes.data) ? savRes.data : [];
       setSavings(savList);
       setSavingsLoading(false);
 
-      // Dividend calendar
       if (divRes.success && divRes.data) {
         setDividendMonths(divRes.data.months);
       }
       setDividendsLoading(false);
 
-      // Portfolio stats (needs IDs)
       if (portList.length > 0) {
         Promise.all(portList.map((p: Portfolio) => portfolioStatsApi.getStats(p.id))).then(results => {
+          if (!alive) return;
           const map: Record<string, PortfolioStats> = {};
           results.forEach((res, i) => {
             if (res.success && res.data) map[portList[i].id] = res.data;
           });
           setStatsMap(map);
           setStatsLoading(false);
-        }).catch(() => setStatsLoading(false));
+        }).catch(() => { if (alive) setStatsLoading(false); });
       } else {
         setStatsLoading(false);
       }
 
-      // Exchange rates (needs currencies from savings)
       const ccys = [...new Set(savList.map((a: SavingsAccount) => a.currency))].filter((c: string) => c !== 'USD');
       if (ccys.length > 0) {
         setRatesLoading(true);
         exchangeRateApi.get('USD', ccys).then(res => {
+          if (!alive) return;
           if (res.success && res.data) {
             const toUsd: Record<string, number> = { USD: 1 };
             for (const [ccy, rate] of Object.entries(res.data.rates as Record<string, number>)) {
-              toUsd[ccy] = (rate as number) > 0 ? 1 / (rate as number) : 1;
+              toUsd[ccy] = rate > 0 ? 1 / rate : 1;
             }
             setToUsdRates(toUsd);
           }
           setRatesLoading(false);
-        });
+        }).catch(() => { if (alive) setRatesLoading(false); });
       }
 
-      // Interest records per savings account
       if (savList.length > 0) {
         setInterestLoading(true);
         Promise.all(savList.map((a: SavingsAccount) => savingsApi.listInterest(a.id))).then(results => {
+          if (!alive) return;
           const map: Record<string, InterestRecord[]> = {};
           results.forEach((res, i) => {
             if (res.success && res.data) map[savList[i].id] = res.data.records;
           });
           setInterestByAccount(map);
           setInterestLoading(false);
-        }).catch(() => setInterestLoading(false));
+        }).catch(() => { if (alive) setInterestLoading(false); });
       }
+    }).catch(() => {
+      if (!alive) return;
+      setPortfoliosLoading(false);
+      setSavingsLoading(false);
+      setDividendsLoading(false);
+      setStatsLoading(false);
     });
+
+    return () => { alive = false; };
   }, []);
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
 
-  const toUsdAmount = (amount: number, currency: string) =>
-    amount * (toUsdRates[currency] ?? 1);
+  const toUsdAmount = useCallback(
+    (amount: number, currency: string) => amount * (toUsdRates[currency] ?? 1),
+    [toUsdRates],
+  );
 
   // ── Derived calculations ──────────────────────────────────────────────────────
 
@@ -192,13 +201,11 @@ export default function FireDashboard() {
 
   const totalSavingsUsd = useMemo(() =>
     savings.reduce((s, a) => s + toUsdAmount(a.balance, a.currency), 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [savings, toUsdRates]);
+    [savings, toUsdAmount]);
 
   const totalInterestYtdUsd = useMemo(() =>
     savings.reduce((s, a) => s + toUsdAmount(a.total_interest_ytd, a.currency), 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [savings, toUsdRates]);
+    [savings, toUsdAmount]);
 
   const totalAssetsUsd = totalPortfolioValue + totalSavingsUsd;
 
@@ -222,13 +229,12 @@ export default function FireDashboard() {
       }
     }
     return map;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savings, interestByAccount, toUsdRates]);
+  }, [savings, interestByAccount, toUsdAmount]);
 
   // Dividends by month from calendar
   const dividendsByMonth = useMemo(() => {
     const map: Record<number, number> = {};
-    for (const m of dividendMonths) map[m.month] = m.total;
+    for (const m of dividendMonths) map[m.month + 1] = m.total; // API is 0-indexed, chart expects 1-12
     return map;
   }, [dividendMonths]);
 
@@ -250,8 +256,7 @@ export default function FireDashboard() {
       amountUsd: toUsdAmount(acct.next_payout_amount, acct.currency),
       name: acct.name,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savings, toUsdRates]);
+  }, [savings, toUsdAmount]);
 
   // ── Loading state flags ───────────────────────────────────────────────────────
 
