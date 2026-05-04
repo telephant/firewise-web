@@ -6,6 +6,7 @@ import { portfolioApi, portfolioStatsApi } from '@/lib/fire/api';
 import type { Portfolio, PortfolioStats } from '@/lib/fire/api';
 import { colors, Button, Loader } from '@/components/fire/ui';
 import { CreatePortfolioDialog } from '@/components/fire/create-portfolio-dialog';
+import { EditPortfolioDialog } from '@/components/fire/edit-portfolio-dialog';
 import { useCurrency } from '@/components/fire/currency-context';
 
 function ColoredCell({ value }: { value: number | null }) {
@@ -23,6 +24,8 @@ export default function PortfoliosPage() {
   const [statsMap, setStatsMap] = useState<Record<string, PortfolioStats>>({});
   const [statsLoading, setStatsLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editPortfolio, setEditPortfolio] = useState<Portfolio | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     portfolioApi.list().then(r => {
@@ -46,6 +49,14 @@ export default function PortfoliosPage() {
       }
     }).catch(() => setLoading(false));
   }, []);
+
+  async function handleDelete(p: Portfolio) {
+    if (!window.confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    setDeletingId(p.id);
+    await portfolioApi.delete(p.id);
+    setPortfolios(prev => prev.filter(x => x.id !== p.id));
+    setDeletingId(null);
+  }
 
   function getReturnPct(portfolioId: string): number | null {
     const stats = statsMap[portfolioId];
@@ -100,6 +111,7 @@ export default function PortfoliosPage() {
                 <th style={{ ...thStyle, textAlign: 'right' }}>Realized P&amp;L</th>
                 <th style={{ ...thStyle, textAlign: 'right' }}>YTD Dividends</th>
                 <th style={{ ...thStyle, textAlign: 'right' }}>Return %</th>
+                <th style={{ ...thStyle, width: 100 }}></th>
               </tr>
             </thead>
             <tbody>
@@ -109,33 +121,46 @@ export default function PortfoliosPage() {
                 return (
                   <tr
                     key={p.id}
-                    onClick={() => router.push(`/fire/portfolios/${p.id}`)}
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = colors.surfaceLight; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = ''; }}
                   >
-                    <td style={{ ...tdStyle, fontWeight: 600 }}>{p.name}</td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    <td style={{ ...tdStyle, fontWeight: 600 }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>{p.name}</td>
+                    <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
                       {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span> : fmt(stats.total_value)}
                     </td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
                       {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span> : fmt(stats.total_cost)}
                     </td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
                       {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span>
                         : <span style={{ color: stats.unrealized_pl >= 0 ? colors.positive : colors.negative }}>{fmt(stats.unrealized_pl)}</span>}
                     </td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
                       {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span>
                         : <span style={{ color: stats.realized_pl >= 0 ? colors.positive : colors.negative }}>{fmt(stats.realized_pl)}</span>}
                     </td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
                       {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span>
                         : <span style={{ color: colors.positive }}>{fmt(stats.dividend_ytd)}</span>}
                     </td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
                       {statsLoading || returnPct === null ? <span style={{ color: colors.muted }}>—</span>
                         : <span style={{ color: returnPct >= 0 ? colors.positive : colors.negative }}>{returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%</span>}
+                    </td>
+                    <td style={{ ...tdStyle, width: 100 }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <Button variant="ghost" size="sm" onClick={() => setEditPortfolio(p)}>Edit</Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={deletingId === p.id}
+                          onClick={() => handleDelete(p)}
+                          style={{ color: colors.negative }}
+                        >
+                          {deletingId === p.id ? '...' : 'Delete'}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -150,6 +175,18 @@ export default function PortfoliosPage() {
         onOpenChange={setCreateOpen}
         onSuccess={p => { setPortfolios(prev => [...prev, p]); setCreateOpen(false); }}
       />
+
+      {editPortfolio && (
+        <EditPortfolioDialog
+          open={!!editPortfolio}
+          onOpenChange={open => { if (!open) setEditPortfolio(null); }}
+          portfolio={editPortfolio}
+          onSuccess={updated => {
+            setPortfolios(prev => prev.map(p => p.id === updated.id ? updated : p));
+            setEditPortfolio(null);
+          }}
+        />
+      )}
     </div>
   );
 }
