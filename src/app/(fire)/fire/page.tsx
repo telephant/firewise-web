@@ -487,7 +487,126 @@ export default function FireDashboard() {
         </div>
       </div>
 
-      {/* Section 3 coming next */}
+      {/* ── Section 3: Passive Income ── */}
+    <div style={{ marginBottom: 28 }}>
+      <p style={{ fontSize: 11, fontWeight: 600, color: colors.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Passive Income</p>
+      <div style={{
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.border}`,
+        borderRadius: 12,
+        padding: '20px 24px',
+      }}>
+
+        {/* Top stats row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${colors.border}` }}>
+          {[
+            { label: 'YTD Dividends', value: assetsReady ? fmt(totalDividendYtd) : null, color: colors.accent },
+            { label: 'YTD Interest', value: assetsReady ? fmt(totalInterestYtdUsd) : null, color: colors.cyan },
+            { label: 'YTD Total', value: assetsReady ? fmt(ytdPassiveIncome) : null, color: colors.positive },
+            {
+              label: 'Next Payout',
+              value: savingsReady && nextPayout ? fmt(nextPayout.amountUsd) : null,
+              sub: nextPayout ? nextPayout.date : null,
+              color: colors.text,
+            },
+          ].map(({ label, value, color, sub }) => (
+            <div key={label}>
+              <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, marginBottom: 4 }}>{label}</p>
+              {value === null ? (
+                <Loader size="sm" variant="dots" />
+              ) : (
+                <>
+                  <p style={{ color, fontSize: 18, fontWeight: 700, margin: 0 }}>{value}</p>
+                  {sub && <p style={{ color: colors.muted, fontSize: 11, margin: '2px 0 0' }}>{sub}</p>}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Area chart */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', gap: 16, marginBottom: 12, alignItems: 'center' }}>
+            <p style={{ color: colors.text, fontSize: 13, fontWeight: 600, margin: 0 }}>Monthly Trend</p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: colors.muted }}>
+                <span style={{ width: 10, height: 2, backgroundColor: colors.accent, display: 'inline-block', borderRadius: 1 }} />
+                Dividends
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: colors.muted }}>
+                <span style={{ width: 10, height: 2, backgroundColor: colors.cyan, display: 'inline-block', borderRadius: 1 }} />
+                Interest
+              </span>
+            </div>
+          </div>
+          {chartReady ? (
+            <PassiveIncomeChart
+              dividendsByMonth={dividendsByMonth}
+              interestByMonth={interestByMonth}
+              fmt={fmt}
+            />
+          ) : (
+            <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Loader size="md" variant="bar" />
+            </div>
+          )}
+        </div>
+
+        {/* Monthly summary table */}
+        <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 16 }}>
+          <p style={{ color: colors.text, fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Monthly Breakdown</p>
+          {chartReady ? (() => {
+            const MONTH_NAMES_FULL = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const rows = Array.from({ length: 12 }, (_, i) => {
+              const m = i + 1;
+              const div = dividendsByMonth[m] ?? 0;
+              const int_ = interestByMonth[m] ?? 0;
+              return { month: m, div, int: int_, total: div + int_ };
+            })
+              .filter(r => r.total > 0)
+              .sort((a, b) => b.month - a.month);
+
+            if (rows.length === 0) {
+              return <p style={{ color: colors.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>No passive income recorded yet this year.</p>;
+            }
+
+            return (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    {['Month', 'Dividends', 'Interest', 'Total'].map((h, i) => (
+                      <th key={h} style={{
+                        textAlign: i === 0 ? 'left' : 'right',
+                        color: colors.muted, fontWeight: 500, fontSize: 11,
+                        padding: '4px 8px', borderBottom: `1px solid ${colors.border}`,
+                        textTransform: 'uppercase', letterSpacing: '0.04em',
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(r => (
+                    <tr key={r.month} style={{
+                      backgroundColor: r.month === CURRENT_MONTH ? `${colors.accent}10` : 'transparent',
+                    }}>
+                      <td style={{ padding: '8px', color: r.month === CURRENT_MONTH ? colors.text : colors.muted, fontWeight: r.month === CURRENT_MONTH ? 600 : 400 }}>
+                        {MONTH_NAMES_FULL[r.month - 1]} {CURRENT_YEAR}
+                        {r.month === CURRENT_MONTH && <span style={{ color: colors.accent, fontSize: 10, marginLeft: 6, fontWeight: 600 }}>NOW</span>}
+                      </td>
+                      <td style={{ padding: '8px', color: colors.accent, textAlign: 'right' }}>{r.div > 0 ? fmt(r.div) : '—'}</td>
+                      <td style={{ padding: '8px', color: colors.cyan, textAlign: 'right' }}>{r.int > 0 ? fmt(r.int) : '—'}</td>
+                      <td style={{ padding: '8px', color: colors.positive, fontWeight: 600, textAlign: 'right' }}>{fmt(r.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+          })() : (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}><Loader size="sm" variant="dots" /></div>
+          )}
+        </div>
+      </div>
+    </div>
     </div>
   );
 }
