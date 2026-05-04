@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { familyApi } from '@/lib/fire/api';
 import type { FamilyInvitation } from '@/lib/fire/api';
 import { colors, Button, Input, Card, Label, Loader } from '@/components/fire/ui';
-import { Breadcrumb } from '@/components/fire/breadcrumb';
 import { useAuth } from '@/hooks/use-auth';
 import { useFamilies } from '@/hooks/fire/use-families';
 
@@ -132,8 +131,7 @@ export default function FamilyPage() {
   return (
     <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <Breadcrumb items={[{ label: 'Family' }]} />
-        <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: '0 0 24px' }}>Family</h1>
+<h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: '0 0 24px' }}>Family</h1>
 
         {/* Family tabs — only if user is in multiple families */}
         {families.length > 1 && (

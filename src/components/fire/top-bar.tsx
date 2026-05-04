@@ -1,17 +1,29 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { colors } from '@/components/fire/ui';
+import { usePageContext } from '@/components/fire/page-context';
 
-function getPageTitle(pathname: string): string {
-  if (pathname === '/fire') return 'Dashboard';
-  if (pathname.startsWith('/fire/portfolios/') && pathname.split('/').length === 4) return 'Portfolio';
-  if (pathname === '/fire/portfolios') return 'Portfolios';
-  if (pathname.startsWith('/fire/dca')) return 'DCA';
-  if (pathname.startsWith('/fire/family')) return 'Family';
-  return 'Firewise';
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+function getBreadcrumbs(pathname: string, pageTitle: string | null): BreadcrumbItem[] {
+  if (pathname.startsWith('/fire/portfolios/') && pathname.split('/').length === 4) {
+    return [
+      { label: 'Portfolios', href: '/fire/portfolios' },
+      { label: pageTitle || '...' },
+    ];
+  }
+  if (pathname === '/fire/portfolios') return [{ label: 'Portfolios' }];
+  if (pathname === '/fire') return [{ label: 'Dashboard' }];
+  if (pathname.startsWith('/fire/dca')) return [{ label: 'DCA' }];
+  if (pathname.startsWith('/fire/family')) return [{ label: 'Family' }];
+  return [{ label: 'Firewise' }];
 }
 
 function getInitials(name?: string | null, email?: string | null): string {
@@ -22,11 +34,12 @@ function getInitials(name?: string | null, email?: string | null): string {
 export function FireTopBar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const { pageTitle } = usePageContext();
   const [open, setOpen] = useState(false);
   const [signOutHover, setSignOutHover] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const title = getPageTitle(pathname);
+  const breadcrumbs = getBreadcrumbs(pathname, pageTitle);
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
   const fullName = user?.user_metadata?.full_name as string | undefined;
   const email = user?.email;
@@ -59,10 +72,28 @@ export function FireTopBar() {
         justifyContent: 'space-between',
       }}
     >
-      {/* Left: page title */}
-      <span style={{ color: colors.text, fontSize: 14, fontWeight: 600 }}>
-        {title}
-      </span>
+      {/* Left: breadcrumbs */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {breadcrumbs.map((item, i) => (
+          <span key={item.href ?? item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {i > 0 && (
+              <span style={{ color: colors.muted, fontSize: 12, opacity: 0.5 }}>/</span>
+            )}
+            {item.href ? (
+              <Link
+                href={item.href}
+                style={{ color: colors.muted, fontSize: 13, textDecoration: 'none', fontWeight: 500 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = colors.text; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = colors.muted; }}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span style={{ color: colors.text, fontSize: 13, fontWeight: 600 }}>{item.label}</span>
+            )}
+          </span>
+        ))}
+      </div>
 
       {/* Right: avatar + dropdown */}
       <div ref={dropdownRef} style={{ position: 'relative' }}>
