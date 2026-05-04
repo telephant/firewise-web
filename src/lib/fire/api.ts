@@ -59,6 +59,33 @@ export interface Dividend {
   created_at: string;
 }
 
+export interface DividendCalendarMonthDividend {
+  ticker: string;
+  assetId: string;
+  amount: number; // GROSS amount in portfolio currency
+  originalAmount?: number;
+  originalCurrency?: string;
+  isForecasted: boolean;
+  date?: string; // ISO date string, present for actual dividends
+  frequency?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | null;
+  market?: string | null;
+}
+
+export interface DividendCalendarMonth {
+  month: number; // 0-11
+  name: string;  // 'Jan', 'Feb', etc.
+  dividends: DividendCalendarMonthDividend[];
+  total: number; // GROSS sum for the month
+}
+
+export interface DividendCalendarResponse {
+  year: number;
+  months: DividendCalendarMonth[];
+  annualTotal: number;
+  currency: string;
+  taxRates: { us: number; sg: number };
+}
+
 export interface PortfolioSnapshot {
   id: string;
   portfolio_id: string;
@@ -294,6 +321,11 @@ export const dividendApi = {
     }),
   delete: (portfolioId: string, dividendId: string) =>
     fetchApi(`/portfolios/${portfolioId}/dividends/${dividendId}`, { method: 'DELETE' }),
+};
+
+export const dividendCalendarApi = {
+  get: (year: number) =>
+    fetchApi<DividendCalendarResponse>(`/fire/dividend-calendar?year=${year}`),
 };
 
 export const portfolioStatsApi = {
