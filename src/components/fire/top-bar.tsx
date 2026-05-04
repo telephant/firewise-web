@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { colors } from '@/components/fire/ui';
 import { usePageContext } from '@/components/fire/page-context';
+import { useCurrency, SUPPORTED_CURRENCIES } from '@/components/fire/currency-context';
 
 interface BreadcrumbItem {
   label: string;
@@ -35,6 +36,7 @@ export function FireTopBar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { pageTitle } = usePageContext();
+  const { displayCurrency, setDisplayCurrency } = useCurrency();
   const [open, setOpen] = useState(false);
   const [signOutHover, setSignOutHover] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -94,6 +96,30 @@ export function FireTopBar() {
           </span>
         ))}
       </div>
+
+      {/* Right: currency selector + avatar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+
+      {/* Currency selector */}
+      <select
+        value={displayCurrency}
+        onChange={e => setDisplayCurrency(e.target.value as typeof displayCurrency)}
+        style={{
+          background: colors.surfaceLight,
+          border: `1px solid ${colors.border}`,
+          borderRadius: 6,
+          color: colors.muted,
+          fontSize: 12,
+          fontWeight: 500,
+          padding: '3px 6px',
+          cursor: 'pointer',
+          outline: 'none',
+        }}
+      >
+        {SUPPORTED_CURRENCIES.map(c => (
+          <option key={c} value={c}>{c}</option>
+        ))}
+      </select>
 
       {/* Right: avatar + dropdown */}
       <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -251,6 +277,7 @@ export function FireTopBar() {
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
