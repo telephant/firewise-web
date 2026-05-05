@@ -10,7 +10,7 @@ import {
   exchangeRateApi,
   snapshotsApi,
 } from '@/lib/fire/api';
-import type { Portfolio, PortfolioStats, SavingsAccount, InterestRecord, MonthlySnapshot } from '@/lib/fire/api';
+import type { Portfolio, PortfolioStats, SavingsAccount, InterestTrendMonth, MonthlySnapshot } from '@/lib/fire/api';
 import { colors, Loader, StatCard, SimpleProgressBar } from '@/components/fire/ui';
 import { useCurrency } from '@/components/fire/currency-context';
 import { PassiveIncomeChart } from '@/components/fire/passive-income-chart';
@@ -101,7 +101,7 @@ export default function FireDashboard() {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [statsMap, setStatsMap] = useState<Record<string, PortfolioStats>>({});
   const [savings, setSavings] = useState<SavingsAccount[]>([]);
-  const [interestByAccount, setInterestByAccount] = useState<Record<string, InterestRecord[]>>({});
+  const [interestTrendMonths, setInterestTrendMonths] = useState<InterestTrendMonth[]>([]);
   const [dividendMonths, setDividendMonths] = useState<DividendMonth[]>([]);
   const [toUsdRates, setToUsdRates] = useState<Record<string, number>>({ USD: 1 });
   const [snapshots, setSnapshots] = useState<MonthlySnapshot[]>([]);
@@ -112,7 +112,6 @@ export default function FireDashboard() {
   const [savingsLoading, setSavingsLoading] = useState(true);
   const [dividendsLoading, setDividendsLoading] = useState(true);
   const [ratesLoading, setRatesLoading] = useState(false);
-  const [interestLoading, setInterestLoading] = useState(false);
 
   // ── Fetch all data ────────────────────────────────────────────────────────────
 
@@ -124,7 +123,8 @@ export default function FireDashboard() {
       savingsApi.list(),
       dividendCalendarApi.get(CURRENT_YEAR),
       snapshotsApi.list(2),
-    ]).then(([portRes, savRes, divRes, snapRes]) => {
+      savingsApi.interestTrend(CURRENT_YEAR),
+    ]).then(([portRes, savRes, divRes, snapRes, trendRes]) => {
       if (!alive) return;
 
       const portList = (portRes.success && portRes.data) ? portRes.data : [];
@@ -142,6 +142,10 @@ export default function FireDashboard() {
 
       if (snapRes.success && snapRes.data) {
         setSnapshots(snapRes.data.snapshots);
+      }
+
+      if (trendRes.success && trendRes.data) {
+        setInterestTrendMonths(trendRes.data.months);
       }
 
       if (portList.length > 0) {
@@ -174,18 +178,6 @@ export default function FireDashboard() {
         }).catch(() => { if (alive) setRatesLoading(false); });
       }
 
-      if (savList.length > 0) {
-        setInterestLoading(true);
-        Promise.all(savList.map((a: SavingsAccount) => savingsApi.listInterest(a.id))).then(results => {
-          if (!alive) return;
-          const map: Record<string, InterestRecord[]> = {};
-          results.forEach((res, i) => {
-            if (res.success && res.data) map[savList[i].id] = res.data.records;
-          });
-          setInterestByAccount(map);
-          setInterestLoading(false);
-        }).catch(() => { if (alive) setInterestLoading(false); });
-      }
     }).catch(() => {
       if (!alive) return;
       setPortfoliosLoading(false);
@@ -262,19 +254,12 @@ export default function FireDashboard() {
     ? Object.values(statsMap).reduce((s, st) => s + (st.mom_gain ?? 0), 0)
     : null;
 
-  // Interest by month (all accounts, converted to USD)
+  // Interest by month (merged historical + forecast from backend)
   const interestByMonth = useMemo(() => {
     const map: Record<number, number> = {};
-    for (const acct of savings) {
-      const records = interestByAccount[acct.id] ?? [];
-      for (const r of records) {
-        const m = new Date(r.credited_at).getMonth() + 1;
-        const usd = toUsdAmount(r.amount, acct.currency);
-        map[m] = (map[m] ?? 0) + usd;
-      }
-    }
+    interestTrendMonths.forEach(m => { if (m.amount > 0) map[m.month] = m.amount; });
     return map;
-  }, [savings, interestByAccount, toUsdAmount]);
+  }, [interestTrendMonths]);
 
   // Dividends by month from calendar
   const dividendsByMonth = useMemo(() => {
@@ -308,17 +293,12 @@ export default function FireDashboard() {
   const statsReady = !statsLoading && portfolios.every(p => statsMap[p.id]);
   const savingsReady = !savingsLoading && !ratesLoading;
   const assetsReady = statsReady && savingsReady;
-  const chartReady = assetsReady && !dividendsLoading && !interestLoading;
+  const chartReady = assetsReady && !dividendsLoading;
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-
-      {/* Header */}
-      <div style={{ marginBottom: 16 }}>
-        <h1 style={{ color: colors.text, fontSize: 22, fontWeight: 700, margin: 0 }}>Dashboard</h1>
-      </div>
+    <div style={{ padding: 24, backgroundColor: colors.bg, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
 
       {/* ── Section 1: Stat Cards ── */}
       <div style={{ marginBottom: 16 }}>
@@ -465,7 +445,7 @@ export default function FireDashboard() {
           </div>
 
           {/* Detail list */}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
             <p style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Investments</p>
             {portfoliosLoading ? (
               <Loader size="sm" variant="dots" />
