@@ -347,7 +347,7 @@ export default function FireDashboard() {
                 </p>
                 {totalAssetsMoM !== null && (
                   <p style={{ color: totalAssetsMoM >= 0 ? colors.positive : colors.negative, fontSize: 12, margin: 0, fontWeight: 500 }}>
-                    {totalAssetsMoM >= 0 ? '↑' : '↓'} {totalAssetsMoM >= 0 ? '+' : ''}{fmt(totalAssetsMoM)} vs last mo
+                    {totalAssetsMoM >= 0 ? '↑' : '↓'} {totalAssetsMoM >= 0 ? '+' : ''}{fmt(Math.abs(totalAssetsMoM))} vs last mo
                   </p>
                 )}
               </div>
