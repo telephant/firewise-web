@@ -606,6 +606,11 @@ export const dcaApi = {
     fetchApi<DcaPending>(`/fire/dca/pending/${id}/skip`, { method: 'POST' }),
 };
 
+export interface InterestTrendMonth {
+  month: number;
+  amount: number;
+}
+
 export const savingsApi = {
   list: () => fetchApi<SavingsAccount[]>('/fire/savings'),
   create: (data: CreateSavingsAccountData) =>
@@ -620,4 +625,6 @@ export const savingsApi = {
     fetchApi<InterestRecord>(`/fire/savings/${id}/interest`, { method: 'POST', body: JSON.stringify(data) }),
   deleteInterest: (id: string, recordId: string) =>
     fetchApi(`/fire/savings/${id}/interest/${recordId}`, { method: 'DELETE' }),
+  interestTrend: (year: number) =>
+    fetchApi<{ months: InterestTrendMonth[] }>(`/fire/savings/interest-trend?year=${year}`),
 };
