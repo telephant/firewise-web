@@ -9,7 +9,7 @@ import { useFamilies } from '@/hooks/fire/use-families';
 
 export default function FamilyPage() {
   const { user } = useAuth();
-  const { families, selectedFamilyId, setSelectedFamily, loading: familiesLoading } = useFamilies();
+  const { families, selectedFamilyId, setSelectedFamily, loading: familiesLoading, refreshFamilies } = useFamilies();
   const [activeFamilyId, setActiveFamilyId] = useState<string | null>(null);
 
   // Derive activeFamily — always reflects the latest families data
@@ -29,6 +29,11 @@ export default function FamilyPage() {
   // Invitation actions
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  // Rename family
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [renamingFamily, setRenamingFamily] = useState(false);
 
   // Load invitations when activeFamily changes
   useEffect(() => {
@@ -100,6 +105,21 @@ export default function FamilyPage() {
     setResendingId(null);
   };
 
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeFamily || !nameInput.trim() || nameInput.trim() === activeFamily.name) {
+      setEditingName(false);
+      return;
+    }
+    setRenamingFamily(true);
+    const result = await familyApi.update(activeFamily.id, { name: nameInput.trim() });
+    setRenamingFamily(false);
+    if (result.success) {
+      setEditingName(false);
+      await refreshFamilies();
+    }
+  };
+
   const handleCancel = async (invId: string) => {
     if (!activeFamily) return;
     setCancellingId(invId);
@@ -161,7 +181,59 @@ export default function FamilyPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Members card */}
-          <Card title={activeFamily.name}>
+          <Card title={
+            isOwner ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {editingName ? (
+                  <form onSubmit={handleRename} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      autoFocus
+                      value={nameInput}
+                      onChange={e => setNameInput(e.target.value)}
+                      style={{
+                        background: 'none',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: 4,
+                        color: colors.text,
+                        fontSize: 15,
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        outline: 'none',
+                      }}
+                    />
+                    <Button type="submit" size="sm" disabled={renamingFamily}>
+                      {renamingFamily ? 'Saving...' : 'Save'}
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingName(false)}>
+                      Cancel
+                    </Button>
+                  </form>
+                ) : (
+                  <>
+                    <span>{activeFamily.name}</span>
+                    <button
+                      onClick={() => { setNameInput(activeFamily.name); setEditingName(true); }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: colors.muted,
+                        padding: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title="Rename family"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : activeFamily.name
+          }>
             <p style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>
               Created {new Date(activeFamily.created_at).toLocaleDateString()}
             </p>

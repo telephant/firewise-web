@@ -9,6 +9,7 @@ interface UseFamiliesReturn {
   selectedFamily: Family | null;
   setSelectedFamily: (id: string) => void;
   loading: boolean;
+  refreshFamilies: () => Promise<void>;
 }
 
 const STORAGE_KEY = 'fire_selected_family_id';
@@ -18,18 +19,21 @@ export function useFamilies(): UseFamiliesReturn {
   const [selectedFamilyId, setSelectedFamilyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    familyApi.getAll().then(res => {
-      if (res.success && res.data) {
-        setFamilies(res.data);
-        const saved = localStorage.getItem(STORAGE_KEY);
-        const validId = saved && res.data.find(f => f.id === saved) ? saved : res.data[0]?.id ?? null;
-        setSelectedFamilyId(validId);
-        if (validId) localStorage.setItem(STORAGE_KEY, validId);
-      }
-      setLoading(false);
-    });
+  const loadFamilies = useCallback(async () => {
+    const res = await familyApi.getAll();
+    if (res.success && res.data) {
+      setFamilies(res.data);
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const validId = saved && res.data.find(f => f.id === saved) ? saved : res.data[0]?.id ?? null;
+      setSelectedFamilyId(validId);
+      if (validId) localStorage.setItem(STORAGE_KEY, validId);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    loadFamilies();
+  }, [loadFamilies]);
 
   const setSelectedFamily = useCallback((id: string) => {
     setSelectedFamilyId(id);
@@ -38,5 +42,5 @@ export function useFamilies(): UseFamiliesReturn {
 
   const selectedFamily = families.find(f => f.id === selectedFamilyId) ?? null;
 
-  return { families, selectedFamilyId, selectedFamily, setSelectedFamily, loading };
+  return { families, selectedFamilyId, selectedFamily, setSelectedFamily, loading, refreshFamilies: loadFamilies };
 }
