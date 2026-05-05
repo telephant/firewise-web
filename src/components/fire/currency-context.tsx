@@ -2,10 +2,9 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { exchangeRateApi } from '@/lib/fire/api';
+import { CURRENCIES } from '@/components/fire/ui/currency-combobox';
 
-// Supported display currencies
-export const SUPPORTED_CURRENCIES = ['USD', 'SGD', 'CNY', 'EUR', 'GBP', 'JPY', 'HKD', 'AUD'] as const;
-export type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number];
+export type SupportedCurrency = string;
 
 const STORAGE_KEY = 'fire_display_currency';
 
@@ -34,8 +33,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   // Load saved preference
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as SupportedCurrency | null;
-    if (saved && SUPPORTED_CURRENCIES.includes(saved)) {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && CURRENCIES.some(c => c.code === saved)) {
       setDisplayCurrencyState(saved);
     }
   }, []);

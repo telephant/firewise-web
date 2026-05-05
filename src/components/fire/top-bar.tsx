@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { colors, CurrencyCombobox } from '@/components/fire/ui';
 import { usePageContext } from '@/components/fire/page-context';
-import { useCurrency, SUPPORTED_CURRENCIES } from '@/components/fire/currency-context';
+import { useCurrency } from '@/components/fire/currency-context';
 
 interface BreadcrumbItem {
   label: string;
@@ -101,11 +101,10 @@ export function FireTopBar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
       {/* Currency selector */}
-      <div style={{ width: 140 }}>
+      <div style={{ width: 200 }}>
         <CurrencyCombobox
           value={displayCurrency}
-          onChange={v => setDisplayCurrency(v as typeof displayCurrency)}
-          currencies={[...SUPPORTED_CURRENCIES]}
+          onChange={v => setDisplayCurrency(v)}
         />
       </div>
 
