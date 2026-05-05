@@ -4,7 +4,7 @@ import * as React from 'react';
 import { colors } from '../theme';
 import { cn } from '@/lib/utils';
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   title?: React.ReactNode;
   variant?: 'default' | 'flat';
   /** Fixed height for the card content area (e.g., '280px') */
