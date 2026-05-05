@@ -127,25 +127,25 @@ export default function PortfoliosPage() {
                   >
                     <td style={{ ...tdStyle, fontWeight: 600 }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>{p.name}</td>
                     <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
-                      {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span> : fmt(stats.total_value)}
+                      {statsLoading ? <Loader size="sm" variant="dots" /> : !stats ? <span style={{ color: colors.muted }}>—</span> : fmt(stats.total_value)}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
-                      {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span> : fmt(stats.total_cost)}
+                      {statsLoading ? <Loader size="sm" variant="dots" /> : !stats ? <span style={{ color: colors.muted }}>—</span> : fmt(stats.total_cost)}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
-                      {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span>
+                      {statsLoading ? <Loader size="sm" variant="dots" /> : !stats ? <span style={{ color: colors.muted }}>—</span>
                         : <span style={{ color: stats.unrealized_pl >= 0 ? colors.positive : colors.negative }}>{fmt(stats.unrealized_pl)}</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
-                      {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span>
+                      {statsLoading ? <Loader size="sm" variant="dots" /> : !stats ? <span style={{ color: colors.muted }}>—</span>
                         : <span style={{ color: stats.realized_pl >= 0 ? colors.positive : colors.negative }}>{fmt(stats.realized_pl)}</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
-                      {statsLoading || !stats ? <span style={{ color: colors.muted }}>—</span>
+                      {statsLoading ? <Loader size="sm" variant="dots" /> : !stats ? <span style={{ color: colors.muted }}>—</span>
                         : <span style={{ color: colors.positive }}>{fmt(stats.dividend_ytd)}</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }} onClick={() => router.push(`/fire/portfolios/${p.id}`)}>
-                      {statsLoading || returnPct === null ? <span style={{ color: colors.muted }}>—</span>
+                      {statsLoading ? <Loader size="sm" variant="dots" /> : returnPct === null ? <span style={{ color: colors.muted }}>—</span>
                         : <span style={{ color: returnPct >= 0 ? colors.positive : colors.negative }}>{returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%</span>}
                     </td>
                     <td style={{ ...tdStyle, width: 100 }} onClick={e => e.stopPropagation()}>

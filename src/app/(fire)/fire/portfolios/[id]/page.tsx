@@ -79,9 +79,19 @@ export default function PortfolioDetail() {
 
   const [dcaPlans, setDcaPlans] = useState<DcaPlan[]>([]);
   const [dcaPending, setDcaPending] = useState<DcaPending[]>([]);
+  const [dcaLoaded, setDcaLoaded] = useState(false);
+  const [dcaLoading, setDcaLoading] = useState(false);
   const [dcaDialogOpen, setDcaDialogOpen] = useState(false);
   const [editDcaPlan, setEditDcaPlan] = useState<DcaPlan | undefined>(undefined);
   const [deletingDcaId, setDeletingDcaId] = useState<string | null>(null);
+
+  // Dividends lazy load
+  const [dividendsLoaded, setDividendsLoaded] = useState(false);
+  const [dividendsLoading, setDividendsLoading] = useState(false);
+
+  // Stats tab lazy load (snapshots)
+  const [snapshotsLoaded, setSnapshotsLoaded] = useState(false);
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false);
 
   const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
   const [dividendDialogOpen, setDividendDialogOpen] = useState(false);
@@ -97,19 +107,11 @@ export default function PortfolioDetail() {
     Promise.all([
       portfolioApi.get(id),
       holdingApi.list(id),
-      dividendApi.list(id),
       portfolioStatsApi.getStats(id),
-      portfolioStatsApi.getSnapshots(id),
-      dcaApi.listPlans(),
-      dcaApi.listPending(id),
-    ]).then(([portfolioRes, holdingsRes, dividendsRes, statsRes, snapshotsRes, dcaPlansRes, dcaPendingRes]) => {
+    ]).then(([portfolioRes, holdingsRes, statsRes]) => {
       if (portfolioRes.success && portfolioRes.data) setPortfolio(portfolioRes.data);
       if (holdingsRes.success && holdingsRes.data) setHoldings(holdingsRes.data);
-      if (dividendsRes.success && dividendsRes.data) setDividends(dividendsRes.data);
       if (statsRes.success && statsRes.data) setStats(statsRes.data);
-      if (snapshotsRes.success && snapshotsRes.data) setSnapshots(snapshotsRes.data);
-      if (dcaPlansRes.success && dcaPlansRes.data) setDcaPlans(dcaPlansRes.data.filter(p => p.portfolio_id === id));
-      if (dcaPendingRes.success && dcaPendingRes.data) setDcaPending(dcaPendingRes.data);
       setLoading(false);
     });
   }, [id]);
@@ -125,6 +127,37 @@ export default function PortfolioDetail() {
       if (res.success && res.data) setPlItems(res.data);
       setPlLoaded(true);
       setPlLoading(false);
+    });
+  }
+
+  function handleDividendsTabActivate() {
+    if (dividendsLoaded || dividendsLoading) return;
+    setDividendsLoading(true);
+    dividendApi.list(id).then((res) => {
+      if (res.success && res.data) setDividends(res.data);
+      setDividendsLoaded(true);
+      setDividendsLoading(false);
+    });
+  }
+
+  function handleDcaTabActivate() {
+    if (dcaLoaded || dcaLoading) return;
+    setDcaLoading(true);
+    Promise.all([dcaApi.listPlans(), dcaApi.listPending(id)]).then(([plansRes, pendingRes]) => {
+      if (plansRes.success && plansRes.data) setDcaPlans(plansRes.data.filter(p => p.portfolio_id === id));
+      if (pendingRes.success && pendingRes.data) setDcaPending(pendingRes.data);
+      setDcaLoaded(true);
+      setDcaLoading(false);
+    });
+  }
+
+  function handleStatsTabActivate() {
+    if (snapshotsLoaded || snapshotsLoading) return;
+    setSnapshotsLoading(true);
+    portfolioStatsApi.getSnapshots(id).then((res) => {
+      if (res.success && res.data) setSnapshots(res.data);
+      setSnapshotsLoaded(true);
+      setSnapshotsLoading(false);
     });
   }
 
@@ -222,7 +255,12 @@ export default function PortfolioDetail() {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '0 24px 24px' }}>
       <Tabs
         defaultValue="distribution"
-        onValueChange={(v) => { if (v === 'pl') handlePlTabActivate(); }}
+        onValueChange={(v) => {
+          if (v === 'pl') handlePlTabActivate();
+          if (v === 'dividends') handleDividendsTabActivate();
+          if (v === 'dca') handleDcaTabActivate();
+          if (v === 'stats') handleStatsTabActivate();
+        }}
         style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
       >
         <TabsList style={{ flexShrink: 0 }}>
@@ -395,11 +433,17 @@ export default function PortfolioDetail() {
 
         {/* Dividends Tab */}
         <TabsContent value="dividends" style={{ flex: 1, overflow: 'hidden', marginTop: 16, display: 'flex', flexDirection: 'column' }}>
-          <DividendViews
-            dividends={dividends}
-            currency={currency}
-            onAddDividend={() => setDividendDialogOpen(true)}
-          />
+          {dividendsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+              <Loader size="md" variant="bar" />
+            </div>
+          ) : (
+            <DividendViews
+              dividends={dividends}
+              currency={currency}
+              onAddDividend={() => setDividendDialogOpen(true)}
+            />
+          )}
         </TabsContent>
 
         {/* P&L Tab */}
@@ -451,7 +495,11 @@ export default function PortfolioDetail() {
         {/* Stats Tab */}
         <TabsContent value="stats" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
           <div>
-            {!stats ? (
+            {snapshotsLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+                <Loader size="md" variant="bar" />
+              </div>
+            ) : !stats ? (
               <p style={{ textAlign: 'center', padding: '48px 0', color: colors.muted, fontSize: 14 }}>No stats available.</p>
             ) : (
               <>
@@ -516,6 +564,11 @@ export default function PortfolioDetail() {
         {/* DCA Tab */}
         <TabsContent value="dca" style={{ flex: 1, overflow: 'auto', marginTop: 16 }}>
           <div>
+            {dcaLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+                <Loader size="md" variant="bar" />
+              </div>
+            ) : (<>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
               <Button variant="outline" onClick={() => { setEditDcaPlan(undefined); setDcaDialogOpen(true); }}>
                 + New Plan
@@ -599,6 +652,7 @@ export default function PortfolioDetail() {
                 </table>
               </div>
             )}
+            </>)}
           </div>
         </TabsContent>
       </Tabs>
