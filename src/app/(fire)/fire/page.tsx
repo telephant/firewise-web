@@ -233,27 +233,6 @@ export default function FireDashboard() {
   const fireProgressBar = Math.min((avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100, 100);
   const fireProgressLabel = (avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100;
 
-  // ── MoM derived values ────────────────────────────────────────────────────────
-
-  const currentSnap = snapshots[0] ?? null;
-  const prevSnap = snapshots[1] ?? null;
-
-  const totalAssetsMoM = currentSnap && prevSnap
-    ? currentSnap.total_assets - prevSnap.total_assets
-    : null;
-
-  const passiveIncomeMoM = currentSnap && prevSnap
-    ? currentSnap.passive_income - prevSnap.passive_income
-    : null;
-
-  const avgPassiveMoM = currentSnap && prevSnap
-    ? currentSnap.avg_passive_income_12m - prevSnap.avg_passive_income_12m
-    : null;
-
-  const totalMomGain = Object.values(statsMap).some(st => st.mom_gain !== null)
-    ? Object.values(statsMap).reduce((s, st) => s + (st.mom_gain ?? 0), 0)
-    : null;
-
   // Interest by month (merged historical + forecast from backend)
   const interestByMonth = useMemo(() => {
     const map: Record<number, number> = {};
@@ -294,6 +273,33 @@ export default function FireDashboard() {
   const savingsReady = !savingsLoading && !ratesLoading;
   const assetsReady = statsReady && savingsReady;
   const chartReady = assetsReady && !dividendsLoading;
+
+  // ── MoM derived values ────────────────────────────────────────────────────────
+  // Use already-loaded monthly data to compare current month vs last month
+
+  const PREV_MONTH = CURRENT_MONTH === 1 ? 12 : CURRENT_MONTH - 1;
+
+  // Passive income MoM: current month vs last month (from calendar + interest trend)
+  const currentMonthPassive = (dividendsByMonth[CURRENT_MONTH] ?? 0) + (interestByMonth[CURRENT_MONTH] ?? 0);
+  const prevMonthPassive = (dividendsByMonth[PREV_MONTH] ?? 0) + (interestByMonth[PREV_MONTH] ?? 0);
+  const passiveIncomeMoM = chartReady && prevMonthPassive > 0
+    ? currentMonthPassive - prevMonthPassive
+    : null;
+
+  // Avg passive MoM: use snapshot if available
+  const lastMonthSnap = snapshots[0] ?? null;
+  const avgPassiveMoM = assetsReady && lastMonthSnap
+    ? avgPassivePerMonth - lastMonthSnap.avg_passive_income_12m
+    : null;
+
+  // Total assets MoM: use snapshot if available
+  const totalAssetsMoM = assetsReady && lastMonthSnap
+    ? totalAssetsUsd - lastMonthSnap.total_assets
+    : null;
+
+  const totalMomGain = Object.values(statsMap).some(st => st.mom_gain !== null)
+    ? Object.values(statsMap).reduce((s, st) => s + (st.mom_gain ?? 0), 0)
+    : null;
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
@@ -362,7 +368,7 @@ export default function FireDashboard() {
             label="YTD Passive Income"
             value={assetsReady ? fmt(ytdPassiveIncome) : '—'}
             valueColor="positive"
-            trend={assetsReady ? formatMoMTrend(passiveIncomeMoM, fmt) : undefined}
+            trend={chartReady ? formatMoMTrend(passiveIncomeMoM, fmt) : undefined}
             isLoading={!assetsReady}
           />
           <StatCard
