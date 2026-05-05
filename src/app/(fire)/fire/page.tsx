@@ -8,8 +8,9 @@ import {
   savingsApi,
   dividendCalendarApi,
   exchangeRateApi,
+  snapshotsApi,
 } from '@/lib/fire/api';
-import type { Portfolio, PortfolioStats, SavingsAccount, InterestRecord } from '@/lib/fire/api';
+import type { Portfolio, PortfolioStats, SavingsAccount, InterestRecord, MonthlySnapshot } from '@/lib/fire/api';
 import { colors, Loader, StatCard, SimpleProgressBar } from '@/components/fire/ui';
 import { useCurrency } from '@/components/fire/currency-context';
 import { PassiveIncomeChart } from '@/components/fire/passive-income-chart';
@@ -76,6 +77,20 @@ function DonutChart({ slices, centerLabel }: { slices: DonutSlice[]; centerLabel
   );
 }
 
+// ── MoM trend helper ──────────────────────────────────────────────────────────
+
+function formatMoMTrend(
+  delta: number | null,
+  fmt: (v: number) => string,
+): { value: string; direction: 'up' | 'down' | 'neutral' } | undefined {
+  if (delta === null) return undefined;
+  const direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral';
+  return {
+    value: `${delta > 0 ? '+' : ''}${fmt(Math.abs(delta))} vs last mo`,
+    direction,
+  };
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function FireDashboard() {
@@ -89,6 +104,7 @@ export default function FireDashboard() {
   const [interestByAccount, setInterestByAccount] = useState<Record<string, InterestRecord[]>>({});
   const [dividendMonths, setDividendMonths] = useState<DividendMonth[]>([]);
   const [toUsdRates, setToUsdRates] = useState<Record<string, number>>({ USD: 1 });
+  const [snapshots, setSnapshots] = useState<MonthlySnapshot[]>([]);
 
   // Loading flags
   const [portfoliosLoading, setPortfoliosLoading] = useState(true);
@@ -107,7 +123,8 @@ export default function FireDashboard() {
       portfolioApi.list(),
       savingsApi.list(),
       dividendCalendarApi.get(CURRENT_YEAR),
-    ]).then(([portRes, savRes, divRes]) => {
+      snapshotsApi.list(2),
+    ]).then(([portRes, savRes, divRes, snapRes]) => {
       if (!alive) return;
 
       const portList = (portRes.success && portRes.data) ? portRes.data : [];
@@ -122,6 +139,10 @@ export default function FireDashboard() {
         setDividendMonths(divRes.data.months);
       }
       setDividendsLoading(false);
+
+      if (snapRes.success && snapRes.data) {
+        setSnapshots(snapRes.data.snapshots);
+      }
 
       if (portList.length > 0) {
         Promise.all(portList.map((p: Portfolio) => portfolioStatsApi.getStats(p.id))).then(results => {
@@ -217,7 +238,29 @@ export default function FireDashboard() {
 
   const ytdPassiveIncome = totalDividendYtd + totalInterestYtdUsd;
   const avgPassivePerMonth = CURRENT_MONTH > 0 ? ytdPassiveIncome / CURRENT_MONTH : 0;
-  const fireProgress = Math.min((avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100, 100);
+  const fireProgressBar = Math.min((avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100, 100);
+  const fireProgressLabel = (avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100;
+
+  // ── MoM derived values ────────────────────────────────────────────────────────
+
+  const currentSnap = snapshots[0] ?? null;
+  const prevSnap = snapshots[1] ?? null;
+
+  const totalAssetsMoM = currentSnap && prevSnap
+    ? currentSnap.total_assets - prevSnap.total_assets
+    : null;
+
+  const passiveIncomeMoM = currentSnap && prevSnap
+    ? currentSnap.passive_income - prevSnap.passive_income
+    : null;
+
+  const avgPassiveMoM = currentSnap && prevSnap
+    ? currentSnap.avg_passive_income_12m - prevSnap.avg_passive_income_12m
+    : null;
+
+  const totalMomGain = Object.values(statsMap).some(st => st.mom_gain !== null)
+    ? Object.values(statsMap).reduce((s, st) => s + (st.mom_gain ?? 0), 0)
+    : null;
 
   // Interest by month (all accounts, converted to USD)
   const interestByMonth = useMemo(() => {
