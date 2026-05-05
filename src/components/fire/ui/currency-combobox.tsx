@@ -69,6 +69,7 @@ export interface CurrencyComboboxProps {
   className?: string;
   error?: string;
   placeholder?: string;
+  currencies?: string[]; // restrict to specific currency codes
 }
 
 export function CurrencyCombobox({
@@ -79,12 +80,16 @@ export function CurrencyCombobox({
   className,
   error,
   placeholder = 'Select currency...',
+  currencies,
 }: CurrencyComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const hasError = !!error;
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const [portalContainer, setPortalContainer] = React.useState<HTMLElement | null>(null);
+  const currencyList = currencies
+    ? CURRENCIES.filter(c => currencies.includes(c.code))
+    : CURRENCIES;
 
   // When inside a Radix Dialog (modal), react-remove-scroll blocks wheel events on
   // portaled elements outside the dialog DOM tree. Fix: portal into the dialog content
@@ -181,7 +186,7 @@ export function CurrencyCombobox({
                   >
                     No currency found
                   </Command.Empty>
-                  {CURRENCIES.map((currency) => (
+                  {currencyList.map((currency) => (
                     <Command.Item
                       key={currency.code}
                       value={`${currency.code} ${currency.name}`}

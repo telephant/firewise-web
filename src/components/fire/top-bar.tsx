@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { colors } from '@/components/fire/ui';
+import { colors, CurrencyCombobox } from '@/components/fire/ui';
 import { usePageContext } from '@/components/fire/page-context';
 import { useCurrency, SUPPORTED_CURRENCIES } from '@/components/fire/currency-context';
 
@@ -101,25 +101,13 @@ export function FireTopBar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
       {/* Currency selector */}
-      <select
-        value={displayCurrency}
-        onChange={e => setDisplayCurrency(e.target.value as typeof displayCurrency)}
-        style={{
-          background: colors.surfaceLight,
-          border: `1px solid ${colors.border}`,
-          borderRadius: 6,
-          color: colors.muted,
-          fontSize: 12,
-          fontWeight: 500,
-          padding: '3px 6px',
-          cursor: 'pointer',
-          outline: 'none',
-        }}
-      >
-        {SUPPORTED_CURRENCIES.map(c => (
-          <option key={c} value={c}>{c}</option>
-        ))}
-      </select>
+      <div style={{ width: 140 }}>
+        <CurrencyCombobox
+          value={displayCurrency}
+          onChange={v => setDisplayCurrency(v as typeof displayCurrency)}
+          currencies={[...SUPPORTED_CURRENCIES]}
+        />
+      </div>
 
       {/* Right: avatar + dropdown */}
       <div ref={dropdownRef} style={{ position: 'relative' }}>

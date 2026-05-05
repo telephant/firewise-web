@@ -573,6 +573,7 @@ export default function FireDashboard() {
                 dividendsByMonth={dividendsByMonth}
                 interestByMonth={interestByMonth}
                 fmt={fmt}
+                forecastFromMonth={CURRENT_MONTH + 1}
               />
             ) : (
               <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

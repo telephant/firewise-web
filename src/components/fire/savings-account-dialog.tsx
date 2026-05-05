@@ -1,14 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { colors, Button, Input, DateInput } from '@/components/fire/ui';
+import { colors, Button, Input, DateInput, CurrencyCombobox } from '@/components/fire/ui';
 import { savingsApi, SavingsAccount, CreateSavingsAccountData } from '@/lib/fire/api';
-
-const CURRENCY_OPTIONS = [
-  'USD', 'EUR', 'GBP', 'AED', 'SGD', 'HKD', 'JPY', 'CNY', 'AUD', 'CAD', 'CHF',
-  'MYR', 'THB', 'IDR', 'INR', 'KRW', 'TWD', 'NZD', 'SEK', 'NOK', 'DKK',
-  'SAR', 'QAR', 'KWD', 'BHD', 'OMR', 'TRY', 'ZAR', 'BRL', 'MXN',
-];
 const FREQUENCY_OPTIONS: { value: CreateSavingsAccountData['compound_frequency']; label: string }[] = [
   { value: 'monthly', label: 'Monthly' },
   { value: 'quarterly', label: 'Quarterly' },
@@ -114,18 +108,11 @@ export function SavingsAccountDialog({ account, onSuccess, onClose }: Props) {
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <label style={{ color: colors.muted, fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>CURRENCY</label>
-            <select
+            <CurrencyCombobox
+              label="CURRENCY"
               value={form.currency}
-              onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
-              style={{
-                width: '100%', padding: '8px 10px', borderRadius: 6,
-                backgroundColor: colors.surfaceLight, border: `1px solid ${colors.border}`,
-                color: colors.text, fontSize: 13,
-              }}
-            >
-              {CURRENCY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+              onChange={v => setForm(f => ({ ...f, currency: v }))}
+            />
           </div>
           <div style={{ flex: 2 }}>
             <label style={{ color: colors.muted, fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>BALANCE *</label>
