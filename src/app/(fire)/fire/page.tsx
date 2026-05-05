@@ -394,14 +394,14 @@ export default function FireDashboard() {
               <>
                 <p style={{
                   fontSize: 20, fontWeight: 700, margin: '0 0 8px',
-                  color: fireProgress >= 100 ? colors.positive : fireProgress >= 50 ? colors.info : colors.muted,
+                  color: fireProgressLabel >= 100 ? colors.positive : fireProgressLabel >= 50 ? colors.info : colors.muted,
                 }}>
-                  {fireProgress.toFixed(1)}%
+                  {fireProgressLabel.toFixed(1)}%
                 </p>
                 <SimpleProgressBar
-                  value={fireProgress}
+                  value={fireProgressBar}
                   size="sm"
-                  color={fireProgress >= 100 ? colors.positive : fireProgress >= 50 ? colors.info : colors.muted}
+                  color={fireProgressLabel >= 100 ? colors.positive : fireProgressLabel >= 50 ? colors.info : colors.muted}
                 />
                 <p style={{ color: colors.muted, fontSize: 10, marginTop: 6 }}>
                   {fmt(avgPassivePerMonth)} / {fmt(FIRE_TARGET_MONTHLY)} target
