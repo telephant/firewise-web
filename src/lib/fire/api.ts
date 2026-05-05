@@ -384,6 +384,25 @@ export const portfolioStatsApi = {
     fetchApi<PortfolioSnapshot[]>(`/portfolios/${portfolioId}/snapshots`),
 };
 
+export interface MonthlySnapshot {
+  id: string;
+  year: number;
+  month: number;
+  snapshot_date: string;
+  total_assets: number;
+  total_debts: number;
+  net_worth: number;
+  passive_income: number;
+  avg_passive_income_12m: number;
+  total_income: number;
+  total_expenses: number;
+}
+
+export const snapshotsApi = {
+  list: (limit = 2) =>
+    fetchApi<{ snapshots: MonthlySnapshot[] }>(`/fire/snapshots?limit=${limit}`),
+};
+
 export const exchangeRateApi = {
   get: (base: string, codes: string[]) =>
     fetchApi<ExchangeRates>(`/exchange-rates?base=${base}&codes=${codes.join(',')}`),
