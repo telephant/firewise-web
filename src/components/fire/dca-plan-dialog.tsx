@@ -5,7 +5,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody,
   Button, Input, Label, Select, colors, CurrencyCombobox, DateInput,
 } from '@/components/fire/ui';
-import { dcaApi, DcaPlan, CreateDcaPlanData, DcaFrequency, DcaMode } from '@/lib/fire/api';
+import { dcaApi, DcaPlan, CreateDcaPlanData, DcaFrequency, DcaMode, DcaPriceReference } from '@/lib/fire/api';
 import { StockTickerInput } from '@/components/fire/stock-ticker-input';
 
 interface Props {
@@ -36,6 +36,8 @@ export function DcaPlanDialog({ open, onOpenChange, portfolioId, defaultCurrency
   const [amount, setAmount] = useState('');
   const [shares, setShares] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [priceReference, setPriceReference] = useState<DcaPriceReference>('close');
+  const [priceDelayMinutes, setPriceDelayMinutes] = useState('30');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,12 +52,16 @@ export function DcaPlanDialog({ open, onOpenChange, portfolioId, defaultCurrency
       setAmount(editPlan.amount !== null ? String(editPlan.amount) : '');
       setShares(editPlan.shares !== null ? String(editPlan.shares) : '');
       setStartDate(editPlan.next_run_date);
+      setPriceReference(editPlan.price_reference || 'close');
+      setPriceDelayMinutes(editPlan.price_delay_minutes !== null ? String(editPlan.price_delay_minutes) : '30');
       setNotes(editPlan.notes || '');
       setError(null);
     } else if (!open) {
       setTicker(''); setTickerName(''); setMarket('US'); setCurrency(defaultCurrency);
       setFrequency('monthly'); setMode('amount'); setAmount(''); setShares('');
-      setStartDate(new Date().toISOString().split('T')[0]); setNotes(''); setError(null);
+      setStartDate(new Date().toISOString().split('T')[0]);
+      setPriceReference('close'); setPriceDelayMinutes('30');
+      setNotes(''); setError(null);
     }
   }, [open, editPlan, defaultCurrency]);
 
@@ -72,6 +78,8 @@ export function DcaPlanDialog({ open, onOpenChange, portfolioId, defaultCurrency
       frequency,
       mode,
       start_date: startDate,
+      price_reference: priceReference,
+      price_delay_minutes: priceReference === 'delay' ? parseInt(priceDelayMinutes) || 30 : undefined,
       notes: notes || undefined,
       ...(mode === 'amount' ? { amount: parseFloat(amount) } : { shares: parseFloat(shares) }),
     };
@@ -154,6 +162,43 @@ export function DcaPlanDialog({ open, onOpenChange, portfolioId, defaultCurrency
             )}
 
             <DateInput value={startDate} onChange={setStartDate} label={isEdit ? 'Next Run Date' : 'First Run Date'} />
+
+            {/* Price Reference */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Label>Price Reference</Label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {(['open', 'close', 'delay'] as DcaPriceReference[]).map(ref => (
+                  <Button
+                    key={ref}
+                    type="button"
+                    variant={priceReference === ref ? 'primary' : 'outline'}
+                    style={{ flex: 1 }}
+                    onClick={() => setPriceReference(ref)}
+                  >
+                    {ref === 'open' ? 'Open' : ref === 'close' ? 'Close' : 'Delay'}
+                  </Button>
+                ))}
+              </div>
+              {priceReference === 'delay' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="480"
+                    step="1"
+                    value={priceDelayMinutes}
+                    onChange={(e) => setPriceDelayMinutes(e.target.value)}
+                    style={{ width: 80 }}
+                  />
+                  <span style={{ fontSize: 13, color: colors.muted }}>minutes after open</span>
+                </div>
+              )}
+              <p style={{ fontSize: 11, color: colors.muted, margin: 0 }}>
+                {priceReference === 'open' && 'Use the opening price on run day'}
+                {priceReference === 'close' && 'Use the current/closing price on run day'}
+                {priceReference === 'delay' && `Use price ${priceDelayMinutes || 30} minutes after market opens`}
+              </p>
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <Label>Notes (optional)</Label>

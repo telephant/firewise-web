@@ -9,11 +9,14 @@ import {
   dividendCalendarApi,
   exchangeRateApi,
   snapshotsApi,
+  nextDividendApi,
 } from '@/lib/fire/api';
-import type { Portfolio, PortfolioStats, SavingsAccount, InterestTrendMonth, MonthlySnapshot } from '@/lib/fire/api';
+import type { Portfolio, PortfolioStats, SavingsAccount, InterestTrendMonth, MonthlySnapshot, NextDividend } from '@/lib/fire/api';
 import { colors, Loader, StatCard, SimpleProgressBar } from '@/components/fire/ui';
 import { useCurrency } from '@/components/fire/currency-context';
 import { PassiveIncomeChart } from '@/components/fire/passive-income-chart';
+import { PrivacyNumber } from '@/components/fire/privacy-number';
+import { usePrivacy } from '@/components/fire/privacy-context';
 
 const FIRE_TARGET_MONTHLY = 2000; // USD
 const CURRENT_YEAR = new Date().getFullYear();
@@ -95,6 +98,7 @@ function formatMoMTrend(
 
 export default function FireDashboard() {
   const { fmt } = useCurrency();
+  const { privacyMode } = usePrivacy();
   const router = useRouter();
 
   // Raw data
@@ -105,6 +109,8 @@ export default function FireDashboard() {
   const [dividendMonths, setDividendMonths] = useState<DividendMonth[]>([]);
   const [toUsdRates, setToUsdRates] = useState<Record<string, number>>({ USD: 1 });
   const [snapshots, setSnapshots] = useState<MonthlySnapshot[]>([]);
+  const [nextDividend, setNextDividend] = useState<NextDividend | null>(null);
+  const [nextDividendLoading, setNextDividendLoading] = useState(true);
 
   // Loading flags
   const [portfoliosLoading, setPortfoliosLoading] = useState(true);
@@ -186,6 +192,17 @@ export default function FireDashboard() {
       setStatsLoading(false);
     });
 
+    return () => { alive = false; };
+  }, []);
+
+  // ── Next dividend: lazy, non-blocking ────────────────────────────────────────
+  useEffect(() => {
+    let alive = true;
+    nextDividendApi.get().then(res => {
+      if (!alive) return;
+      if (res.success) setNextDividend(res.data ?? null);
+      setNextDividendLoading(false);
+    }).catch(() => { if (alive) setNextDividendLoading(false); });
     return () => { alive = false; };
   }, []);
 
@@ -322,7 +339,9 @@ export default function FireDashboard() {
           <div>
             <p style={{ color: colors.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Total Assets</p>
             {assetsReady ? (
-              <p style={{ color: colors.text, fontSize: 32, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>{fmt(totalAssetsUsd)}</p>
+              <p style={{ color: colors.text, fontSize: 32, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
+                <PrivacyNumber value={fmt(totalAssetsUsd)} />
+              </p>
             ) : (
               <div style={{ paddingTop: 4 }}><Loader size="md" variant="dots" /></div>
             )}
@@ -331,7 +350,7 @@ export default function FireDashboard() {
                 <p style={{ color: roi >= 0 ? colors.positive : colors.negative, fontSize: 13, margin: 0, fontWeight: 500 }}>
                   ROI {roi >= 0 ? '+' : ''}{roi.toFixed(2)}%
                 </p>
-                {totalAssetsMoM !== null && (
+                {totalAssetsMoM !== null && !privacyMode && (
                   <p style={{ color: totalAssetsMoM >= 0 ? colors.positive : colors.negative, fontSize: 12, margin: 0, fontWeight: 500 }}>
                     {totalAssetsMoM >= 0 ? '↑' : '↓'} {totalAssetsMoM >= 0 ? '+' : ''}{fmt(Math.abs(totalAssetsMoM))} vs last mo
                   </p>
@@ -343,13 +362,13 @@ export default function FireDashboard() {
             <div>
               <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: '0 0 2px' }}>Investments</p>
               <p style={{ color: colors.accent, fontSize: 16, fontWeight: 600, margin: 0 }}>
-                {statsReady ? fmt(totalPortfolioValue) : '—'}
+                {statsReady ? <PrivacyNumber value={fmt(totalPortfolioValue)} /> : '—'}
               </p>
             </div>
             <div>
               <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: '0 0 2px' }}>Savings</p>
               <p style={{ color: colors.cyan, fontSize: 16, fontWeight: 600, margin: 0 }}>
-                {savingsReady ? fmt(totalSavingsUsd) : '—'}
+                {savingsReady ? <PrivacyNumber value={fmt(totalSavingsUsd)} /> : '—'}
               </p>
             </div>
           </div>
@@ -359,23 +378,23 @@ export default function FireDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           <StatCard
             label="Unrealized P&L"
-            value={statsReady ? fmt(totalUnrealizedPl) : '—'}
+            value={statsReady ? <PrivacyNumber value={fmt(totalUnrealizedPl)} /> : '—'}
             valueColor={statsReady ? (totalUnrealizedPl >= 0 ? 'positive' : 'negative') : 'default'}
-            trend={statsReady ? formatMoMTrend(totalMomGain, fmt) : undefined}
+            trend={statsReady && !privacyMode ? formatMoMTrend(totalMomGain, fmt) : undefined}
             isLoading={!statsReady}
           />
           <StatCard
             label="YTD Passive Income"
-            value={assetsReady ? fmt(ytdPassiveIncome) : '—'}
+            value={assetsReady ? <PrivacyNumber value={fmt(ytdPassiveIncome)} /> : '—'}
             valueColor="positive"
-            trend={chartReady ? formatMoMTrend(passiveIncomeMoM, fmt) : undefined}
+            trend={chartReady && !privacyMode ? formatMoMTrend(passiveIncomeMoM, fmt) : undefined}
             isLoading={!assetsReady}
           />
           <StatCard
             label="Avg / Month"
-            value={assetsReady ? fmt(avgPassivePerMonth) : '—'}
+            value={assetsReady ? <PrivacyNumber value={fmt(avgPassivePerMonth)} /> : '—'}
             valueColor="positive"
-            trend={assetsReady ? formatMoMTrend(avgPassiveMoM, fmt) : undefined}
+            trend={assetsReady && !privacyMode ? formatMoMTrend(avgPassiveMoM, fmt) : undefined}
             isLoading={!assetsReady}
           />
           {/* FIRE Progress card */}
@@ -401,7 +420,7 @@ export default function FireDashboard() {
                   color={fireProgressLabel >= 100 ? colors.positive : fireProgressLabel >= 50 ? colors.info : colors.muted}
                 />
                 <p style={{ color: colors.muted, fontSize: 10, marginTop: 6 }}>
-                  {fmt(avgPassivePerMonth)} / {fmt(FIRE_TARGET_MONTHLY)} target
+                  <PrivacyNumber value={fmt(avgPassivePerMonth)} /> / {fmt(FIRE_TARGET_MONTHLY)} target
                 </p>
               </>
             ) : (
@@ -430,7 +449,7 @@ export default function FireDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 16, flexShrink: 0 }}>
             {assetsReady ? (
               <>
-                <DonutChart slices={donutSlices} centerLabel={fmt(totalAssetsUsd)} />
+                <DonutChart slices={donutSlices} centerLabel={privacyMode ? '••••' : fmt(totalAssetsUsd)} />
                 <div style={{ display: 'flex', gap: 16 }}>
                   {donutSlices.map(sl => (
                     <div key={sl.name} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -475,7 +494,7 @@ export default function FireDashboard() {
                     <span style={{ flex: 1, color: colors.text, fontSize: 13, fontWeight: 500 }}>{p.name}</span>
                     <span style={{ color: colors.muted, fontSize: 12 }}>{pct.toFixed(1)}%</span>
                     <span style={{ color: colors.text, fontSize: 13, fontWeight: 600, minWidth: 90, textAlign: 'right' }}>
-                      {statsLoading ? '—' : fmt(value)}
+                      {statsLoading ? '—' : <PrivacyNumber value={fmt(value)} />}
                     </span>
                     {plPct !== null && (
                       <span style={{ color: plPct >= 0 ? colors.positive : colors.negative, fontSize: 11, minWidth: 55, textAlign: 'right' }}>
@@ -510,7 +529,7 @@ export default function FireDashboard() {
                     <span style={{ color: colors.info, fontSize: 12 }}>{(a.interest_rate * 100).toFixed(2)}%</span>
                     <span style={{ color: colors.muted, fontSize: 10, backgroundColor: colors.surfaceLight, padding: '1px 6px', borderRadius: 4 }}>{a.currency}</span>
                     <span style={{ color: colors.text, fontSize: 13, fontWeight: 600, minWidth: 90, textAlign: 'right' }}>
-                      {savingsReady ? fmt(balUsd) : '—'}
+                      {savingsReady ? <PrivacyNumber value={fmt(balUsd)} /> : '—'}
                     </span>
                   </div>
                 );
@@ -535,14 +554,14 @@ export default function FireDashboard() {
           {/* Top stats row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${colors.border}`, flexShrink: 0 }}>
             {[
-              { label: 'YTD Dividends', value: assetsReady ? fmt(totalDividendYtd) : null, color: colors.accent },
-              { label: 'YTD Interest', value: assetsReady ? fmt(totalInterestYtdUsd) : null, color: colors.cyan },
-              { label: 'YTD Total', value: assetsReady ? fmt(ytdPassiveIncome) : null, color: colors.positive },
+              { label: 'YTD Dividends', value: assetsReady ? fmt(totalDividendYtd) : null, color: colors.accent, sub: null },
+              { label: 'YTD Interest', value: assetsReady ? fmt(totalInterestYtdUsd) : null, color: colors.cyan, sub: null },
+              { label: 'YTD Total', value: assetsReady ? fmt(ytdPassiveIncome) : null, color: colors.positive, sub: null },
               {
-                label: 'Next Payout',
-                value: savingsReady && nextPayout ? fmt(nextPayout.amountUsd) : null,
+                label: 'Next Interest',
+                value: savingsReady ? (nextPayout ? fmt(nextPayout.amountUsd) : '—') : null,
                 sub: savingsReady && nextPayout ? nextPayout.date : null,
-                color: colors.text,
+                color: colors.cyan,
               },
             ].map(({ label, value, color, sub }) => (
               <div key={label}>
@@ -551,12 +570,38 @@ export default function FireDashboard() {
                   <Loader size="sm" variant="dots" />
                 ) : (
                   <>
-                    <p style={{ color, fontSize: 16, fontWeight: 700, margin: 0 }}>{value}</p>
+                    <p style={{ color, fontSize: 16, fontWeight: 700, margin: 0 }}>
+                      <PrivacyNumber value={value} />
+                    </p>
                     {sub && <p style={{ color: colors.muted, fontSize: 11, margin: '2px 0 0' }}>{sub}</p>}
                   </>
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Next Dividend — lazy loaded independently */}
+          <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${colors.border}`, flexShrink: 0 }}>
+            <p style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Next Dividend</p>
+            {nextDividendLoading ? (
+              <Loader size="sm" variant="dots" />
+            ) : nextDividend ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div>
+                  <p style={{ color: colors.accent, fontSize: 20, fontWeight: 700, margin: 0 }}><PrivacyNumber value={fmt(nextDividend.amount_usd)} /></p>
+                  <p style={{ color: colors.muted, fontSize: 11, margin: '2px 0 0' }}>{nextDividend.date}</p>
+                </div>
+                <div>
+                  <p style={{ color: colors.text, fontSize: 13, fontWeight: 600, margin: 0 }}>{nextDividend.ticker}</p>
+                  <p style={{ color: colors.muted, fontSize: 11, margin: '2px 0 0' }}>{nextDividend.portfolio_name}</p>
+                </div>
+                {nextDividend.is_forecasted && (
+                  <span style={{ fontSize: 10, color: colors.muted, backgroundColor: colors.surfaceLight, padding: '2px 6px', borderRadius: 4 }}>est.</span>
+                )}
+              </div>
+            ) : (
+              <p style={{ color: colors.muted, fontSize: 12 }}>No upcoming dividends found.</p>
+            )}
           </div>
 
           {/* Area chart */}
@@ -629,9 +674,9 @@ export default function FireDashboard() {
                           {MONTH_NAMES_FULL[r.month - 1]} {CURRENT_YEAR}
                           {r.month === CURRENT_MONTH && <span style={{ color: colors.accent, fontSize: 10, marginLeft: 6, fontWeight: 600 }}>NOW</span>}
                         </td>
-                        <td style={{ padding: '7px 8px', color: colors.accent, textAlign: 'right' }}>{r.div > 0 ? fmt(r.div) : '—'}</td>
-                        <td style={{ padding: '7px 8px', color: colors.cyan, textAlign: 'right' }}>{r.int > 0 ? fmt(r.int) : '—'}</td>
-                        <td style={{ padding: '7px 8px', color: colors.positive, fontWeight: 600, textAlign: 'right' }}>{fmt(r.total)}</td>
+                        <td style={{ padding: '7px 8px', color: colors.accent, textAlign: 'right' }}>{r.div > 0 ? <PrivacyNumber value={fmt(r.div)} /> : '—'}</td>
+                        <td style={{ padding: '7px 8px', color: colors.cyan, textAlign: 'right' }}>{r.int > 0 ? <PrivacyNumber value={fmt(r.int)} /> : '—'}</td>
+                        <td style={{ padding: '7px 8px', color: colors.positive, fontWeight: 600, textAlign: 'right' }}><PrivacyNumber value={fmt(r.total)} /></td>
                       </tr>
                     ))}
                   </tbody>

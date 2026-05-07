@@ -225,10 +225,13 @@ export default function PortfolioDetail() {
                       const weight = stats?.total_value && h.value_usd != null
                         ? ((h.value_usd / stats.total_value) * 100).toFixed(1)
                         : '—';
+                      const fmt2 = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: h.currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
                       const value = new Intl.NumberFormat('en-US', { style: 'currency', currency: h.currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(h.value!);
-                      return `${h.ticker}\t${weight}%\t${value}`;
+                      const avgCost = fmt2(h.avg_cost);
+                      const currentPrice = h.current_price != null ? fmt2(h.current_price) : '—';
+                      return `${h.ticker}\t${weight}%\t${value}\t${avgCost}\t${currentPrice}`;
                     });
-                  navigator.clipboard.writeText(['Ticker\tWeight\tValue', ...lines].join('\n'));
+                  navigator.clipboard.writeText(['Ticker\tWeight\tValue\tAvg Cost\tPrice', ...lines].join('\n'));
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 }}

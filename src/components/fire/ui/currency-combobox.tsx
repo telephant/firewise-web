@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { Command } from 'cmdk';
 import { colors } from './theme';
@@ -87,6 +87,7 @@ export function CurrencyCombobox({
   const hasError = !!error;
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const [portalContainer, setPortalContainer] = React.useState<HTMLElement | null>(null);
+  const popoverId = useId();
   const currencyList = currencies
     ? CURRENCIES.filter(c => currencies.includes(c.code))
     : CURRENCIES;
@@ -119,7 +120,7 @@ export function CurrencyCombobox({
           {label}
         </label>
       )}
-      <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Root open={open} onOpenChange={setOpen} modal={false}>
         <Popover.Trigger asChild disabled={disabled}>
           <button
             ref={triggerRef}
@@ -157,6 +158,7 @@ export function CurrencyCombobox({
 
         <Popover.Portal container={portalContainer ?? undefined}>
           <Popover.Content
+            id={popoverId}
             className="z-[9999] rounded-lg"
             style={{
               backgroundColor: colors.surface,

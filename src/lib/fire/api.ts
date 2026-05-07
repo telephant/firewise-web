@@ -377,6 +377,18 @@ export const dividendCalendarApi = {
     fetchApi<DividendCalendarResponse>(`/fire/dividend-calendar?year=${year}`),
 };
 
+export interface NextDividend {
+  date: string;
+  amount_usd: number;
+  ticker: string;
+  portfolio_name: string;
+  is_forecasted: boolean;
+}
+
+export const nextDividendApi = {
+  get: () => fetchApi<NextDividend | null>('/fire/next-dividend'),
+};
+
 export const portfolioStatsApi = {
   getStats: (portfolioId: string) =>
     fetchApi<PortfolioStats>(`/portfolios/${portfolioId}/stats`),
@@ -537,6 +549,8 @@ export const commodityApi = {
 export type DcaFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
 export type DcaMode = 'amount' | 'shares';
 
+export type DcaPriceReference = 'open' | 'close' | 'delay';
+
 export interface DcaPlan {
   id: string;
   portfolio_id: string;
@@ -550,6 +564,8 @@ export interface DcaPlan {
   next_run_date: string;
   last_run_date: string | null;
   is_active: boolean;
+  price_reference: DcaPriceReference;
+  price_delay_minutes: number | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -585,6 +601,8 @@ export interface CreateDcaPlanData {
   amount?: number;
   shares?: number;
   start_date: string;
+  price_reference?: DcaPriceReference;
+  price_delay_minutes?: number;
   notes?: string;
 }
 

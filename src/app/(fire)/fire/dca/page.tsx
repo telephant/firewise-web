@@ -104,7 +104,7 @@ export default function DcaPage() {
           {pending.length === 0 ? (
             <p style={{ color: colors.muted, fontSize: 13 }}>No pending confirmations.</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {pending.map(p => (
                 <DcaPendingCard
                   key={p.id}

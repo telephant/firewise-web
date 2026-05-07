@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { colors, CurrencyCombobox } from '@/components/fire/ui';
 import { usePageContext } from '@/components/fire/page-context';
 import { useCurrency } from '@/components/fire/currency-context';
+import { usePrivacy } from '@/components/fire/privacy-context';
 
 interface BreadcrumbItem {
   label: string;
@@ -37,6 +38,7 @@ export function FireTopBar() {
   const { user, signOut } = useAuth();
   const { pageTitle } = usePageContext();
   const { displayCurrency, setDisplayCurrency } = useCurrency();
+  const { privacyMode, togglePrivacy } = usePrivacy();
   const [open, setOpen] = useState(false);
   const [signOutHover, setSignOutHover] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -107,6 +109,40 @@ export function FireTopBar() {
           onChange={v => setDisplayCurrency(v)}
         />
       </div>
+
+      {/* Privacy toggle */}
+      <button
+        onClick={togglePrivacy}
+        title={privacyMode ? 'Show numbers' : 'Hide numbers'}
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: privacyMode ? colors.accent : colors.muted,
+          padding: 4,
+          display: 'flex',
+          alignItems: 'center',
+          borderRadius: 4,
+          transition: 'color 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.color = colors.text)}
+        onMouseLeave={e => (e.currentTarget.style.color = privacyMode ? colors.accent : colors.muted)}
+      >
+        {privacyMode ? (
+          // Eye-off icon
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+            <line x1="1" y1="1" x2="23" y2="23" />
+          </svg>
+        ) : (
+          // Eye icon
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        )}
+      </button>
 
       {/* Right: avatar + dropdown */}
       <div ref={dropdownRef} style={{ position: 'relative' }}>
