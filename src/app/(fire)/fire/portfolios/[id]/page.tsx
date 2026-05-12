@@ -22,6 +22,7 @@ import { DcaPendingCard } from '@/components/fire/dca-pending-card';
 import { isCommodity, displayTicker, displayUnit } from '@/lib/fire/commodities';
 import { PortfolioTreemap } from '@/components/fire/portfolio-treemap';
 import { PortfolioAnalyticsPanel } from '@/components/fire/portfolio-analytics-panel';
+import { AssetTypePie } from '@/components/fire/asset-type-pie';
 import { DividendViews } from '@/components/fire/dividend-views';
 
 function fmt(value: number | null, currency: string): string {
@@ -284,8 +285,9 @@ export default function PortfolioDetail() {
               totalValue={stats?.total_value ?? 0}
             />
           </div>
-          {/* Analytics panel — 35% width */}
-          <div style={{ flex: '0 0 calc(35% - 12px)', overflow: 'hidden' }}>
+          {/* Right column — asset type pie + analytics panel */}
+          <div style={{ flex: '0 0 calc(35% - 12px)', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <AssetTypePie holdings={holdings} />
             {portfolio && <PortfolioAnalyticsPanel portfolioId={portfolio.id} />}
           </div>
         </TabsContent>
@@ -559,6 +561,7 @@ export default function PortfolioDetail() {
                     valueColor={stats.mom_gain !== null ? (stats.mom_gain >= 0 ? 'positive' : 'negative') : 'default'}
                   />
                 </div>
+
               </>
             )}
           </div>

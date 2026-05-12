@@ -43,6 +43,7 @@ export interface Holding {
   unrealized_pl: number | null;
   unrealized_pl_pct: number | null;
   next_ex_date: string | null; // ISO date, e.g. "2025-06-15"
+  asset_subtype: 'stock' | 'etf' | 'commodity' | 'crypto' | 'fund' | 'other' | null;
 }
 
 export interface Dividend {
