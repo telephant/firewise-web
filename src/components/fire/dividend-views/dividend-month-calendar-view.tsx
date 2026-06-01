@@ -113,9 +113,10 @@ export function DividendMonthCalendarView({
   }
 
   // Forecasted total for a month in calCurrency
+  // API already returns net amounts (after tax deduction), so no further adjustment needed
   function getForecastedTotal(monthIdx: number): number {
     return getForecastedForMonth(monthIdx).reduce(
-      (sum, d) => sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0
+      (sum, d) => sum + d.amount, 0
     );
   }
 
@@ -131,9 +132,9 @@ export function DividendMonthCalendarView({
     const usd = d.amount_usd ?? 0;
     return sum + (taxMode === 'net' ? usd * (1 - d.tax_rate) : usd);
   }, 0);
-  // Forecasted: in calCurrency → fmtCal
+  // Forecasted: API already returns net amounts, sum as-is
   const drawerForecastedTotal = drawerForecasted.reduce(
-    (sum, d) => sum + (taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount), 0
+    (sum, d) => sum + d.amount, 0
   );
 
   const drawerOpen = selectedMonth !== null;
@@ -178,8 +179,11 @@ export function DividendMonthCalendarView({
       <div style={{ width: 148, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
         {/* Realized: in USD → display currency (same as Table total) */}
         <div style={{ padding: '12px 0', borderTop: gridBorder }}>
-          <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>
-            Realized
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
+            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Realized
+            </div>
+            <span style={{ color: colors.muted, fontSize: 9, padding: '1px 4px', borderRadius: 3, backgroundColor: `${colors.muted}15`, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>net</span>
           </div>
           <div style={{ color: colors.positive, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
             {fmtDisplay(annualSummary.realized)}
@@ -188,8 +192,11 @@ export function DividendMonthCalendarView({
 
         {/* Projected: in calCurrency (estimated, different pipeline) */}
         <div style={{ padding: '12px 0', borderTop: gridBorder }}>
-          <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>
-            Projected
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
+            <div style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Projected
+            </div>
+            <span style={{ color: colors.muted, fontSize: 9, padding: '1px 4px', borderRadius: 3, backgroundColor: `${colors.muted}15`, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>net</span>
           </div>
           <div style={{ color: colors.muted, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
             {fmtCal(annualSummary.projected)}
@@ -464,12 +471,15 @@ export function DividendMonthCalendarView({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {drawerForecasted.map((d, i) => {
-                    const amount = taxMode === 'net' ? d.amount * (1 - taxRate) : d.amount;
+                    // API returns net amount already
                     return (
                       <div key={`fc-${i}`} style={{ padding: '8px 10px', backgroundColor: colors.surfaceLight, borderRadius: 6, border: `1px dashed ${colors.border}` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                           <span style={{ color: colors.text, fontWeight: 600, fontSize: 12 }}>{d.ticker}</span>
-                          <span style={{ color: colors.muted, fontSize: 12, fontWeight: 600 }}>{fmtCal(amount, 2)}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ color: colors.muted, fontSize: 9, padding: '1px 4px', borderRadius: 3, backgroundColor: `${colors.muted}15`, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>net</span>
+                            <span style={{ color: colors.muted, fontSize: 12, fontWeight: 600 }}>{fmtCal(d.amount, 2)}</span>
+                          </div>
                         </div>
                         <div style={{ color: colors.muted, fontSize: 10 }}>
                           {d.frequency ? FREQ_LABEL[d.frequency] ?? d.frequency : 'Estimated'}
@@ -486,13 +496,19 @@ export function DividendMonthCalendarView({
             <div style={{ paddingTop: 10, borderTop: `1px solid ${colors.border}` }}>
               {drawerActual.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ color: colors.muted, fontSize: 11 }}>Received</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ color: colors.muted, fontSize: 11 }}>Received</span>
+                    <span style={{ color: colors.muted, fontSize: 9, padding: '1px 4px', borderRadius: 3, backgroundColor: `${colors.muted}15`, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>net</span>
+                  </div>
                   <span style={{ color: colors.positive, fontSize: 13, fontWeight: 700 }}>{fmtDisplay(drawerActualUsdTotal, { decimals: 2 })}</span>
                 </div>
               )}
               {drawerForecasted.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ color: colors.muted, fontSize: 11 }}>Estimated</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ color: colors.muted, fontSize: 11 }}>Estimated</span>
+                    <span style={{ color: colors.muted, fontSize: 9, padding: '1px 4px', borderRadius: 3, backgroundColor: `${colors.muted}15`, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>net</span>
+                  </div>
                   <span style={{ color: colors.muted, fontSize: 12, fontWeight: 600 }}>{fmtCal(drawerForecastedTotal, 2)}</span>
                 </div>
               )}

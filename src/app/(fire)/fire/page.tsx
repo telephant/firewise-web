@@ -246,9 +246,8 @@ export default function FireDashboard() {
     : 0;
 
   const ytdPassiveIncome = totalDividendYtd + totalInterestYtdUsd;
-  const avgPassivePerMonth = CURRENT_MONTH > 0 ? ytdPassiveIncome / CURRENT_MONTH : 0;
-  const fireProgressBar = Math.min((avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100, 100);
-  const fireProgressLabel = (avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100;
+  // Divide by completed months (CURRENT_MONTH - 1), not the current month which has no data yet
+  const completedMonths = CURRENT_MONTH > 1 ? CURRENT_MONTH - 1 : 1;
 
   // Interest by month (merged historical + forecast from backend)
   const interestByMonth = useMemo(() => {
@@ -263,6 +262,23 @@ export default function FireDashboard() {
     for (const m of dividendMonths) map[m.month + 1] = m.total; // API is 0-indexed, chart expects 1-12
     return map;
   }, [dividendMonths]);
+
+  // Full-year projections: actual months + forecast remaining months
+  const projectedDividends = useMemo(() =>
+    Object.values(dividendsByMonth).reduce((s, v) => s + v, 0),
+    [dividendsByMonth]);
+
+  const projectedInterest = useMemo(() =>
+    Array.from({ length: 12 }, (_, i) => interestByMonth[i + 1] ?? 0).reduce((s, v) => s + v, 0),
+    [interestByMonth]);
+
+  const projectedTotal = projectedDividends + projectedInterest;
+
+  // Avg passive/month: use full-year projection ÷ 12 for consistency with projected total
+  // Falls back to YTD ÷ completed months until projection data is ready
+  const avgPassivePerMonth = projectedTotal > 0 ? projectedTotal / 12 : ytdPassiveIncome / completedMonths;
+  const fireProgressBar = Math.min((avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100, 100);
+  const fireProgressLabel = (avgPassivePerMonth / FIRE_TARGET_MONTHLY) * 100;
 
   // Donut slices
   const donutSlices = useMemo(() => {
@@ -304,18 +320,22 @@ export default function FireDashboard() {
     : null;
 
   // Avg passive MoM: use snapshot if available
-  const lastMonthSnap = snapshots[0] ?? null;
+  // snapshots are ordered newest-first; [0]=most recent, [1]=previous month
+  const lastMonthSnap = snapshots[1] ?? null;
   const avgPassiveMoM = assetsReady && lastMonthSnap
     ? avgPassivePerMonth - lastMonthSnap.avg_passive_income_12m
     : null;
 
-  // Total assets MoM: use snapshot if available
-  const totalAssetsMoM = assetsReady && lastMonthSnap
-    ? totalAssetsUsd - lastMonthSnap.total_assets
-    : null;
-
+  // Total assets MoM: use portfolio_snapshots mom_gain (populated by task:monthly)
+  // monthly_financial_snapshots is not written by any task so lastMonthSnap.total_assets is unreliable
   const totalMomGain = Object.values(statsMap).some(st => st.mom_gain !== null)
     ? Object.values(statsMap).reduce((s, st) => s + (st.mom_gain ?? 0), 0)
+    : null;
+
+  const totalAssetsMoM = totalMomGain;
+
+  const totalUnrealizedPlMoM = Object.values(statsMap).some(st => st.mom_unrealized_pl !== null)
+    ? Object.values(statsMap).reduce((s, st) => s + (st.mom_unrealized_pl ?? 0), 0)
     : null;
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -380,7 +400,7 @@ export default function FireDashboard() {
             label="Unrealized P&L"
             value={statsReady ? <PrivacyNumber value={fmt(totalUnrealizedPl)} /> : '—'}
             valueColor={statsReady ? (totalUnrealizedPl >= 0 ? 'positive' : 'negative') : 'default'}
-            trend={statsReady && !privacyMode ? formatMoMTrend(totalMomGain, fmt) : undefined}
+            trend={statsReady && !privacyMode ? formatMoMTrend(totalUnrealizedPlMoM, fmt) : undefined}
             isLoading={!statsReady}
           />
           <StatCard
@@ -552,20 +572,24 @@ export default function FireDashboard() {
           <p style={{ fontSize: 11, fontWeight: 600, color: colors.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, flexShrink: 0 }}>Passive Income</p>
 
           {/* Top stats row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${colors.border}`, flexShrink: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${colors.border}`, flexShrink: 0 }}>
             {[
-              { label: 'YTD Dividends', value: assetsReady ? fmt(totalDividendYtd) : null, color: colors.accent, sub: null },
-              { label: 'YTD Interest', value: assetsReady ? fmt(totalInterestYtdUsd) : null, color: colors.cyan, sub: null },
-              { label: 'YTD Total', value: assetsReady ? fmt(ytdPassiveIncome) : null, color: colors.positive, sub: null },
+              { label: 'YTD Dividends', value: assetsReady ? fmt(totalDividendYtd) : null, color: colors.accent, sub: null, net: true },
+              { label: 'YTD Interest', value: assetsReady ? fmt(totalInterestYtdUsd) : null, color: colors.cyan, sub: null, net: false },
+              { label: 'YTD Total', value: assetsReady ? fmt(ytdPassiveIncome) : null, color: colors.positive, sub: null, net: true },
               {
                 label: 'Next Interest',
                 value: savingsReady ? (nextPayout ? fmt(nextPayout.amountUsd) : '—') : null,
                 sub: savingsReady && nextPayout ? nextPayout.date : null,
                 color: colors.cyan,
+                net: false,
               },
-            ].map(({ label, value, color, sub }) => (
+            ].map(({ label, value, color, sub, net }) => (
               <div key={label}>
-                <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, marginBottom: 4 }}>{label}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                  <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: 0 }}>{label}</p>
+                  {net && <span style={{ color: colors.muted, fontSize: 9, padding: '1px 4px', borderRadius: 3, backgroundColor: `rgba(255,255,255,0.06)`, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', border: `1px solid rgba(255,255,255,0.08)` }}>net</span>}
+                </div>
                 {value === null ? (
                   <Loader size="sm" variant="dots" />
                 ) : (
@@ -575,6 +599,30 @@ export default function FireDashboard() {
                     </p>
                     {sub && <p style={{ color: colors.muted, fontSize: 11, margin: '2px 0 0' }}>{sub}</p>}
                   </>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Full-year projection row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${colors.border}`, flexShrink: 0 }}>
+            {[
+              { label: `${CURRENT_YEAR} Dividends`, value: chartReady ? fmt(projectedDividends) : null, color: colors.accent, net: true },
+              { label: `${CURRENT_YEAR} Interest`, value: chartReady ? fmt(projectedInterest) : null, color: colors.cyan, net: false },
+              { label: `${CURRENT_YEAR} Total`, value: chartReady ? fmt(projectedTotal) : null, color: colors.positive, net: true },
+              { label: 'Remaining', value: chartReady ? fmt(projectedTotal - ytdPassiveIncome) : null, color: colors.warning, net: true },
+            ].map(({ label, value, color, net }) => (
+              <div key={label}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                  <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: 0 }}>{label}</p>
+                  {net && <span style={{ color: colors.muted, fontSize: 9, padding: '1px 4px', borderRadius: 3, backgroundColor: `rgba(255,255,255,0.06)`, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', border: `1px solid rgba(255,255,255,0.08)` }}>net</span>}
+                </div>
+                {value === null ? (
+                  <Loader size="sm" variant="dots" />
+                ) : (
+                  <p style={{ color, fontSize: 16, fontWeight: 700, margin: 0 }}>
+                    <PrivacyNumber value={value} />
+                  </p>
                 )}
               </div>
             ))}

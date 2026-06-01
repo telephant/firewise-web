@@ -119,6 +119,7 @@ export interface PortfolioStats {
   dividend_mtd: number;
   mom_gain: number | null;
   mom_gain_pct: number | null;
+  mom_unrealized_pl: number | null;
   currency: string;
 }
 
