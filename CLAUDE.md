@@ -1,4 +1,15 @@
-# Firewise Frontend — Development Rules
+# Firewise Frontend — CLAUDE.md
+
+## 每次对话开始时必读
+
+1. `docs/loop.md` — 工作流程
+2. `docs/todo/` — 当前任务列表
+3. `docs/product.md` — 产品功能全貌
+4. `docs/architecture.md` — 技术架构和关键约定
+
+---
+
+# 前端开发规范
 
 ## Module Separation (CRITICAL)
 
