@@ -199,12 +199,21 @@ export function RecordTradeDialog({
                   <Label>Market</Label>
                   <Select
                     value={market}
-                    onChange={(e) => setMarket(e.target.value)}
+                    onChange={(e) => {
+                      const m = e.target.value;
+                      setMarket(m);
+                      // Auto-switch currency based on market
+                      const marketCurrency: Record<string, string> = {
+                        US: 'USD', SGX: 'SGD', HK: 'HKD', CN: 'CNY', SE: 'SEK',
+                      };
+                      if (marketCurrency[m]) setCurrency(marketCurrency[m]);
+                    }}
                     options={[
                       { value: 'US', label: 'US' },
                       { value: 'SGX', label: 'SGX' },
                       { value: 'HK', label: 'HK' },
                       { value: 'CN', label: 'CN' },
+                      { value: 'SE', label: 'SE (Sweden)' },
                     ]}
                   />
                 </div>

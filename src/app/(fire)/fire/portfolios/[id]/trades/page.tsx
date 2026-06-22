@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { tradeApi, portfolioApi } from '@/lib/fire/api';
 import type { Trade, Portfolio } from '@/lib/fire/api';
 import { colors, Button, Loader } from '@/components/fire/ui';
 import { RecordTradeDialog } from '@/components/fire/record-trade-dialog';
 import Link from 'next/link';
+
+const PAGE_SIZE = 20;
 
 function fmt(value: number, currency: string): string {
   return new Intl.NumberFormat('en-US', {
@@ -17,6 +19,8 @@ function fmt(value: number, currency: string): string {
   }).format(value);
 }
 
+type TypeFilter = 'all' | 'buy' | 'sell';
+
 export default function TradeHistoryPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -26,16 +30,32 @@ export default function TradeHistoryPage() {
   const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Filters
+  const [tickerFilter, setTickerFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [page, setPage] = useState(1);
+
   useEffect(() => {
     if (!id) return;
     Promise.all([portfolioApi.get(id), tradeApi.list(id)]).then(
       ([portfolioRes, tradesRes]) => {
         if (portfolioRes.success && portfolioRes.data) setPortfolio(portfolioRes.data);
-        if (tradesRes.success && tradesRes.data) setTrades(tradesRes.data);
+        if (tradesRes.success && tradesRes.data) {
+          // Default: newest first
+          const sorted = [...tradesRes.data].sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+          setTrades(sorted);
+        }
         setLoading(false);
       }
     );
   }, [id]);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setPage(1);
+  }, [tickerFilter, typeFilter]);
 
   const handleDelete = async (tradeId: string) => {
     if (!confirm('Delete this trade?')) return;
@@ -47,7 +67,36 @@ export default function TradeHistoryPage() {
     }
   };
 
+  // Unique tickers for filter dropdown
+  const tickerOptions = useMemo(() => {
+    const set = new Set(trades.map((t) => t.ticker));
+    return Array.from(set).sort();
+  }, [trades]);
+
+  // Filtered + paginated
+  const filtered = useMemo(() => {
+    return trades.filter((t) => {
+      if (tickerFilter && t.ticker !== tickerFilter) return false;
+      if (typeFilter !== 'all' && t.type !== typeFilter) return false;
+      return true;
+    });
+  }, [trades, tickerFilter, typeFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const currency = portfolio?.currency || 'USD';
+
+  const filterSelectStyle: React.CSSProperties = {
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 6,
+    color: colors.text,
+    fontSize: 13,
+    padding: '6px 10px',
+    outline: 'none',
+    cursor: 'pointer',
+  };
 
   return (
     <div style={{ padding: 24, backgroundColor: colors.bg, minHeight: '100vh' }}>
@@ -69,64 +118,213 @@ export default function TradeHistoryPage() {
         <Button onClick={() => setTradeDialogOpen(true)}>Record Trade</Button>
       </div>
 
+      {/* Filters */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+        <select
+          value={tickerFilter}
+          onChange={(e) => setTickerFilter(e.target.value)}
+          style={filterSelectStyle}
+        >
+          <option value="">All Tickers</option>
+          {tickerOptions.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+
+        <div style={{ display: 'flex', gap: 4 }}>
+          {(['all', 'buy', 'sell'] as TypeFilter[]).map((v) => (
+            <button
+              key={v}
+              onClick={() => setTypeFilter(v)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+                backgroundColor:
+                  typeFilter === v
+                    ? v === 'buy'
+                      ? 'rgba(74,222,128,0.18)'
+                      : v === 'sell'
+                      ? 'rgba(248,113,113,0.18)'
+                      : colors.surfaceLight
+                    : colors.surface,
+                color:
+                  typeFilter === v
+                    ? v === 'buy'
+                      ? colors.positive
+                      : v === 'sell'
+                      ? colors.negative
+                      : colors.text
+                    : colors.muted,
+              }}
+            >
+              {v === 'all' ? 'All' : v === 'buy' ? 'Buy' : 'Sell'}
+            </button>
+          ))}
+        </div>
+
+        {(tickerFilter || typeFilter !== 'all') && (
+          <button
+            onClick={() => { setTickerFilter(''); setTypeFilter('all'); }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: colors.muted,
+              fontSize: 12,
+              cursor: 'pointer',
+              padding: '6px 4px',
+            }}
+          >
+            Clear filters
+          </button>
+        )}
+
+        <span style={{ marginLeft: 'auto', color: colors.muted, fontSize: 12 }}>
+          {filtered.length} trade{filtered.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}>
           <Loader size="md" variant="bar" />
         </div>
-      ) : trades.length === 0 ? (
-        <p style={{ textAlign: 'center', padding: '48px 0', color: colors.muted, fontSize: 14 }}>No trades recorded yet.</p>
+      ) : filtered.length === 0 ? (
+        <p style={{ textAlign: 'center', padding: '48px 0', color: colors.muted, fontSize: 14 }}>
+          {trades.length === 0 ? 'No trades recorded yet.' : 'No trades match the current filters.'}
+        </p>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
-                {['Date', 'Ticker', 'Type', 'Shares', 'Price', 'Currency', 'Notes', 'Actions'].map(h => (
-                  <th key={h} style={{ paddingBottom: 8, paddingRight: 16, textAlign: 'left', color: colors.muted, fontWeight: 500, fontSize: 12 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {trades.map((t) => (
-                <tr key={t.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
-                  <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{t.date}</td>
-                  <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: colors.text }}>
-                    {t.ticker}
-                    <span style={{ marginLeft: 6, fontSize: 11, color: colors.muted }}>{t.market}</span>
-                  </td>
-                  <td style={{ padding: '12px 16px 12px 0' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '2px 8px',
-                      borderRadius: 4,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      backgroundColor: t.type === 'buy' ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
-                      color: t.type === 'buy' ? colors.positive : colors.negative,
-                      border: `1px solid ${t.type === 'buy' ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)'}`,
-                    }}>
-                      {t.type === 'buy' ? 'Buy' : 'Sell'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{t.shares}</td>
-                  <td style={{ padding: '12px 16px 12px 0', color: colors.info }}>{fmt(t.price, t.currency)}</td>
-                  <td style={{ padding: '12px 16px 12px 0', color: colors.muted }}>{t.currency}</td>
-                  <td style={{ padding: '12px 16px 12px 0', color: colors.muted }}>{t.notes || '—'}</td>
-                  <td style={{ padding: '12px 16px 12px 0' }}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(t.id)}
-                      disabled={deletingId === t.id}
-                      style={{ color: colors.negative }}
-                    >
-                      {deletingId === t.id ? 'Deleting...' : 'Delete'}
-                    </Button>
-                  </td>
+        <>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                  {['Date', 'Ticker', 'Type', 'Shares', 'Price', 'Currency', 'Notes', 'Actions'].map(h => (
+                    <th key={h} style={{ paddingBottom: 8, paddingRight: 16, textAlign: 'left', color: colors.muted, fontWeight: 500, fontSize: 12 }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {paginated.map((t) => (
+                  <tr key={t.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                    <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{t.date}</td>
+                    <td style={{ padding: '12px 16px 12px 0', fontWeight: 600, color: colors.text }}>
+                      {t.ticker}
+                      <span style={{ marginLeft: 6, fontSize: 11, color: colors.muted }}>{t.market}</span>
+                    </td>
+                    <td style={{ padding: '12px 16px 12px 0' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        backgroundColor: t.type === 'buy' ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
+                        color: t.type === 'buy' ? colors.positive : colors.negative,
+                        border: `1px solid ${t.type === 'buy' ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)'}`,
+                      }}>
+                        {t.type === 'buy' ? 'Buy' : 'Sell'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px 12px 0', color: colors.text }}>{t.shares}</td>
+                    <td style={{ padding: '12px 16px 12px 0', color: colors.info }}>{fmt(t.price, t.currency)}</td>
+                    <td style={{ padding: '12px 16px 12px 0', color: colors.muted }}>{t.currency}</td>
+                    <td style={{ padding: '12px 16px 12px 0', color: colors.muted }}>{t.notes || '—'}</td>
+                    <td style={{ padding: '12px 16px 12px 0' }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(t.id)}
+                        disabled={deletingId === t.id}
+                        style={{ color: colors.negative }}
+                      >
+                        {deletingId === t.id ? 'Deleting...' : 'Delete'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 24 }}>
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: colors.surface,
+                  color: page === 1 ? colors.muted : colors.text,
+                  fontSize: 13,
+                  cursor: page === 1 ? 'default' : 'pointer',
+                  opacity: page === 1 ? 0.4 : 1,
+                }}
+              >
+                ←
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) {
+                    acc.push('...');
+                  }
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === '...' ? (
+                    <span key={`ellipsis-${idx}`} style={{ color: colors.muted, fontSize: 13, padding: '0 4px' }}>…</span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => setPage(item as number)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        border: `1px solid ${page === item ? colors.accent : colors.border}`,
+                        backgroundColor: page === item ? `${colors.accent}22` : colors.surface,
+                        color: page === item ? colors.accent : colors.text,
+                        fontSize: 13,
+                        fontWeight: page === item ? 600 : 400,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
+
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: colors.surface,
+                  color: page === totalPages ? colors.muted : colors.text,
+                  fontSize: 13,
+                  cursor: page === totalPages ? 'default' : 'pointer',
+                  opacity: page === totalPages ? 0.4 : 1,
+                }}
+              >
+                →
+              </button>
+
+              <span style={{ color: colors.muted, fontSize: 12, marginLeft: 4 }}>
+                {page} / {totalPages}
+              </span>
+            </div>
+          )}
+        </>
       )}
 
       <RecordTradeDialog
@@ -135,7 +333,10 @@ export default function TradeHistoryPage() {
         portfolioId={id}
         defaultCurrency={currency}
         onSuccess={(trade) => {
-          setTrades((prev) => [trade, ...prev]);
+          setTrades((prev) => {
+            const updated = [trade, ...prev];
+            return updated.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          });
           setTradeDialogOpen(false);
         }}
       />
