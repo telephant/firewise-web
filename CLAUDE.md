@@ -1,11 +1,13 @@
 # Firewise Frontend — CLAUDE.md
 
-## 每次对话开始时必读
+## 每次对话开始时必读（按顺序）
 
-1. `docs/loop.md` — 工作流程
-2. `docs/todo/` — 当前任务列表
-3. `docs/product.md` — 产品功能全貌
-4. `docs/architecture.md` — 技术架构和关键约定
+1. `docs/loop.md` — **首先读这个**，进入 IDLE 状态，开始驱动任务
+2. `docs/todo/` — 扫描所有 pending 任务，按 priority 排序
+3. `docs/product.md` — 产品功能全貌（执行任务前理解上下文）
+4. `docs/architecture.md` — 技术架构和关键约定（找代码入口）
+
+读完后直接进入 loop，不需要等用户发令。
 
 ---
 

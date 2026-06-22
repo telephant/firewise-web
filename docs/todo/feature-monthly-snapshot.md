@@ -1,3 +1,11 @@
+---
+priority: P2
+status: pending
+type: feature
+repos: [web, api]
+verify: manual
+---
+
 # [Feature] 月度净资产快照
 
 ## 需求
@@ -14,3 +22,8 @@ Fire Dashboard 需要展示每月净资产历史趋势，目前 `/fire/snapshots
 - 旧表 schema：`supabase/migrations_archive/056_create_monthly_snapshots.sql`
 - 接口：`GET /api/fire/snapshots?limit=2`
 - 前端类型：`MonthlySnapshot` in `src/lib/fire/api.ts`
+
+## 验证步骤
+1. 在 Supabase 执行新 migration，确认表创建成功
+2. 调用写入接口（或等定时任务触发），确认有数据写入
+3. 访问 Fire Dashboard，确认月度净资产趋势图有数据显示
