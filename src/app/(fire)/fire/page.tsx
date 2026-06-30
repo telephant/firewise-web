@@ -504,7 +504,7 @@ export default function FireDashboard() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <p style={{ color: colors.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-                  {CURRENT_YEAR} Monthly Assets
+                  {CURRENT_YEAR} Monthly Investments
                 </p>
                 {monthlyAssetsLoading && <Loader size="sm" variant="dots" />}
               </div>
