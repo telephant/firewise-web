@@ -169,9 +169,10 @@ export default function FireDashboard() {
           setStatsLoading(false);
         }).catch(() => { if (alive) setStatsLoading(false); });
 
-        // Load portfolio snapshots sequentially with delay — aggregate by month
-        setMonthlyAssetsLoading(true);
-        ;(async () => {
+        // Load portfolio snapshots after a delay so main data loads first
+        setTimeout(async () => {
+          if (!alive) return;
+          setMonthlyAssetsLoading(true);
           const monthTotals: Record<string, number> = {};
           for (let i = 0; i < portList.length; i++) {
             if (!alive) return;
@@ -180,7 +181,6 @@ export default function FireDashboard() {
             if (!alive) return;
             if (res.success && res.data) {
               for (const snap of res.data) {
-                // Only include snapshots from current year
                 if (!snap.snapshot_date.startsWith(String(CURRENT_YEAR))) continue;
                 const monthKey = snap.snapshot_date.slice(0, 7); // YYYY-MM
                 monthTotals[monthKey] = (monthTotals[monthKey] ?? 0) + snap.total_value;
@@ -191,7 +191,7 @@ export default function FireDashboard() {
             setMonthlyAssets(monthTotals);
             setMonthlyAssetsLoading(false);
           }
-        })();
+        }, 1500);
       } else {
         setStatsLoading(false);
       }
@@ -531,7 +531,7 @@ export default function FireDashboard() {
                               fontSize: 9, fontWeight: 600,
                               color: mom >= 0 ? colors.positive : colors.negative,
                             }}>
-                              {mom >= 0 ? '+' : ''}{mom >= 1000 ? `${(mom / 1000).toFixed(0)}k` : mom.toFixed(0)}
+                              {mom >= 0 ? '+' : '-'}{fmt(Math.abs(mom), { decimals: 0 })}
                             </span>
                           )}
                         </div>
@@ -572,9 +572,8 @@ export default function FireDashboard() {
                         </div>
                         {/* Value */}
                         <p style={{ color: colors.muted, fontSize: 9, margin: 0, textAlign: 'center', whiteSpace: 'nowrap' }}>
-                          {value !== null && !privacyMode
-                            ? (value >= 1000000 ? `${(value / 1000000).toFixed(1)}M` : value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value.toFixed(0))
-                            : value !== null && privacyMode ? '••••'
+                          {value !== null
+                            ? <PrivacyNumber value={fmt(value, { decimals: 0 })} />
                             : '—'
                           }
                         </p>
