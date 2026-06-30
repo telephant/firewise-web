@@ -112,6 +112,10 @@ export default function FireDashboard() {
   const [nextDividend, setNextDividend] = useState<NextDividend | null>(null);
   const [nextDividendLoading, setNextDividendLoading] = useState(true);
 
+  // Portfolio snapshots: month → total USD value across all portfolios
+  const [monthlyAssets, setMonthlyAssets] = useState<Record<string, number>>({});
+  const [monthlyAssetsLoading, setMonthlyAssetsLoading] = useState(false);
+
   // Loading flags
   const [portfoliosLoading, setPortfoliosLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -164,6 +168,30 @@ export default function FireDashboard() {
           setStatsMap(map);
           setStatsLoading(false);
         }).catch(() => { if (alive) setStatsLoading(false); });
+
+        // Load portfolio snapshots sequentially with delay — aggregate by month
+        setMonthlyAssetsLoading(true);
+        ;(async () => {
+          const monthTotals: Record<string, number> = {};
+          for (let i = 0; i < portList.length; i++) {
+            if (!alive) return;
+            if (i > 0) await new Promise(r => setTimeout(r, 300));
+            const res = await portfolioStatsApi.getSnapshots(portList[i].id);
+            if (!alive) return;
+            if (res.success && res.data) {
+              for (const snap of res.data) {
+                // Only include snapshots from current year
+                if (!snap.snapshot_date.startsWith(String(CURRENT_YEAR))) continue;
+                const monthKey = snap.snapshot_date.slice(0, 7); // YYYY-MM
+                monthTotals[monthKey] = (monthTotals[monthKey] ?? 0) + snap.total_value;
+              }
+            }
+          }
+          if (alive) {
+            setMonthlyAssets(monthTotals);
+            setMonthlyAssetsLoading(false);
+          }
+        })();
       } else {
         setStatsLoading(false);
       }
@@ -343,111 +371,230 @@ export default function FireDashboard() {
   return (
     <div style={{ padding: 24, backgroundColor: colors.bg, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
 
-      {/* ── Section 1: Stat Cards ── */}
-      <div style={{ marginBottom: 16 }}>
-        {/* Primary card — Total Assets */}
-        <div style={{
-          backgroundColor: colors.surface,
-          border: `1px solid ${colors.border}`,
-          borderRadius: 12,
-          padding: '16px 24px',
-          marginBottom: 10,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <div>
-            <p style={{ color: colors.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Total Assets</p>
-            {assetsReady ? (
-              <p style={{ color: colors.text, fontSize: 32, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
-                <PrivacyNumber value={fmt(totalAssetsUsd)} />
-              </p>
-            ) : (
-              <div style={{ paddingTop: 4 }}><Loader size="md" variant="dots" /></div>
-            )}
-            {assetsReady && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
-                <p style={{ color: roi >= 0 ? colors.positive : colors.negative, fontSize: 13, margin: 0, fontWeight: 500 }}>
-                  ROI {roi >= 0 ? '+' : ''}{roi.toFixed(2)}%
+      {/* ── Section 1: Left stats + Right monthly asset trend ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+
+        {/* Left: Total Assets card + 4 stat cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Primary card — Total Assets */}
+          <div style={{
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
+            borderRadius: 12,
+            padding: '14px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <div>
+              <p style={{ color: colors.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Total Assets</p>
+              {assetsReady ? (
+                <p style={{ color: colors.text, fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
+                  <PrivacyNumber value={fmt(totalAssetsUsd)} />
                 </p>
-                {totalAssetsMoM !== null && !privacyMode && (
-                  <p style={{ color: totalAssetsMoM >= 0 ? colors.positive : colors.negative, fontSize: 12, margin: 0, fontWeight: 500 }}>
-                    {totalAssetsMoM >= 0 ? '↑' : '↓'} {totalAssetsMoM >= 0 ? '+' : ''}{fmt(Math.abs(totalAssetsMoM))} vs last mo
+              ) : (
+                <div style={{ paddingTop: 4 }}><Loader size="md" variant="dots" /></div>
+              )}
+              {assetsReady && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+                  <p style={{ color: roi >= 0 ? colors.positive : colors.negative, fontSize: 13, margin: 0, fontWeight: 500 }}>
+                    ROI {roi >= 0 ? '+' : ''}{roi.toFixed(2)}%
                   </p>
-                )}
-              </div>
-            )}
-          </div>
-          <div style={{ textAlign: 'right', display: 'flex', gap: 24 }}>
-            <div>
-              <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: '0 0 2px' }}>Investments</p>
-              <p style={{ color: colors.accent, fontSize: 16, fontWeight: 600, margin: 0 }}>
-                {statsReady ? <PrivacyNumber value={fmt(totalPortfolioValue)} /> : '—'}
-              </p>
+                  {totalAssetsMoM !== null && !privacyMode && (
+                    <p style={{ color: totalAssetsMoM >= 0 ? colors.positive : colors.negative, fontSize: 12, margin: 0, fontWeight: 500 }}>
+                      {totalAssetsMoM >= 0 ? '↑' : '↓'} {totalAssetsMoM >= 0 ? '+' : ''}{fmt(Math.abs(totalAssetsMoM))} vs last mo
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-            <div>
-              <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: '0 0 2px' }}>Savings</p>
-              <p style={{ color: colors.cyan, fontSize: 16, fontWeight: 600, margin: 0 }}>
-                {savingsReady ? <PrivacyNumber value={fmt(totalSavingsUsd)} /> : '—'}
-              </p>
+            <div style={{ display: 'flex', gap: 20 }}>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: '0 0 2px' }}>Investments</p>
+                <p style={{ color: colors.accent, fontSize: 15, fontWeight: 600, margin: 0 }}>
+                  {statsReady ? <PrivacyNumber value={fmt(totalPortfolioValue)} /> : '—'}
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ color: colors.muted, fontSize: 11, fontWeight: 500, margin: '0 0 2px' }}>Savings</p>
+                <p style={{ color: colors.cyan, fontSize: 15, fontWeight: 600, margin: 0 }}>
+                  {savingsReady ? <PrivacyNumber value={fmt(totalSavingsUsd)} /> : '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 stat cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            <StatCard
+              label="Unrealized P&L"
+              value={statsReady ? <PrivacyNumber value={fmt(totalUnrealizedPl)} /> : '—'}
+              valueColor={statsReady ? (totalUnrealizedPl >= 0 ? 'positive' : 'negative') : 'default'}
+              trend={statsReady && !privacyMode ? formatMoMTrend(totalUnrealizedPlMoM, fmt) : undefined}
+              isLoading={!statsReady}
+            />
+            <StatCard
+              label="YTD Passive Income"
+              value={assetsReady ? <PrivacyNumber value={fmt(ytdPassiveIncome)} /> : '—'}
+              valueColor="positive"
+              trend={chartReady && !privacyMode ? formatMoMTrend(passiveIncomeMoM, fmt) : undefined}
+              isLoading={!assetsReady}
+            />
+            <StatCard
+              label="Avg / Month"
+              value={assetsReady ? <PrivacyNumber value={fmt(avgPassivePerMonth)} /> : '—'}
+              valueColor="positive"
+              trend={assetsReady && !privacyMode ? formatMoMTrend(avgPassiveMoM, fmt) : undefined}
+              isLoading={!assetsReady}
+            />
+            {/* FIRE Progress */}
+            <div style={{
+              backgroundColor: colors.surface,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 8,
+              padding: '12px',
+              textAlign: 'center',
+            }}>
+              <p style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>FIRE Progress</p>
+              {assetsReady ? (
+                <>
+                  <p style={{
+                    fontSize: 20, fontWeight: 700, margin: '0 0 8px',
+                    color: fireProgressLabel >= 100 ? colors.positive : fireProgressLabel >= 50 ? colors.info : colors.muted,
+                  }}>
+                    {fireProgressLabel.toFixed(1)}%
+                  </p>
+                  <SimpleProgressBar
+                    value={fireProgressBar}
+                    size="sm"
+                    color={fireProgressLabel >= 100 ? colors.positive : fireProgressLabel >= 50 ? colors.info : colors.muted}
+                  />
+                  <p style={{ color: colors.muted, fontSize: 10, marginTop: 6 }}>
+                    <PrivacyNumber value={fmt(avgPassivePerMonth)} /> / {fmt(FIRE_TARGET_MONTHLY)} target
+                  </p>
+                </>
+              ) : (
+                <div style={{ paddingTop: 4 }}><Loader size="sm" variant="dots" /></div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Secondary cards row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-          <StatCard
-            label="Unrealized P&L"
-            value={statsReady ? <PrivacyNumber value={fmt(totalUnrealizedPl)} /> : '—'}
-            valueColor={statsReady ? (totalUnrealizedPl >= 0 ? 'positive' : 'negative') : 'default'}
-            trend={statsReady && !privacyMode ? formatMoMTrend(totalUnrealizedPlMoM, fmt) : undefined}
-            isLoading={!statsReady}
-          />
-          <StatCard
-            label="YTD Passive Income"
-            value={assetsReady ? <PrivacyNumber value={fmt(ytdPassiveIncome)} /> : '—'}
-            valueColor="positive"
-            trend={chartReady && !privacyMode ? formatMoMTrend(passiveIncomeMoM, fmt) : undefined}
-            isLoading={!assetsReady}
-          />
-          <StatCard
-            label="Avg / Month"
-            value={assetsReady ? <PrivacyNumber value={fmt(avgPassivePerMonth)} /> : '—'}
-            valueColor="positive"
-            trend={assetsReady && !privacyMode ? formatMoMTrend(avgPassiveMoM, fmt) : undefined}
-            isLoading={!assetsReady}
-          />
-          {/* FIRE Progress card */}
-          <div style={{
-            backgroundColor: colors.surface,
-            border: `1px solid ${colors.border}`,
-            borderRadius: 8,
-            padding: '12px',
-            textAlign: 'center',
-          }}>
-            <p style={{ color: colors.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>FIRE Progress</p>
-            {assetsReady ? (
-              <>
-                <p style={{
-                  fontSize: 20, fontWeight: 700, margin: '0 0 8px',
-                  color: fireProgressLabel >= 100 ? colors.positive : fireProgressLabel >= 50 ? colors.info : colors.muted,
-                }}>
-                  {fireProgressLabel.toFixed(1)}%
+        {/* Right: Monthly asset snapshot trend */}
+        {(() => {
+          const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          // Build 12 months for current year
+          const months = MONTH_NAMES.map((name, i) => {
+            const m = i + 1;
+            const key = `${CURRENT_YEAR}-${String(m).padStart(2, '0')}`;
+            const value = monthlyAssets[key] ?? null;
+            return { name, month: m, key, value };
+          });
+          const maxValue = Math.max(...months.map(m => m.value ?? 0), 1);
+          const hasSomeData = months.some(m => m.value !== null);
+
+          return (
+            <div style={{
+              backgroundColor: colors.surface,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 12,
+              padding: '14px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <p style={{ color: colors.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+                  {CURRENT_YEAR} Monthly Assets
                 </p>
-                <SimpleProgressBar
-                  value={fireProgressBar}
-                  size="sm"
-                  color={fireProgressLabel >= 100 ? colors.positive : fireProgressLabel >= 50 ? colors.info : colors.muted}
-                />
-                <p style={{ color: colors.muted, fontSize: 10, marginTop: 6 }}>
-                  <PrivacyNumber value={fmt(avgPassivePerMonth)} /> / {fmt(FIRE_TARGET_MONTHLY)} target
-                </p>
-              </>
-            ) : (
-              <div style={{ paddingTop: 4 }}><Loader size="sm" variant="dots" /></div>
-            )}
-          </div>
-        </div>
+                {monthlyAssetsLoading && <Loader size="sm" variant="dots" />}
+              </div>
+
+              {!hasSomeData && !monthlyAssetsLoading ? (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <p style={{ color: colors.muted, fontSize: 12 }}>No snapshots yet — run the snapshot task to populate.</p>
+                </div>
+              ) : (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+                  {months.map(({ name, month, value }, i) => {
+                    const isCurrent = month === CURRENT_MONTH;
+                    const isFuture = month > CURRENT_MONTH;
+                    const prevValue = i > 0 ? months[i - 1].value : null;
+                    const mom = value !== null && prevValue !== null ? value - prevValue : null;
+                    const barPct = value !== null ? (value / maxValue) * 100 : 0;
+
+                    return (
+                      <div key={name} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                        {/* MoM change */}
+                        <div style={{ height: 16, display: 'flex', alignItems: 'center' }}>
+                          {mom !== null && !privacyMode && (
+                            <span style={{
+                              fontSize: 9, fontWeight: 600,
+                              color: mom >= 0 ? colors.positive : colors.negative,
+                            }}>
+                              {mom >= 0 ? '+' : ''}{mom >= 1000 ? `${(mom / 1000).toFixed(0)}k` : mom.toFixed(0)}
+                            </span>
+                          )}
+                        </div>
+                        {/* Bar */}
+                        <div style={{
+                          width: '100%',
+                          height: 80,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'flex-end',
+                          position: 'relative',
+                        }}>
+                          {value !== null ? (
+                            <div style={{
+                              width: '100%',
+                              height: `${Math.max(barPct, 2)}%`,
+                              backgroundColor: isCurrent ? colors.accent : `${colors.accent}55`,
+                              borderRadius: '3px 3px 0 0',
+                              transition: 'height 0.4s ease',
+                            }} />
+                          ) : isFuture ? (
+                            <div style={{
+                              width: '100%',
+                              height: '2px',
+                              backgroundColor: colors.border,
+                            }} />
+                          ) : monthlyAssetsLoading ? (
+                            <div style={{
+                              width: '100%',
+                              height: '30%',
+                              backgroundColor: `${colors.surfaceLight}`,
+                              borderRadius: '3px 3px 0 0',
+                              animation: 'pulse 1.5s ease-in-out infinite',
+                            }} />
+                          ) : (
+                            <div style={{ width: '100%', height: '2px', backgroundColor: colors.border }} />
+                          )}
+                        </div>
+                        {/* Value */}
+                        <p style={{ color: colors.muted, fontSize: 9, margin: 0, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                          {value !== null && !privacyMode
+                            ? (value >= 1000000 ? `${(value / 1000000).toFixed(1)}M` : value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value.toFixed(0))
+                            : value !== null && privacyMode ? '••••'
+                            : '—'
+                          }
+                        </p>
+                        {/* Month label */}
+                        <p style={{
+                          color: isCurrent ? colors.text : colors.muted,
+                          fontSize: 10,
+                          fontWeight: isCurrent ? 600 : 400,
+                          margin: 0,
+                        }}>
+                          {name}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Two-column section: stretches to fill remaining height ── */}
